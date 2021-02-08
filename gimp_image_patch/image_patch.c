@@ -8,16 +8,13 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "plug-in-gimp_nima"
+#define PLUG_IN_PROC "plug-in-gimp_patch"
 
 static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
-static void init_proc(void);
-static void quit_proc(void);
 
-
-static void nima(GimpDrawable * drawable)
+static void patch(GimpDrawable * drawable)
 {
 	gint x, y, width, height;
 	IMAGE *image;
@@ -49,23 +46,13 @@ static void nima(GimpDrawable * drawable)
 
 
 GimpPlugInInfo PLUG_IN_INFO = {
-  init_proc,
-  quit_proc,
+    NULL,
+    NULL,
 	query,
 	run
 };
 
 MAIN()
-
-static void init_proc(void)
-{
-  g_print("Init nima ...\n");
-}
-
-static void quit_proc(void)
-{
-  g_print("Exit nima ...\n");
-}
 
 static void query(void)
 {
@@ -85,11 +72,11 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Nima with Deep Learning",
-						   "This plug-in nima image with deep learning technology",
+						   "Image Patch with Deep Learning",
+						   "This plug-in patch image with deep learning technology",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
-						   "2020", "_Nima", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020", "_Patch", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI");
 }
@@ -118,14 +105,14 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	drawable = gimp_drawable_get(param[2].data.d_drawable);
 
 	if (gimp_drawable_is_rgb(drawable->drawable_id) || gimp_drawable_is_gray(drawable->drawable_id)) {
-		gimp_progress_init("Nima...");
+		gimp_progress_init("Patch...");
 
 		GTimer *timer;
 		timer = g_timer_new();
 
-		nima(drawable);
+		patch(drawable);
 
-		g_print("image nima took %g seconds.\n", g_timer_elapsed(timer, NULL));
+		g_print("image patch took %g seconds.\n", g_timer_elapsed(timer, NULL));
 		g_timer_destroy(timer);
 
 		if (run_mode != GIMP_RUN_NONINTERACTIVE)

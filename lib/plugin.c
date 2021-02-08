@@ -154,7 +154,8 @@ TENSOR *tensor_fromgimp(GimpDrawable * drawable, int x, int y, int width, int he
 	gint c, channels;
 	GimpPixelRgn input_rgn;
 	TENSOR *tensor = NULL;
-	guchar *rgn_data, *s, *d;
+	guchar *rgn_data, *s;
+	float *d;
 
 	channels = drawable->bpp;
 	gimp_pixel_rgn_init(&input_rgn, drawable, 0, 0, drawable->width, drawable->height, FALSE, FALSE);
@@ -180,7 +181,7 @@ TENSOR *tensor_fromgimp(GimpDrawable * drawable, int x, int y, int width, int he
 		for (i = 0; i < height; i++) {
 			k = i * width * channels; // start row i, for HxWxC format
 			for (j = 0; j < width; j++) {
-				*d++ = s[k + j*channels + c];
+				*d++ = ((float)s[k + j*channels + c])/255.0;
 			}
 		}
 	}
@@ -195,7 +196,8 @@ int tensor_togimp(TENSOR * tensor, GimpDrawable * drawable, int x, int y, int wi
 	gint i, j, k;
 	gint c, channels;
 	GimpPixelRgn output_rgn;
-	guchar *rgn_data, *s, *d;
+	guchar *rgn_data, *d;
+	float *s;
 
 	channels = drawable->bpp;
 	gimp_pixel_rgn_init(&output_rgn, drawable, 0, 0, drawable->width, drawable->height, TRUE, TRUE);
@@ -212,7 +214,7 @@ int tensor_togimp(TENSOR * tensor, GimpDrawable * drawable, int x, int y, int wi
 		for (i = 0; i < height; i++) {
 			k = i * width * channels; // start row i for HxWxC
 			for (j = 0; j < width; j++) {
-				d[k + j*channels + c] = *s++;
+				d[k + j*channels + c] = (guchar)((*s++)*255.0);
 			}
 		}
 	}

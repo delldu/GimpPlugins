@@ -8,14 +8,13 @@
 #
 INSTALL_DIR := ~/snap/gimp/current/.config/GIMP/2.10/plug-ins
 
-TARGET := gimp_patch
+TARGET := gimp_image_color
 
 SOURCE :=  \
-	patch.c
+	image_color.c
 
-INCS	:= -I../lib $(shell gimptool-2.0 --cflags)
-LIBS	:= -L../lib -lplugin $(shell gimptool-2.0 --libs) -lnimage -lnng -lpthread -ljpeg -lpng -lm
-
+INCS	:= -I../lib $(shell gimptool-2.0 --cflags) $(shell nimagetool --cflags)
+LIBS	:= -L../lib -lplugin $(shell gimptool-2.0 --libs) $(shell nimagetool --libs)
 
 DEFINES :=
 

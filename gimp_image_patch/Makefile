@@ -7,13 +7,14 @@
 #************************************************************************************/
 #
 INSTALL_DIR := ~/snap/gimp/current/.config/GIMP/2.10/plug-ins
-TARGET := gimp_clean
+
+TARGET := gimp_image_patch
 
 SOURCE :=  \
-	clean.c
+	image_patch.c
 
-INCS	:= -I../lib $(shell gimptool-2.0 --cflags)
-LIBS	:= -L../lib -lplugin $(shell gimptool-2.0 --libs) -lnimage -lnng -ljpeg -lpng -lpthread -lm
+INCS	:= -I../lib $(shell gimptool-2.0 --cflags) $(shell nimagetool --cflags)
+LIBS	:= -L../lib -lplugin $(shell gimptool-2.0 --libs) $(shell nimagetool --libs)
 
 DEFINES :=
 

@@ -8,13 +8,13 @@
 #
 INSTALL_DIR := ~/snap/gimp/current/.config/GIMP/2.10/plug-ins
 
-TARGET := gimp_nima
+TARGET := gimp_image_zoom
 
 SOURCE :=  \
-	nima.c
+	image_zoom.c
 
-INCS	:= -I../lib $(shell gimptool-2.0 --cflags)
-LIBS	:= -L../lib -lplugin $(shell gimptool-2.0 --libs) -lnimage -lnng -ljpeg -lpng -lpthread -lm
+INCS	:= -I../lib $(shell gimptool-2.0 --cflags) $(shell nimagetool --cflags)
+LIBS	:= -L../lib -lplugin $(shell gimptool-2.0 --libs) $(shell nimagetool --libs)
 
 DEFINES :=
 

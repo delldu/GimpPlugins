@@ -13,8 +13,6 @@
 static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
-static void init_proc(void);
-static void quit_proc(void);
 
 static void zoom(GimpDrawable * drawable)
 {
@@ -48,23 +46,13 @@ static void zoom(GimpDrawable * drawable)
 
 
 GimpPlugInInfo PLUG_IN_INFO = {
-  init_proc,
-  quit_proc,
+    NULL,
+    NULL,
 	query,
 	run
 };
 
 MAIN()
-
-static void init_proc(void)
-{
-  g_print("Init zoom ...\n");
-}
-
-static void quit_proc(void)
-{
-  g_print("Exit zoom ...\n");
-}
 
 static void query(void)
 {
