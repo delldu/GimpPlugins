@@ -1,24 +1,24 @@
 .
-├── gimp_clean
-│   ├── clean.c
+├── gimp_image_clean
+│   ├── image_clean.c
 │   └── Makefile
-├── gimp_color
-│   ├── color.c
+├── gimp_image_color
+│   ├── image_color.c
 │   └── Makefile
-├── gimp_nima
-│   ├── Makefile
-│   └── nima.c
-├── gimp_patch
-│   ├── Makefile
-│   └── patch.c
-├── gimp_zoom
-│   ├── Makefile
-│   └── zoom.c
-├── hello_world.py
+├── gimp_image_nima
+│   ├── image_nima.c
+│   └── Makefile
+├── gimp_image_patch
+│   ├── image_patch.c
+│   └── Makefile
+├── gimp_image_zoom
+│   ├── image_zoom.c
+│   └── Makefile
 ├── lib
 │   ├── Makefile
 │   ├── plugin.c
 │   └── plugin.h
+├── LICENSE
 ├── Makefile
 └── README.md
 
