@@ -9,11 +9,11 @@
 
 XSUBDIRS :=  \
 	lib \
-	gimp_clean \
-	gimp_zoom \
-	gimp_color \
-	gimp_patch \
-	gimp_nima
+	gimp_image_clean \
+	gimp_image_zoom \
+	gimp_image_color \
+	gimp_image_patch \
+	gimp_image_nima
 
 
 BSUBDIRS :=

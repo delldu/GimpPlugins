@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-*** Copyright 2020 Dell(18588220928g@163.com), All Rights Reserved.
+*** Copyright 2020-2021 Dell(18588220928g@163.com), All Rights Reserved.
 ***
 *** File Author: Dell, 2020-11-16 12:16:01
 ***
@@ -8,7 +8,7 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "plug-in-gimp_clean"
+#define PLUG_IN_PROC "plug-in-gimp_image_clean"
 
 static void query(void);
 static void run(const gchar * name,
@@ -78,7 +78,7 @@ static void query(void)
 						   "This plug-in clean image with deep learning technology",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
-						   "2020", "_Clean", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2021", "_Clean", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI");
 }

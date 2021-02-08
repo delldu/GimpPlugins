@@ -36,14 +36,10 @@ all: staticlib
 
 sharelib: $(OBJECTS)
 	$(LD) $(LDFLAGS) -shared -soname $(LIB_NAME).so -o $(LIB_NAME).so $(OBJECTS)
-	# cp $(LIB_NAME).so ${INSTALL_DIR}/lib
-	# mv $(LIB_NAME).so ../lib
 
 
 staticlib:$(OBJECTS)
 	$(AR) $(ARFLAGS) $(LIB_NAME).a $(OBJECTS)
-	# cp $(LIB_NAME).a ${INSTALL_DIR}/lib
-	# mv $(LIB_NAME).a ../lib
 
 
 #****************************************************************************
