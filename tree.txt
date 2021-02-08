@@ -1,0 +1,25 @@
+.
+├── gimp_clean
+│   ├── clean.c
+│   └── Makefile
+├── gimp_color
+│   ├── color.c
+│   └── Makefile
+├── gimp_nima
+│   ├── Makefile
+│   └── nima.c
+├── gimp_patch
+│   ├── Makefile
+│   └── patch.c
+├── gimp_zoom
+│   ├── Makefile
+│   └── zoom.c
+├── hello_world.py
+├── lib
+│   ├── Makefile
+│   ├── plugin.c
+│   └── plugin.h
+├── Makefile
+└── README.md
+
+6 directories, 16 files
