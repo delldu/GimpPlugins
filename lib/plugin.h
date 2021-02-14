@@ -33,6 +33,8 @@ extern "C" {
 	// Set tensor to gimp
 	int tensor_togimp(TENSOR * tensor, GimpDrawable * drawable, int x, int y, int width, int height);
 
+	// Load layers ...
+	int image_layers(int image_id, int max_layers, IMAGE *layers[]);
 
 #if defined(__cplusplus)
 }

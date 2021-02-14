@@ -91,7 +91,7 @@ int image_togimp(IMAGE * image, GimpDrawable * drawable, int x, int y, int width
 	guchar *rgn_data, *d;
 
 	channels = drawable->bpp;
-	gimp_pixel_rgn_init(&output_rgn, drawable, 0, 0, drawable->width, drawable->height, TRUE, TRUE);
+	gimp_pixel_rgn_init(&output_rgn, drawable, 0, 0, drawable->width, drawable->height, TRUE, FALSE);
 
 	rgn_data = g_new(guchar, height * width * channels);
 	if (!rgn_data) {
@@ -200,7 +200,7 @@ int tensor_togimp(TENSOR * tensor, GimpDrawable * drawable, int x, int y, int wi
 	float *s;
 
 	channels = drawable->bpp;
-	gimp_pixel_rgn_init(&output_rgn, drawable, 0, 0, drawable->width, drawable->height, TRUE, TRUE);
+	gimp_pixel_rgn_init(&output_rgn, drawable, 0, 0, drawable->width, drawable->height, TRUE, FALSE);
 
 	rgn_data = g_new(guchar, height * width * channels);
 	if (!rgn_data) {
@@ -224,4 +224,24 @@ int tensor_togimp(TENSOR * tensor, GimpDrawable * drawable, int x, int y, int wi
 	g_free(rgn_data);
 
 	return 0;
+}
+
+int image_layers(int image_id, int max_layers, IMAGE *layers[])
+{
+	gint i;
+	gint32 layer_count, *layer_id_list;
+	GimpDrawable *drawable;
+	
+	layer_id_list = gimp_image_get_layers ((gint32)image_id, &layer_count);
+	if (layer_count > max_layers)
+		layer_count = max_layers;
+
+	for (i = 0; i < layer_count; i++) {
+		drawable = gimp_drawable_get(layer_id_list[i]);
+		layers[i] = image_fromgimp(drawable, 0, 0, drawable->width, drawable->height);
+		gimp_drawable_detach(drawable);
+	}
+	g_free (layer_id_list);
+
+	return layer_count;
 }
