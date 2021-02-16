@@ -19,22 +19,23 @@ static void run(const gchar * name,
 // IMAGE *get_color_target(char *url, IMAGE *input);
 // display_color_target(IMAGE *target);
 
-IMAGE *get_color_source(int image_id)
+TENSOR *get_color_source(int image_id)
 {
 	int i, j, n_layers;
 	IMAGE *layers[2], *gray_image, *color_image;
+	TENSOR *tensor = NULL;
 
 	n_layers = image_layers(image_id, ARRAY_SIZE(layers), layers);
 	if (n_layers != 2) {
 		syslog_error("Color image must have 2 layes, one for gray texture, other for color.");
-		goto failure;
+		goto free_layers;
 	}
 
 	color_image = layers[0];
 	gray_image = layers[1];
 	if (gray_image->height != color_image->height || gray_image->width != color_image->width) {
 		syslog_error("The size of gray and color layers is not same.");
-		goto failure;
+		goto free_layers;
 	}
 
 	// PASS
@@ -46,24 +47,27 @@ IMAGE *get_color_source(int image_id)
 		}
 		gray_image->ie[i][j].a = 255;
 	}
-	image_destroy(color_image);
+	tensor = tensor_from_image(gray_image, 1);	// with alpha
 
-	return gray_image;
-
-failure:
+free_layers:
 	for (i = 0; i < n_layers; i++)
 		image_destroy(layers[i]);
 
-	return NULL;
+	return tensor;
 }
 
-int display_color_target(IMAGE *target)
+int display_color_target(TENSOR *target)
 {
 	gchar name[64];
 	gint32 image_ID, layer_ID;
 	GimpDrawable *drawable;
 
-	check_image(target);
+	check_tensor(target);
+
+	if (target->chan != 3 && target->chan != 4) {
+		syslog_error("Tensor chan must be 3 or 4");
+		return RET_ERROR;
+	}
 
 	image_ID = gimp_image_new(target->width, target->height, GIMP_RGB);
 	if (image_ID < 0) {
@@ -72,12 +76,17 @@ int display_color_target(IMAGE *target)
 	}
 
 	g_snprintf(name, sizeof(name), "color_%d", image_ID);
-	layer_ID = gimp_layer_new(image_ID, name, target->width, target->height, GIMP_RGBA_IMAGE, 50.0, 
-		GIMP_NORMAL_MODE);
+	layer_ID = -1;
+	if (target->chan == 4)
+		layer_ID = gimp_layer_new(image_ID, name, target->width, target->height, GIMP_RGBA_IMAGE, 100.0, 
+			GIMP_NORMAL_MODE);
+	else if (target->chan == 3)
+		layer_ID = gimp_layer_new(image_ID, name, target->width, target->height, GIMP_RGB_IMAGE, 100.0, 
+			GIMP_NORMAL_MODE);
 
 	if (layer_ID > 0) {
 		drawable = gimp_drawable_get((gint32)layer_ID);
-		image_togimp(target, drawable,  0, 0, target->width, target->height);
+		tensor_togimp(target, drawable,  0, 0, target->width, target->height);
 		if (! gimp_image_insert_layer(image_ID, layer_ID, 0, 0)) {
 			syslog_error("Insert layer error.");
 		}
@@ -186,12 +195,12 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	// IMAGE *get_color_target(char *url, IMAGE *input);
 	// display_color_target(IMAGE *target);
 
-	IMAGE *source = get_color_source(param[1].data.d_image);
-	if (! image_valid(source)) {
+	TENSOR *source = get_color_source(param[1].data.d_image);
+	if (! tensor_valid(source)) {
 		status = GIMP_PDB_EXECUTION_ERROR;
 	} else {
 		display_color_target(source);
-		image_destroy(source);
+		tensor_destroy(source);
 	}
 
 	// drawable = gimp_drawable_get(param[2].data.d_drawable);

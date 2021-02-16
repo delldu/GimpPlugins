@@ -79,7 +79,7 @@ IMAGE *image_fromgimp(GimpDrawable * drawable, int x, int y, int width, int heig
 		break;
 	default:
 		// Error ?
-		g_print("Strange channels: %d\n", channels);
+		g_print("Invalid channels: %d\n", channels);
 		break;
 	}
 
@@ -144,7 +144,7 @@ int image_togimp(IMAGE * image, GimpDrawable * drawable, int x, int y, int width
 		break;
 	default:
 		// Error ?
-		g_print("Strange channels: %d\n", channels);
+		g_print("Invalid channels: %d\n", channels);
 		break;
 	}
 
@@ -184,7 +184,7 @@ TENSOR *tensor_fromgimp(GimpDrawable * drawable, int x, int y, int width, int he
 
 	s = rgn_data;		// source
 	d = tensor->data;	// destion
-	for (c = 0; i < channels; c++) {
+	for (c = 0; c < channels; c++) {
 		for (i = 0; i < height; i++) {
 			k = i * width * channels; // start row i, for HxWxC format
 			for (j = 0; j < width; j++)
@@ -206,6 +206,10 @@ int tensor_togimp(TENSOR * tensor, GimpDrawable * drawable, int x, int y, int wi
 	float *s;
 
 	channels = drawable->bpp;
+	if (channels != tensor->chan) {
+		g_print("Error: Tensor channels is not same with drawable bpp");
+		return -1;
+	}
 	gimp_pixel_rgn_init(&output_rgn, drawable, 0, 0, drawable->width, drawable->height, TRUE, FALSE);
 
 	rgn_data = g_new(guchar, height * width * channels);
@@ -216,7 +220,7 @@ int tensor_togimp(TENSOR * tensor, GimpDrawable * drawable, int x, int y, int wi
 
 	d = rgn_data;
 	s = tensor->data;
-	for (c = 0; i < channels; c++) {
+	for (c = 0; c < channels; c++) {
 		for (i = 0; i < height; i++) {
 			k = i * width * channels; // start row i for HxWxC
 			for (j = 0; j < width; j++)
