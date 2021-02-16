@@ -9,6 +9,8 @@
 #include "plugin.h"
 
 #define PLUG_IN_PROC "plug-in-gimp_image_nima"
+#define IMAGE_NIMA_URL "ipc:///tmp/image_nima.ipc"
+#define IMAGE_NIMA_REQCODE 0x0103
 
 static void query(void);
 static void run(const gchar * name,

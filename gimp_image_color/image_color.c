@@ -9,17 +9,15 @@
 #include "plugin.h"
 
 #define PLUG_IN_PROC "plug-in-gimp_image_color"
-#define URL "ipc:///tmp/image_color.ipc"
+
+#define IMAGE_COLOR_REQCODE 0x0102
+#define IMAGE_COLOR_URL "ipc:///tmp/image_color.ipc"
 
 static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-// IMAGE *get_color_source(int image_id) 
-// IMAGE *get_color_target(char *url, IMAGE *input);
-// display_color_target(IMAGE *target);
-
-TENSOR *get_color_source(int image_id)
+TENSOR *color_source(int image_id)
 {
 	int i, j, n_layers;
 	IMAGE *layers[2], *gray_image, *color_image;
@@ -27,14 +25,14 @@ TENSOR *get_color_source(int image_id)
 
 	n_layers = image_layers(image_id, ARRAY_SIZE(layers), layers);
 	if (n_layers != 2) {
-		syslog_error("Color image must have 2 layes, one for gray texture, other for color.");
+		g_message("Error: Image must have 2 layes, one for gray texture and the other for color.");
 		goto free_layers;
 	}
 
 	color_image = layers[0];
 	gray_image = layers[1];
 	if (gray_image->height != color_image->height || gray_image->width != color_image->width) {
-		syslog_error("The size of gray and color layers is not same.");
+		g_message("Error: The size of gray and color layers is not same.");
 		goto free_layers;
 	}
 
@@ -56,82 +54,39 @@ free_layers:
 	return tensor;
 }
 
-int display_color_target(TENSOR *target)
+int color(gint32 image_id)
 {
-	gchar name[64];
-	gint32 image_ID, layer_ID;
-	GimpDrawable *drawable;
+	int socket, ret, rescode;
+	TENSOR *source, *target;
 
-	check_tensor(target);
-
-	if (target->chan != 3 && target->chan != 4) {
-		syslog_error("Tensor chan must be 3 or 4");
+	socket = client_open(IMAGE_COLOR_URL);
+	if (socket < 0) {
+		g_message("Error: connect server.");
 		return RET_ERROR;
 	}
 
-	image_ID = gimp_image_new(target->width, target->height, GIMP_RGB);
-	if (image_ID < 0) {
-		syslog_error("Create gimp image.");
+	source = color_source(image_id);
+	if (! tensor_valid(source)) {
+		client_close(socket);
 		return RET_ERROR;
 	}
 
-	g_snprintf(name, sizeof(name), "color_%d", image_ID);
-	layer_ID = -1;
-	if (target->chan == 4)
-		layer_ID = gimp_layer_new(image_ID, name, target->width, target->height, GIMP_RGBA_IMAGE, 100.0, 
-			GIMP_NORMAL_MODE);
-	else if (target->chan == 3)
-		layer_ID = gimp_layer_new(image_ID, name, target->width, target->height, GIMP_RGB_IMAGE, 100.0, 
-			GIMP_NORMAL_MODE);
+	ret = request_send(socket, IMAGE_COLOR_REQCODE, source);
 
-	if (layer_ID > 0) {
-		drawable = gimp_drawable_get((gint32)layer_ID);
-		tensor_togimp(target, drawable,  0, 0, target->width, target->height);
-		if (! gimp_image_insert_layer(image_ID, layer_ID, 0, 0)) {
-			syslog_error("Insert layer error.");
+	if (ret == RET_OK) {
+		target = response_recv(socket, &rescode);
+		if (tensor_valid(target) && rescode == IMAGE_COLOR_REQCODE) {
+			tensor_display(target, "color");
+			tensor_destroy(target);
+		} else {
+			g_message("Error: Remote service is not valid or timeout.");
+			ret = RET_ERROR;
 		}
-		gimp_display_new(image_ID);
-		gimp_displays_flush();
+	}	
+	tensor_destroy(source);
 
-		gimp_drawable_detach(drawable);
-	} else {
-		syslog_error("Create gimp layer.");
-		return RET_ERROR;
-	}
-
-	return RET_OK;
+	return ret;
 }
-
-static void color(GimpDrawable * drawable)
-{
-	gint x, y, width, height;
-	IMAGE *image;
-	// gboolean has_alpha;
-
-	if (!gimp_drawable_mask_intersect(drawable->drawable_id, &x, &y, &width, &height) || width < 1 || height < 1) {
-		g_print("Drawable region is empty.\n");
-		return;
-	}
-	// has_alpha = gimp_drawable_has_alpha (drawable->drawable_id);
-
-	image = image_fromgimp(drawable, x, y, width, height);
-	if (image_valid(image)) {
-		gimp_progress_update(0.1);
-
-		color_togray(image);
-
-		gimp_progress_update(0.8);
-		image_togimp(image, drawable, x, y, width, height);
-
-		image_destroy(image);
-		gimp_progress_update(1.0);
-	}
-	// Update region
-	gimp_drawable_flush(drawable);
-	gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
-	gimp_drawable_update(drawable->drawable_id, x, y, width, height);
-}
-
 
 GimpPlugInInfo PLUG_IN_INFO = {
     NULL,
@@ -186,43 +141,10 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
 		return;
 	}
-
 	values[0].data.d_status = status;
 
-	// run_mode = param[0].data.d_int32;
-
-	// IMAGE *get_color_source(int image_id) 
-	// IMAGE *get_color_target(char *url, IMAGE *input);
-	// display_color_target(IMAGE *target);
-
-	TENSOR *source = get_color_source(param[1].data.d_image);
-	if (! tensor_valid(source)) {
+	if (color(param[1].data.d_image) != RET_OK)
 		status = GIMP_PDB_EXECUTION_ERROR;
-	} else {
-		display_color_target(source);
-		tensor_destroy(source);
-	}
 
-	// drawable = gimp_drawable_get(param[2].data.d_drawable);
-
-	// if (gimp_drawable_is_rgb(drawable->drawable_id)) {
-	// 	gimp_progress_init("Color...");
-
-	// 	GTimer *timer;
-	// 	timer = g_timer_new();
-
-	// 	// color(drawable);
-
-	// 	g_print("image color took %g seconds.\n", g_timer_elapsed(timer, NULL));
-	// 	g_timer_destroy(timer);
-
-	// 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
-	// 		gimp_displays_flush();
-	// } else {
-	// 	g_print("Drawable layer is not rgb color.\n");
-	// 	status = GIMP_PDB_EXECUTION_ERROR;
-	// }
 	values[0].data.d_status = status;
-
-	// gimp_drawable_detach(drawable);
 }

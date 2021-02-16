@@ -30,7 +30,8 @@ install:
 		if [ -d $$d ] ; then \
 			$(MAKE) -C $$d install || exit 1; \
 		fi \
-	done	
+	done
+	./gimpinstall.sh debug_layers.py	
 
 
 uninstall:

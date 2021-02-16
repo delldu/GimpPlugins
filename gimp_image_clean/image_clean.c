@@ -9,42 +9,48 @@
 #include "plugin.h"
 
 #define PLUG_IN_PROC "plug-in-gimp_image_clean"
+#define IMAGE_CLEAN_REQCODE 0x0101
+#define IMAGE_CLEAN_URL "ipc:///tmp/image_clean.ipc"
 
 static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-
-static void clean(GimpDrawable * drawable)
+int clean(GimpDrawable * drawable)
 {
-	gint x, y, width, height;
-	IMAGE *image;
-	// gboolean has_alpha;
+	int socket, ret, rescode;
+	TENSOR *source, *target;
 
-	if (!gimp_drawable_mask_intersect(drawable->drawable_id, &x, &y, &width, &height) || width < 1 || height < 1) {
-		g_print("Drawable region is empty.\n");
-		return;
+	socket = client_open(IMAGE_CLEAN_URL);
+	if (socket < 0) {
+		g_message("Error: connect server.");
+		return RET_ERROR;
 	}
-	// has_alpha = gimp_drawable_has_alpha (drawable->drawable_id);
 
-	image = image_fromgimp(drawable, x, y, width, height);
-	if (image_valid(image)) {
-		gimp_progress_update(0.1);
-
-		color_togray(image);
-
-		gimp_progress_update(0.8);
-		image_togimp(image, drawable, x, y, width, height);
-
-		image_destroy(image);
-		gimp_progress_update(1.0);
+	source = tensor_fromgimp(drawable, 0, 0, drawable->width, drawable->height);
+	if (! tensor_valid(source)) {
+		client_close(socket);
+		return RET_ERROR;
 	}
-	// Update region
-	gimp_drawable_flush(drawable);
-	gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
-	gimp_drawable_update(drawable->drawable_id, x, y, width, height);
+
+	ret = request_send(socket, IMAGE_CLEAN_REQCODE, source);
+
+	if (ret == RET_OK) {
+		// Recv
+		target = response_recv(socket, &rescode);
+		if (tensor_valid(target) && rescode == IMAGE_CLEAN_REQCODE) {
+			// Process recv tensor ...
+			tensor_display(target, "clean");
+			tensor_destroy(target);
+		} else {
+			g_message("Error: Remote service is not valid or timeout.");
+			ret = RET_ERROR;
+		}
+	}	
+	tensor_destroy(source);
+
+	return ret;
 }
-
 
 GimpPlugInInfo PLUG_IN_INFO = {
 	NULL,
@@ -88,7 +94,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 {
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
-	GimpRunMode run_mode;
+	// GimpRunMode run_mode;
 	GimpDrawable *drawable;
 
 	/* Setting mandatory output values */
@@ -100,26 +106,25 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
 		return;
 	}
-
 	values[0].data.d_status = status;
 
-	run_mode = (GimpRunMode)param[0].data.d_int32;
+	// run_mode = (GimpRunMode)param[0].data.d_int32;
 	drawable = gimp_drawable_get(param[2].data.d_drawable);
 
-	if (gimp_drawable_is_rgb(drawable->drawable_id) || gimp_drawable_is_gray(drawable->drawable_id)) {
+	if (gimp_drawable_is_rgb(drawable->drawable_id)) {
 		gimp_progress_init("Clean...");
 
 		GTimer *timer;
 		timer = g_timer_new();
 
-		clean(drawable);
+		if (clean(drawable) != RET_OK)
+			status = GIMP_PDB_EXECUTION_ERROR;
 
 		g_print("image clean took %g seconds.\n", g_timer_elapsed(timer, NULL));
 		g_timer_destroy(timer);
-
-		if (run_mode != GIMP_RUN_NONINTERACTIVE)
-			gimp_displays_flush();
 	} else {
+		g_message("Drawable is not RGBA format.");
+
 		status = GIMP_PDB_EXECUTION_ERROR;
 	}
 	values[0].data.d_status = status;

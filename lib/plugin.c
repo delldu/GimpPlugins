@@ -102,7 +102,7 @@ int image_togimp(IMAGE * image, GimpDrawable * drawable, int x, int y, int width
 	rgn_data = g_new(guchar, height * width * channels);
 	if (!rgn_data) {
 		g_print("Memory allocate (%d bytes) failure.\n", height * width * channels);
-		return -1;
+		return RET_ERROR;
 	}
 
 	d = rgn_data;
@@ -152,7 +152,7 @@ int image_togimp(IMAGE * image, GimpDrawable * drawable, int x, int y, int width
 
 	g_free(rgn_data);
 
-	return 0;
+	return RET_OK;
 }
 
 TENSOR *tensor_fromgimp(GimpDrawable * drawable, int x, int y, int width, int height)
@@ -208,14 +208,14 @@ int tensor_togimp(TENSOR * tensor, GimpDrawable * drawable, int x, int y, int wi
 	channels = drawable->bpp;
 	if (channels != tensor->chan) {
 		g_print("Error: Tensor channels is not same with drawable bpp");
-		return -1;
+		return RET_ERROR;
 	}
 	gimp_pixel_rgn_init(&output_rgn, drawable, 0, 0, drawable->width, drawable->height, TRUE, FALSE);
 
 	rgn_data = g_new(guchar, height * width * channels);
 	if (!rgn_data) {
 		g_print("Memory allocate (%d bytes) failure.\n", height * width * channels);
-		return -1;
+		return RET_ERROR;
 	}
 
 	d = rgn_data;
@@ -232,7 +232,7 @@ int tensor_togimp(TENSOR * tensor, GimpDrawable * drawable, int x, int y, int wi
 
 	g_free(rgn_data);
 
-	return 0;
+	return RET_OK;
 }
 
 int image_layers(int image_id, int max_layers, IMAGE *layers[])
@@ -273,4 +273,51 @@ int tensor_layers(int image_id, int max_layers, TENSOR *layers[])
 	g_free (layer_id_list);
 
 	return layer_count;
+}
+
+int tensor_display(TENSOR *tensor, gchar *name_prefix)
+{
+	gchar name[64];
+	GimpDrawable *drawable;
+	gint32 image_ID, layer_ID;
+
+	check_tensor(tensor);
+
+	if (tensor->chan != 3 && tensor->chan != 4) {
+		g_message("Error: Tensor channel must be 3 or 4");
+		return RET_ERROR;
+	}
+
+	image_ID = gimp_image_new(tensor->width, tensor->height, GIMP_RGB);
+	if (image_ID < 0) {
+		g_message("Error: Create gimp image.");
+		return RET_ERROR;
+	}
+
+	g_snprintf(name, sizeof(name), "%s_%d", name_prefix, image_ID);
+
+	layer_ID = -1;
+	if (tensor->chan == 4)
+		layer_ID = gimp_layer_new(image_ID, name, tensor->width, tensor->height, GIMP_RGBA_IMAGE, 100.0, 
+			GIMP_NORMAL_MODE);
+	else if (tensor->chan == 3)
+		layer_ID = gimp_layer_new(image_ID, name, tensor->width, tensor->height, GIMP_RGB_IMAGE, 100.0, 
+			GIMP_NORMAL_MODE);
+
+	if (layer_ID > 0) {
+		drawable = gimp_drawable_get((gint32)layer_ID);
+		tensor_togimp(tensor, drawable,  0, 0, tensor->width, tensor->height);
+		if (! gimp_image_insert_layer(image_ID, layer_ID, 0, 0)) {
+			g_message("Error: Insert layer error.");
+		}
+		gimp_display_new(image_ID);
+		gimp_displays_flush();
+
+		gimp_drawable_detach(drawable);
+	} else {
+		g_message("Error: Create gimp layer.");
+		return RET_ERROR;
+	}
+
+	return RET_OK;
 }
