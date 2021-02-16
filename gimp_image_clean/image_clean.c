@@ -36,10 +36,8 @@ int clean(GimpDrawable * drawable)
 	ret = request_send(socket, IMAGE_CLEAN_REQCODE, source);
 
 	if (ret == RET_OK) {
-		// Recv
 		target = response_recv(socket, &rescode);
 		if (tensor_valid(target) && rescode == IMAGE_CLEAN_REQCODE) {
-			// Process recv tensor ...
 			tensor_display(target, "clean");
 			tensor_destroy(target);
 		} else {

@@ -91,8 +91,8 @@ int color(gint32 image_id)
 GimpPlugInInfo PLUG_IN_INFO = {
     NULL,
     NULL,
-	query,
-	run
+    query,
+    run
 };
 
 MAIN()

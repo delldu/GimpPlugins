@@ -53,8 +53,8 @@ int patch(GimpDrawable * drawable)
 GimpPlugInInfo PLUG_IN_INFO = {
     NULL,
     NULL,
-	query,
-	run
+    query,
+    run
 };
 
 MAIN()
