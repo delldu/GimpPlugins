@@ -6,7 +6,6 @@
 ***
 ************************************************************************************/
 
-
 #include "plugin.h"
 
 IMAGE *image_fromgimp(GimpDrawable * drawable, int x, int y, int width, int height)
@@ -41,14 +40,20 @@ IMAGE *image_fromgimp(GimpDrawable * drawable, int x, int y, int width, int heig
 		for (i = 0; i < height; i++) {
 			for (j = 0; j < width; j++) {
 				image->ie[i][j].r = *d++;
+				image->ie[i][j].g = image->ie[i][j].r;
+				image->ie[i][j].b = image->ie[i][j].r;
+				image->ie[i][j].a = 255;
 			}
 		}
 		break;
 	case 2:
+		// Mono Gray + Alpha
 		for (i = 0; i < height; i++) {
 			for (j = 0; j < width; j++) {
 				image->ie[i][j].r = *d++;
-				image->ie[i][j].g = *d++;
+				image->ie[i][j].g = image->ie[i][j].r;
+				image->ie[i][j].b = image->ie[i][j].r;
+				image->ie[i][j].a = *d++;
 			}
 		}
 		break;
@@ -58,6 +63,7 @@ IMAGE *image_fromgimp(GimpDrawable * drawable, int x, int y, int width, int heig
 				image->ie[i][j].r = *d++;
 				image->ie[i][j].g = *d++;
 				image->ie[i][j].b = *d++;
+				image->ie[i][j].a = 255;
 			}
 		}
 		break;
@@ -109,10 +115,11 @@ int image_togimp(IMAGE * image, GimpDrawable * drawable, int x, int y, int width
 		}
 		break;
 	case 2:
+		// Mono Gray + Alpha
 		for (i = 0; i < height; i++) {
 			for (j = 0; j < width; j++) {
 				*d++ = image->ie[i][j].r;
-				*d++ = image->ie[i][j].g;
+				*d++ = image->ie[i][j].a;
 			}
 		}
 		break;
@@ -180,9 +187,8 @@ TENSOR *tensor_fromgimp(GimpDrawable * drawable, int x, int y, int width, int he
 	for (c = 0; i < channels; c++) {
 		for (i = 0; i < height; i++) {
 			k = i * width * channels; // start row i, for HxWxC format
-			for (j = 0; j < width; j++) {
+			for (j = 0; j < width; j++)
 				*d++ = ((float)s[k + j*channels + c])/255.0;
-			}
 		}
 	}
 
@@ -213,9 +219,8 @@ int tensor_togimp(TENSOR * tensor, GimpDrawable * drawable, int x, int y, int wi
 	for (c = 0; i < channels; c++) {
 		for (i = 0; i < height; i++) {
 			k = i * width * channels; // start row i for HxWxC
-			for (j = 0; j < width; j++) {
+			for (j = 0; j < width; j++)
 				d[k + j*channels + c] = (guchar)((*s++)*255.0);
-			}
 		}
 	}
 
@@ -239,6 +244,26 @@ int image_layers(int image_id, int max_layers, IMAGE *layers[])
 	for (i = 0; i < layer_count; i++) {
 		drawable = gimp_drawable_get(layer_id_list[i]);
 		layers[i] = image_fromgimp(drawable, 0, 0, drawable->width, drawable->height);
+		gimp_drawable_detach(drawable);
+	}
+	g_free (layer_id_list);
+
+	return layer_count;
+}
+
+int tensor_layers(int image_id, int max_layers, TENSOR *layers[])
+{
+	gint i;
+	gint32 layer_count, *layer_id_list;
+	GimpDrawable *drawable;
+	
+	layer_id_list = gimp_image_get_layers ((gint32)image_id, &layer_count);
+	if (layer_count > max_layers)
+		layer_count = max_layers;
+
+	for (i = 0; i < layer_count; i++) {
+		drawable = gimp_drawable_get(layer_id_list[i]);
+		layers[i] = tensor_fromgimp(drawable, 0, 0, drawable->width, drawable->height);
 		gimp_drawable_detach(drawable);
 	}
 	g_free (layer_id_list);

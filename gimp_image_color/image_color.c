@@ -32,9 +32,6 @@ IMAGE *get_color_source(int image_id)
 
 	color_image = layers[0];
 	gray_image = layers[1];
-	// image_save(gray_image, "gray.jpg");
-	// image_save(color_image, "color.png");
-
 	if (gray_image->height != color_image->height || gray_image->width != color_image->width) {
 		syslog_error("The size of gray and color layers is not same.");
 		goto failure;
@@ -42,12 +39,12 @@ IMAGE *get_color_source(int image_id)
 
 	// PASS
 	image_foreach(color_image, i, j) {
-		if (color_image->ie[i][j].a < 128) {
+		if (color_image->ie[i][j].a > 128) {
 			gray_image->ie[i][j].r = color_image->ie[i][j].r;
 			gray_image->ie[i][j].g = color_image->ie[i][j].g;
 			gray_image->ie[i][j].b = color_image->ie[i][j].b;
-			gray_image->ie[i][j].a = 0;
 		}
+		gray_image->ie[i][j].a = 255;
 	}
 	image_destroy(color_image);
 
@@ -86,13 +83,6 @@ int display_color_target(IMAGE *target)
 		}
 		gimp_display_new(image_ID);
 		gimp_displays_flush();
-
-		// image_save(target, "s.jpg");
-		image_save(target, "s.png");
-
-		// IMAGE *backup = image_fromgimp(drawable, 0, 0, drawable->width, drawable->height);
-		// image_save(backup, "b.jpg");
-		// image_destroy(backup);
 
 		gimp_drawable_detach(drawable);
 	} else {
@@ -177,7 +167,6 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	// GimpRunMode run_mode;
-	// GimpDrawable *drawable;
 
 	/* Setting mandatory output values */
 	*nreturn_vals = 1;
@@ -192,8 +181,6 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	values[0].data.d_status = status;
 
 	// run_mode = param[0].data.d_int32;
-
-	CheckPoint("Image ID = %d, drawable ID = %d", param[1].data.d_image, param[2].data.d_drawable);
 
 	// IMAGE *get_color_source(int image_id) 
 	// IMAGE *get_color_target(char *url, IMAGE *input);
