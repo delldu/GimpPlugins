@@ -19,75 +19,39 @@ static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-
-TENSOR *color_normlab(IMAGE * image)
+int blend_fake(TENSOR *source, TENSOR *fake)
 {
 	int i, j;
-	TENSOR *tensor;
-	float *R, *G, *B, *A, L, a, b;
-
-	CHECK_IMAGE(image);
-
-	tensor = tensor_create(1, sizeof(RGBA_8888), image->height, image->width);
-	CHECK_TENSOR(tensor);
-
-	R = tensor->data;
-	G = R + tensor->height * tensor->width;
-	B = G + tensor->height * tensor->width;
-	A = B + tensor->height * tensor->width;
-
-	image_foreach(image, i, j) {
-		color_rgb2lab(image->ie[i][j].r, image->ie[i][j].g, image->ie[i][j].b, &L, &a, &b);
-		L = (L - 50.f)/100.f; a /= 110.f; b /= 110.f;
-		*R++ = L; *G++ = a; *B++ = b;
-		*A++ = (image->ie[i][j].a > 128)? 1.0f : 0.f;
-	}
-
-	return tensor;
-}
-
-int blend_fake(TENSOR *gray_source, TENSOR *fake_ab)
-{
-	int i, j;
-	float *gray_source_L, *gray_source_a, *gray_source_b;
-	float *fake_a, *fake_b;
-	float L, a, b;
 	BYTE R, G, B;
+	float *source_L, *source_a, *source_b, *fake_a, *fake_b, L, a, b;
 
-	check_tensor(gray_source);	// 1x4xHxW
-	check_tensor(fake_ab);	// 1x2xHxW
+	check_tensor(source);	// 1x4xHxW
+	check_tensor(fake);	// 1x2xHxW
 
-	if (gray_source->batch != 1 || gray_source->chan != 4 || fake_ab->batch != 1 || fake_ab->chan != 2) {
-		g_message("Bad gray_source or fake_ab tensor.");
+	if (source->batch != 1 || source->chan != 4 || fake->batch != 1 || fake->chan != 2) {
+		g_message("Bad source or fake tensor.");
 		return RET_ERROR;
 	}
-	if (gray_source->height != fake_ab->height || gray_source->width != fake_ab->width) {
-		g_message("Source tensor size is not same as fake_ab.");
+	if (source->height != fake->height || source->width != fake->width) {
+		g_message("Source tensor size is not same as fake.");
 		return RET_ERROR;
 	}
 
-	for (i = 0; i < gray_source->height; i++) {
-		gray_source_L = tensor_startrow(gray_source, 0 /*batch*/, 0 /*channel*/, i);
-		gray_source_a = tensor_startrow(gray_source, 0 /*batch*/, 1 /*channel*/, i);
-		gray_source_b = tensor_startrow(gray_source, 0 /*batch*/, 2 /*channel*/, i);
+	for (i = 0; i < source->height; i++) {
+		source_L = tensor_start_row(source, 0 /*batch*/, 0 /*channel*/, i);
+		source_a = tensor_start_row(source, 0 /*batch*/, 1 /*channel*/, i);
+		source_b = tensor_start_row(source, 0 /*batch*/, 2 /*channel*/, i);
 
-		fake_a = tensor_startrow(fake_ab, 0 /*batch*/, 0 /*channel*/, i);
-		fake_b = tensor_startrow(fake_ab, 0 /*batch*/, 1 /*channel*/, i);
+		fake_a = tensor_start_row(fake, 0 /*batch*/, 0 /*channel*/, i);
+		fake_b = tensor_start_row(fake, 0 /*batch*/, 1 /*channel*/, i);
 
-		for (j = 0; j < gray_source->width; j++) {
-			L = *gray_source_L; a = *fake_a; b = *fake_b;
+		for (j = 0; j < source->width; j++) {
+			L = *source_L; a = *fake_a; b = *fake_b;
 			L = L*100.f + 50.f; a *= 110.f; b *= 110.f;
 			color_lab2rgb(L, a, b, &R, &G, &B);
-			// CheckPoint("r = %d, g=%d, b=%d, L=%.4f, a=%.4f, b=%.4f", 
-			// 	R, G, B,
-			// 	L, a, b);
 
-			L = (float)R/255.f;
-			a = (float)G/255.f;
-			b = (float)B/255.f;
-			*gray_source_L++ = L;
-			*gray_source_a++ = a;
-			*gray_source_b++ = b;
+			L = (float)R/255.f; a = (float)G/255.f; b = (float)B/255.f;
+			*source_L++ = L; *source_a++ = a; *source_b++ = b;
 		}
 	}
 	return RET_OK;
@@ -95,46 +59,54 @@ int blend_fake(TENSOR *gray_source, TENSOR *fake_ab)
 
 int color_source(int image_id, TENSOR *tensors[2])
 {
-	int i, j, n_layers, ret;
+	int i, j, n_layers, ret = RET_ERROR;
 	IMAGE *layers[2], *gray_image, *color_image;
 
-	ret = RET_ERROR;
-
 	n_layers = image_layers(image_id, ARRAY_SIZE(layers), layers);
-	if (n_layers != 2) {
-		g_message("Error: Image must have 2 layes, one for gray texture and the other for color.");
+	if (n_layers < 1) {
+		g_message("Error: Image must at least have 1 layes, general 2, one for gray texture and the other for color.");
 		goto free_layers;
 	}
 
 	color_image = layers[0];
-	gray_image = layers[1];
-	if (gray_image->height != color_image->height || gray_image->width != color_image->width) {
-		g_message("Error: The size of gray and color layers is not same.");
-		goto free_layers;
-	}
-
-	// Create color tensor
-	image_foreach(color_image, i, j) {
-		if (color_image->ie[i][j].a > 128) {
-			color_image->ie[i][j].a = 255;
-		} else {
-			color_image->ie[i][j].a = 0;
-
-			color_image->ie[i][j].r = gray_image->ie[i][j].r;
-			color_image->ie[i][j].g = gray_image->ie[i][j].g;
-			color_image->ie[i][j].b = gray_image->ie[i][j].b;
+	if (n_layers == 2) {
+		gray_image = layers[1];
+		if (gray_image->height != color_image->height || gray_image->width != color_image->width) {
+			g_message("Error: The size of gray and color layers is not same.");
+			goto free_layers;
 		}
+
+		// Create color tensor
+		image_foreach(color_image, i, j) {
+			if (color_image->ie[i][j].a > 128) {
+				color_image->ie[i][j].a = 255;
+			} else {
+				color_image->ie[i][j].a = 0;  // NO user mark color, dont trust it !!!
+				color_image->ie[i][j].r = gray_image->ie[i][j].r;
+				color_image->ie[i][j].g = gray_image->ie[i][j].g;
+				color_image->ie[i][j].b = gray_image->ie[i][j].b;
+			}
+		}
+	} else {
+		image_foreach(color_image, i, j)
+			color_image->ie[i][j].a = 0; // NO user mark color, dont trust it !!!
 	}
-	tensors[0] = color_normlab(color_image);		// 0 -- Color tensor
+	tensors[0] = tensor_rgb2lab(color_image);		// 0 -- Color tensor
 	if (! tensor_valid(tensors[0])) {
 		g_message("Error: Create color image tensor.");
 		goto free_layers;
 	}
 
 	// Create gray tensor
+	if (n_layers == 2) {
+		gray_image = layers[1];
+	} else {
+		gray_image = layers[0];
+	}
+	// we just use it to blend with fake, so set a==255
 	image_foreach(gray_image, i, j)
 		gray_image->ie[i][j].a = 255;
-	tensors[1] = color_normlab(gray_image);	// 1 - Gray tensor
+	tensors[1] = tensor_rgb2lab(gray_image);	// 1 - Gray tensor
 	if (! tensor_valid(tensors[1])) {
 		g_message("Error: Create gray image tensor.");
 		goto free_layers;
@@ -150,7 +122,6 @@ free_layers:
 	return ret;
 }
 
-
 void dump(TENSOR * recv_tensor)
 {
 	IMAGE *image = image_from_tensor(recv_tensor, 0);
@@ -160,9 +131,49 @@ void dump(TENSOR * recv_tensor)
 	}
 }
 
+TENSOR *onnxrpc(int socket, TENSOR *send_tensor)
+{
+	int nh, nw, rescode;
+	TENSOR *resize_send, *resize_recv, *recv_tensor;
+
+	CHECK_TENSOR(send_tensor);
+
+	// Color server limited: max 512, only accept 8 times !!!
+	resize(send_tensor->height, send_tensor->width, 512, 8, &nh, &nw);
+	
+	CheckPoint("send_tensor->height = %d, send_tensor->width = %d", send_tensor->height, send_tensor->width);
+
+	recv_tensor = NULL;
+	resize_recv = NULL;
+	if (send_tensor->height == nh && send_tensor->width == nw) {
+		// Normal onnx RPC
+		CheckPoint();
+        if (request_send(socket, IMAGE_COLOR_REQCODE, send_tensor) == RET_OK) {
+            recv_tensor = response_recv(socket, &rescode);
+        }
+	} else {
+		// Resize send, Onnx RPC, Resize recv
+		CheckPoint();
+		resize_send = tensor_zoom(send_tensor, nh, nw); CHECK_TENSOR(resize_send);
+        if (request_send(socket, IMAGE_COLOR_REQCODE, resize_send) == RET_OK) {
+			CheckPoint();
+            resize_recv = response_recv(socket, &rescode);
+        }
+		CheckPoint();
+		recv_tensor = tensor_zoom(resize_recv, send_tensor->height, send_tensor->width);
+
+		tensor_destroy(resize_recv);
+		tensor_destroy(resize_send);
+	}
+
+	CheckPoint("recv_tensor->height = %d, recv_tensor->width = %d", recv_tensor->height, recv_tensor->width);
+
+	return recv_tensor;
+}
+
 int color(gint32 image_id)
 {
-	int socket, ret, rescode;
+	int socket, ret = RET_ERROR;
 	TENSOR *source[2], *target;
 
 	socket = client_open(IMAGE_COLOR_URL);
@@ -176,21 +187,21 @@ int color(gint32 image_id)
 		return RET_ERROR;
 	}
 
-	ret = request_send(socket, IMAGE_COLOR_REQCODE, source[0]);
+	CheckPoint("source[0].height = %d, width = %d", source[0]->height, source[0]->width);
+	CheckPoint("source[1].height = %d, width = %d", source[1]->height, source[1]->width);
 
-	if (ret == RET_OK) {
-		target = response_recv(socket, &rescode);
-		if (tensor_valid(target) && rescode == IMAGE_COLOR_REQCODE) {
-			if (blend_fake(source[1], target) == RET_OK) {
-				// dump(source[1]);
-				tensor_display(source[1], "color");	// Now source has target information !!!
-			}
-			tensor_destroy(target);
-		} else {
-			g_message("Error: Remote service is not valid or timeout.");
-			ret = RET_ERROR;
+	target = onnxrpc(socket, source[0]);
+	if (tensor_valid(target)) {
+		if (blend_fake(source[1], target) == RET_OK) {
+			// dump(source[1]);
+			tensor_display(source[1], "color");	// Now source has target information !!!
+			ret = RET_OK;
 		}
-	}	
+		tensor_destroy(target);
+	} else {
+		g_message("Error: Remote service is not valid or timeout.");
+	}
+
 	tensor_destroy(source[0]);
 	tensor_destroy(source[1]);
 
