@@ -191,13 +191,18 @@ int color(gint32 image_id)
 		g_message("Error: connect server.");
 		return RET_ERROR;
 	}
+	gimp_progress_init("Color ...");
+
+	gimp_progress_update(0.1);
 
 	if (color_source(image_id, source) != RET_OK) {
 		client_close(socket);
 		return RET_ERROR;
 	}
+	gimp_progress_update(0.2);
 
 	target = onnxrpc(socket, source[0]);
+	gimp_progress_update(0.9);
 
 	if (tensor_valid(target)) {
 		blend_result = blend_fake(source[1], target);
@@ -214,6 +219,8 @@ int color(gint32 image_id)
 
 	tensor_destroy(source[0]);
 	tensor_destroy(source[1]);
+
+	gimp_progress_update(1.0);
 
 	return ret;
 }
