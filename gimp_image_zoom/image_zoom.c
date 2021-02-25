@@ -10,45 +10,12 @@
 
 #define PLUG_IN_PROC "plug-in-gimp_image_zoom"
 #define IMAGE_ZOOM_REQCODE 0x0105
-#define IMAGE_ZOOM_URL "ipc:///tmp/image_zoom.ipc"
+// #define IMAGE_ZOOM_URL "ipc:///tmp/image_zoom.ipc"
+#define IMAGE_ZOOM_URL "tcp://127.0.0.1:9105"
 
 static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
-
-int zoom(GimpDrawable * drawable)
-{
-	int socket, ret, rescode;
-	TENSOR *source, *target;
-
-	socket = client_open(IMAGE_ZOOM_URL);
-	if (socket < 0) {
-		g_message("Error: connect server.");
-		return RET_ERROR;
-	}
-
-	source = tensor_fromgimp(drawable, 0, 0, drawable->width, drawable->height);
-	if (! tensor_valid(source)) {
-		client_close(socket);
-		return RET_ERROR;
-	}
-
-	ret = request_send(socket, IMAGE_ZOOM_REQCODE, source);
-
-	if (ret == RET_OK) {
-		target = response_recv(socket, &rescode);
-		if (tensor_valid(target) && rescode == IMAGE_ZOOM_REQCODE) {
-			tensor_display(target, "zoom");
-			tensor_destroy(target);
-		} else {
-			g_message("Error: Remote service is not valid or timeout.");
-			ret = RET_ERROR;
-		}
-	}	
-	tensor_destroy(source);
-
-	return ret;
-}
 
 
 GimpPlugInInfo PLUG_IN_INFO = {
@@ -87,15 +54,80 @@ static void query(void)
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI");
 }
 
+TENSOR *zoom_source(int image_id)
+{
+	int i, n_layers;
+	IMAGE *layers[2];
+	TENSOR *result = NULL;
+
+	n_layers = image_layers(image_id, ARRAY_SIZE(layers), layers);
+
+	if (n_layers < 1) {
+		g_message("Error: Image must at least have 1 layes.");
+		goto free_layers;
+	}
+
+	result = tensor_from_image(layers[0], 0 /* without alpha */);
+
+free_layers:
+	for (i = 0; i < n_layers; i++)
+		image_destroy(layers[i]);
+
+	return result;
+}
+
+int zoom(gint32 image_id)
+{
+	int socket, rescode, ret = RET_ERROR;
+	TENSOR *source, *target = NULL;
+
+	socket = client_open(IMAGE_ZOOM_URL);
+	if (socket < 0) {
+		g_message("Error: connect server.");
+		return RET_ERROR;
+	}
+	gimp_progress_init("Zoom ...");
+
+	gimp_progress_update(0.1);
+
+	source = zoom_source(image_id);
+	if (! tensor_valid(source)) {
+		g_message("Error: Could not got patch source.");
+		client_close(socket);
+		return RET_ERROR;
+	}
+	gimp_progress_update(0.2);
+
+    if (request_send(socket, IMAGE_ZOOM_REQCODE, source) == RET_OK) {
+        target = response_recv(socket, &rescode);
+    }
+	gimp_progress_update(0.9);
+
+	if (tensor_valid(target)) {
+		tensor_display(target, "zoom4x");	// Now source has target information !!!
+		tensor_destroy(target);
+
+		ret = RET_OK;
+	} else {
+		g_message("Error: Remote zoom service is not availabe (maybe timeout).");
+	}
+
+	tensor_destroy(source);
+
+	gimp_progress_update(1.0);
+
+	return ret;
+}
+
+
 static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	// GimpRunMode run_mode;
-	GimpDrawable *drawable;
 
-	/* Setting mandatory output values */
+	/* Setting output values */
 	*nreturn_vals = 1;
 	*return_vals = values;
 	values[0].type = GIMP_PDB_STATUS;
@@ -104,27 +136,10 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
 		return;
 	}
-
 	values[0].data.d_status = status;
 
-	// run_mode = param[0].data.d_int32;
-	drawable = gimp_drawable_get(param[2].data.d_drawable);
-
-	if (gimp_drawable_is_rgb(drawable->drawable_id)) {
-		gimp_progress_init("Zoom...");
-
-		GTimer *timer;
-		timer = g_timer_new();
-		if (zoom(drawable) != RET_OK) {
-			status = GIMP_PDB_EXECUTION_ERROR;
-		}
-		g_print("image zoom took %g seconds.\n", g_timer_elapsed(timer, NULL));
-		g_timer_destroy(timer);
-	} else {
-		g_message("Drawable is not RGBA format.");
+	if (zoom(param[1].data.d_image) != RET_OK)
 		status = GIMP_PDB_EXECUTION_ERROR;
-	}
-	values[0].data.d_status = status;
 
-	gimp_drawable_detach(drawable);
+	values[0].data.d_status = status;	
 }
