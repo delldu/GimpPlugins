@@ -150,7 +150,7 @@ free_layers:
 	return ret;
 }
 
-TENSOR *onnxrpc(int socket, TENSOR *send_tensor)
+TENSOR *resize_onnxrpc(int socket, TENSOR *send_tensor)
 {
 	int nh, nw, rescode;
 	TENSOR *resize_send, *resize_recv, *recv_tensor;
@@ -201,7 +201,7 @@ int color(gint32 image_id)
 	}
 	gimp_progress_update(0.2);
 
-	target = onnxrpc(socket, source[0]);
+	target = resize_onnxrpc(socket, source[0]);
 	gimp_progress_update(0.9);
 
 	if (tensor_valid(target)) {

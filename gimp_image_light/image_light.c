@@ -141,5 +141,10 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	if (light(param[1].data.d_image) != RET_OK)
 		status = GIMP_PDB_EXECUTION_ERROR;
 
-	values[0].data.d_status = status;	
+	values[0].data.d_status = status;
+
+	// run_mode = param[0].data.d_int32;
+  	// if (run_mode != GIMP_RUN_NONINTERACTIVE)
+    	g_message("Hello, world!\n");
+
 }

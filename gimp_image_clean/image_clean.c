@@ -10,44 +10,33 @@
 
 #define PLUG_IN_PROC "plug-in-gimp_image_clean"
 #define IMAGE_CLEAN_REQCODE 0x0101
-#define IMAGE_CLEAN_URL "ipc:///tmp/image_clean.ipc"
+// #define IMAGE_CLEAN_URL "ipc:///tmp/image_clean.ipc"
+#define IMAGE_CLEAN_URL "tcp://127.0.0.1:9101"
 
 static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-int clean(GimpDrawable * drawable)
+TENSOR *clean(TENSOR *send_tensor)
 {
-	int socket, ret, rescode;
-	TENSOR *source, *target;
+	int ret, socket, rescode;
+	TENSOR *recv_tensor = NULL;
 
 	socket = client_open(IMAGE_CLEAN_URL);
 	if (socket < 0) {
 		g_message("Error: connect server.");
-		return RET_ERROR;
+		return NULL;
 	}
 
-	source = tensor_fromgimp(drawable, 0, 0, drawable->width, drawable->height);
-	if (! tensor_valid(source)) {
-		client_close(socket);
-		return RET_ERROR;
-	}
-
-	ret = request_send(socket, IMAGE_CLEAN_REQCODE, source);
-
+	ret = request_send(socket, IMAGE_CLEAN_REQCODE, send_tensor);
 	if (ret == RET_OK) {
-		target = response_recv(socket, &rescode);
-		if (tensor_valid(target) && rescode == IMAGE_CLEAN_REQCODE) {
-			tensor_display(target, "clean");
-			tensor_destroy(target);
-		} else {
+		recv_tensor = response_recv(socket, &rescode);
+		if (! tensor_valid(recv_tensor) || rescode != IMAGE_CLEAN_REQCODE) {
 			g_message("Error: Remote service is not valid or timeout.");
-			ret = RET_ERROR;
 		}
 	}	
-	tensor_destroy(source);
 
-	return ret;
+	return recv_tensor;
 }
 
 GimpPlugInInfo PLUG_IN_INFO = {
@@ -90,6 +79,9 @@ static void query(void)
 static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
+	int x, y, height, width;
+	TENSOR *send_tensor, *recv_tensor;
+
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	// GimpRunMode run_mode;
@@ -109,23 +101,46 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	// run_mode = (GimpRunMode)param[0].data.d_int32;
 	drawable = gimp_drawable_get(param[2].data.d_drawable);
 
-	if (gimp_drawable_is_rgb(drawable->drawable_id)) {
+	if (!gimp_drawable_mask_intersect(drawable->drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
+		// Drawable region is empty.
+		height = drawable->height;
+		width = drawable->width;
+	}
+
+	// Resize width, height
+	width = (width + 3)/4; width *= 4;
+	height = (height + 3)/4; height *= 4;
+
+	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
+	if (tensor_valid(send_tensor)) {
 		gimp_progress_init("Clean...");
 
-		GTimer *timer;
-		timer = g_timer_new();
+		gimp_progress_update(0.1);
 
-		if (clean(drawable) != RET_OK)
-			status = GIMP_PDB_EXECUTION_ERROR;
+		recv_tensor = clean(send_tensor);
 
-		g_print("image clean took %g seconds.\n", g_timer_elapsed(timer, NULL));
-		g_timer_destroy(timer);
+		gimp_progress_update(0.8);
+		if (tensor_valid(recv_tensor)) {
+			tensor_togimp(recv_tensor, drawable, x, y, width, height);
+			tensor_destroy(recv_tensor);
+		}
+
+		tensor_destroy(send_tensor);
+		gimp_progress_update(1.0);
 	} else {
-		g_message("Drawable is not RGBA format.");
-
+		g_message("Error: Clean image error.");
 		status = GIMP_PDB_EXECUTION_ERROR;
 	}
-	values[0].data.d_status = status;
 
+	// Update modified region
+	gimp_drawable_flush(drawable);
+	gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
+	gimp_drawable_update(drawable->drawable_id, x, y, width, height);
+
+	// Flush all ?
+	gimp_displays_flush();
 	gimp_drawable_detach(drawable);
+
+	// Output result for pdb
+	values[0].data.d_status = status;
 }

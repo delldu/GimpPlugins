@@ -13,7 +13,9 @@ XSUBDIRS :=  \
 	gimp_image_zoom \
 	gimp_image_color \
 	gimp_image_patch \
-	gimp_image_nima
+	gimp_image_nima \
+	gimp_image_light \
+	gimp_image_matting
 
 
 BSUBDIRS :=
