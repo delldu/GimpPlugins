@@ -106,24 +106,35 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	values[0].data.d_status = status;
 
 	run_mode = param[0].data.d_int32;
-	drawable = gimp_drawable_get(param[2].data.d_drawable);
 
-	if (gimp_drawable_is_rgb(drawable->drawable_id) || gimp_drawable_is_gray(drawable->drawable_id)) {
-		gimp_progress_init("Nima...");
+	GimpRGB mycolor;
+	mycolor.r = 1.0;
+	mycolor.g = 0.0;
+	mycolor.b = 0.0;
+	mycolor.a = 1.0;
 
-		GTimer *timer;
-		timer = g_timer_new();
 
-		nima(drawable);
+	gimp_image_select_rectangle(param[1].data.d_image, GIMP_CHANNEL_OP_ADD, 100, 100, 400, 200);
+	gimp_image_select_color(param[1].data.d_image, GIMP_CHANNEL_OP_ADD, param[2].data.d_drawable, &mycolor);
 
-		g_print("image nima took %g seconds.\n", g_timer_elapsed(timer, NULL));
-		g_timer_destroy(timer);
+	// drawable = gimp_drawable_get(param[2].data.d_drawable);
 
-		if (run_mode != GIMP_RUN_NONINTERACTIVE)
-			gimp_displays_flush();
-	} else {
-		status = GIMP_PDB_EXECUTION_ERROR;
-	}
+	// if (gimp_drawable_is_rgb(drawable->drawable_id) || gimp_drawable_is_gray(drawable->drawable_id)) {
+	// 	gimp_progress_init("Nima...");
+
+	// 	GTimer *timer;
+	// 	timer = g_timer_new();
+
+	// 	nima(drawable);
+
+	// 	g_print("image nima took %g seconds.\n", g_timer_elapsed(timer, NULL));
+	// 	g_timer_destroy(timer);
+
+	// 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
+	// 		gimp_displays_flush();
+	// } else {
+	// 	status = GIMP_PDB_EXECUTION_ERROR;
+	// }
 	values[0].data.d_status = status;
 
 	gimp_drawable_detach(drawable);

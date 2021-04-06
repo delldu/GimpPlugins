@@ -107,7 +107,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		width = drawable->width;
 	}
 
-	// Resize width, height
+	// Clean server limited: only accept 4 times tensor !!!
 	width = (width + 3)/4; width *= 4;
 	height = (height + 3)/4; height *= 4;
 
