@@ -9,42 +9,67 @@
 #include "plugin.h"
 
 #define PLUG_IN_PROC "plug-in-gimp_image_nima"
-#define IMAGE_NIMA_URL "ipc:///tmp/image_nima.ipc"
+// #define IMAGE_NIMA_URL "ipc:///tmp/image_nima.ipc"
+#define IMAGE_NIMA_URL "tcp://127.0.0.1:9103"
 #define IMAGE_NIMA_REQCODE 0x0103
 
 static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-
-static void nima(GimpDrawable * drawable)
+TENSOR *image_nima(TENSOR *send_tensor)
 {
-	gint x, y, width, height;
-	IMAGE *image;
-	// gboolean has_alpha;
+	int socket, ret, rescode;
+	TENSOR *stand_tensor, *recv_tensor = NULL;
 
-	if (!gimp_drawable_mask_intersect(drawable->drawable_id, &x, &y, &width, &height) || width < 1 || height < 1) {
-		g_print("Drawable region is empty.\n");
+	CHECK_TENSOR(send_tensor);
+	stand_tensor = tensor_zoom(send_tensor, 224, 224);
+	CHECK_TENSOR(stand_tensor);
+
+	// Server only accept 1x3x224x224 tensor
+	if (stand_tensor->batch > 1)
+		stand_tensor->batch = 1;
+	if (stand_tensor->chan > 3)
+		stand_tensor->chan = 3;
+
+	socket = client_open(IMAGE_NIMA_URL);
+	if (socket < 0) {
+		g_message("Error: connect server.");
+		return NULL;
+	}
+
+	ret = request_send(socket, IMAGE_NIMA_REQCODE, stand_tensor);
+	if (ret == RET_OK) {
+		recv_tensor = response_recv(socket, &rescode);
+		if (! tensor_valid(recv_tensor) || rescode != IMAGE_NIMA_REQCODE) {
+			g_message("Error: Remote service is not valid or timeout.");
+		}
+	}	
+	client_close(socket);
+	tensor_destroy(stand_tensor);
+
+	return recv_tensor;
+}
+
+void dump_result(TENSOR *recv_tensor)
+{
+	// dump scores ...
+	int i;
+	float mean;
+	char str[32];
+
+	if (! tensor_valid(recv_tensor)) {
+		syslog_error("Bad tensor.");
 		return;
 	}
-	// has_alpha = gimp_drawable_has_alpha (drawable->drawable_id);
 
-	image = image_fromgimp(drawable, x, y, width, height);
-	if (image_valid(image)) {
-		gimp_progress_update(0.1);
-
-		color_togray(image);
-
-		gimp_progress_update(0.8);
-		image_togimp(image, drawable, x, y, width, height);
-
-		image_destroy(image);
-		gimp_progress_update(1.0);
+	mean = 0.0;
+	for (i = 0; i < 10; i++) {
+		mean += recv_tensor->data[i] * (i + 1.0);
 	}
-	// Update region
-	gimp_drawable_flush(drawable);
-	gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
-	gimp_drawable_update(drawable->drawable_id, x, y, width, height);
+
+	snprintf(str, sizeof(str), "%6.4f", mean);
+	g_message("Image Nima: %s", str);
 }
 
 
@@ -88,9 +113,12 @@ static void query(void)
 static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
+	int x, y, height, width;
+	TENSOR *send_tensor, *recv_tensor;
+
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
-	GimpRunMode run_mode;
+	// GimpRunMode run_mode;
 	GimpDrawable *drawable;
 
 	/* Setting mandatory output values */
@@ -105,37 +133,37 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	values[0].data.d_status = status;
 
-	run_mode = param[0].data.d_int32;
+	// run_mode = (GimpRunMode)param[0].data.d_int32;
+	drawable = gimp_drawable_get(param[2].data.d_drawable);
 
-	GimpRGB mycolor;
-	mycolor.r = 1.0;
-	mycolor.g = 0.0;
-	mycolor.b = 0.0;
-	mycolor.a = 1.0;
+	if (!gimp_drawable_mask_intersect(drawable->drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
+		// Drawable region is empty.
+		height = drawable->height;
+		width = drawable->width;
+	}
 
+	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
+	if (tensor_valid(send_tensor)) {
+		gimp_progress_init("Nima ...");
 
-	gimp_image_select_rectangle(param[1].data.d_image, GIMP_CHANNEL_OP_ADD, 100, 100, 400, 200);
-	gimp_image_select_color(param[1].data.d_image, GIMP_CHANNEL_OP_ADD, param[2].data.d_drawable, &mycolor);
+		gimp_progress_update(0.1);
 
-	// drawable = gimp_drawable_get(param[2].data.d_drawable);
+		recv_tensor = image_nima(send_tensor);
 
-	// if (gimp_drawable_is_rgb(drawable->drawable_id) || gimp_drawable_is_gray(drawable->drawable_id)) {
-	// 	gimp_progress_init("Nima...");
+		gimp_progress_update(0.8);
+		if (tensor_valid(recv_tensor)) {
+			dump_result(recv_tensor);
+			tensor_destroy(recv_tensor);
+		}
 
-	// 	GTimer *timer;
-	// 	timer = g_timer_new();
+		tensor_destroy(send_tensor);
+		gimp_progress_update(1.0);
+	} else {
+		g_message("Error: Image Nima.");
+		status = GIMP_PDB_EXECUTION_ERROR;
+	}
 
-	// 	nima(drawable);
-
-	// 	g_print("image nima took %g seconds.\n", g_timer_elapsed(timer, NULL));
-	// 	g_timer_destroy(timer);
-
-	// 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
-	// 		gimp_displays_flush();
-	// } else {
-	// 	status = GIMP_PDB_EXECUTION_ERROR;
-	// }
+	// Output result for pdb
 	values[0].data.d_status = status;
-
 	gimp_drawable_detach(drawable);
 }

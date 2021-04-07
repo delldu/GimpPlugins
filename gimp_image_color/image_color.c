@@ -202,6 +202,8 @@ int color(gint32 image_id)
 	gimp_progress_update(0.2);
 
 	target = resize_onnxrpc(socket, source[0]);
+	client_close(socket);
+
 	gimp_progress_update(0.9);
 
 	if (tensor_valid(target)) {

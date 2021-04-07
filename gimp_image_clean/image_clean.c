@@ -35,6 +35,7 @@ TENSOR *clean(TENSOR *send_tensor)
 			g_message("Error: Remote service is not valid or timeout.");
 		}
 	}	
+	client_close(socket);
 
 	return recv_tensor;
 }

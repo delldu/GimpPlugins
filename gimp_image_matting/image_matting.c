@@ -138,6 +138,8 @@ TENSOR *matting(TENSOR *send_tensor)
 		return NULL;
 	}
 	recv_tensor = resize_onnxrpc(socket, send_tensor);
+	client_close(socket);
+
 	return recv_tensor;
 }
 

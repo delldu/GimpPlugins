@@ -101,6 +101,8 @@ int zoom(gint32 image_id)
     if (request_send(socket, IMAGE_ZOOM_REQCODE, source) == RET_OK) {
         target = response_recv(socket, &rescode);
     }
+	client_close(socket);
+
 	gimp_progress_update(0.9);
 
 	if (tensor_valid(target)) {
