@@ -17,6 +17,28 @@ static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
+// remote_procee_call
+TENSOR *patch_rpc(TENSOR *send_tensor)
+{
+	int socket;
+	TENSOR *recv_tensor = NULL;
+
+	CHECK_TENSOR(send_tensor);
+
+	socket = client_open(IMAGE_PATCH_URL);
+	if (socket < 0) {
+		g_message("Error: connect server.");
+		return NULL;
+	}
+
+	// Server only accept 128 multiples
+	recv_tensor = zeropad_rpc(socket, send_tensor, IMAGE_PATCH_REQCODE, 128);
+	client_close(socket);
+
+	return recv_tensor;
+}
+
+
 TENSOR *patch_source(int image_id)
 {
 	int i, j, n_layers;
@@ -57,14 +79,9 @@ free_layers:
 
 int patch(gint32 image_id)
 {
-	int socket, rescode, ret = RET_ERROR;
+	int ret = RET_ERROR;
 	TENSOR *source, *target = NULL;
 
-	socket = client_open(IMAGE_PATCH_URL);
-	if (socket < 0) {
-		g_message("Error: connect server.");
-		return RET_ERROR;
-	}
 	gimp_progress_init("Patch ...");
 
 	gimp_progress_update(0.1);
@@ -72,16 +89,11 @@ int patch(gint32 image_id)
 	source = patch_source(image_id);
 	if (! tensor_valid(source)) {
 		g_message("Error: Could not got patch source.");
-		client_close(socket);
 		return RET_ERROR;
 	}
 	gimp_progress_update(0.2);
 
-    if (request_send(socket, IMAGE_PATCH_REQCODE, source) == RET_OK) {
-        target = response_recv(socket, &rescode);
-    }
-	client_close(socket);
-
+	target = patch_rpc(source);
 	gimp_progress_update(0.9);
 
 	if (tensor_valid(target)) {

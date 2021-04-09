@@ -40,6 +40,11 @@ extern "C" {
 	// Create new image and display
 	int tensor_display(TENSOR *tensor, gchar *name_prefix);
 
+
+	TENSOR *resize_rpc(int socket, TENSOR *send_tensor, int reqcode, int multiples);
+	TENSOR *zeropad_rpc(int socket, TENSOR *send_tensor, int reqcode, int multiples);
+
+
 #if defined(__cplusplus)
 }
 #endif

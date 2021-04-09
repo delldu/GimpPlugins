@@ -321,3 +321,71 @@ int tensor_display(TENSOR *tensor, gchar *name_prefix)
 
 	return RET_OK;
 }
+
+
+TENSOR *zeropad_rpc(int socket, TENSOR *send_tensor, int reqcode, int multiples)
+{
+	int nh, nw, rescode;
+	TENSOR *resize_send, *resize_recv, *recv_tensor;
+
+	CHECK_TENSOR(send_tensor);
+
+	// Server limited: only accept 128 times tensor !!!
+	nh = (send_tensor->height + multiples - 1)/multiples; nh *= multiples;
+	nw = (send_tensor->width + multiples - 1)/multiples; nw *= multiples;
+
+	recv_tensor = NULL;
+	resize_recv = NULL;
+	if (send_tensor->height == nh && send_tensor->width == nw) {
+		// Normal onnx RPC
+        if (request_send(socket, reqcode, send_tensor) == RET_OK) {
+            recv_tensor = response_recv(socket, &rescode);
+        }
+	} else {
+		// Resize send, Onnx RPC, Resize recv
+		resize_send = tensor_zeropad(send_tensor, nh, nw); CHECK_TENSOR(resize_send);
+        if (request_send(socket, reqcode, resize_send) == RET_OK) {
+            resize_recv = response_recv(socket, &rescode);
+        }
+		recv_tensor = tensor_zeropad(resize_recv, send_tensor->height, send_tensor->width);
+
+		tensor_destroy(resize_recv);
+		tensor_destroy(resize_send);
+	}
+
+	return recv_tensor;
+}
+
+TENSOR *resize_rpc(int socket, TENSOR *send_tensor, int reqcode, int multiples)
+{
+	int nh, nw, rescode;
+	TENSOR *resize_send, *resize_recv, *recv_tensor;
+
+	CHECK_TENSOR(send_tensor);
+
+	// Server limited: only multiples times tensor !!!
+	nh = (send_tensor->height + multiples - 1)/multiples; nh *= multiples;
+	nw = (send_tensor->width + multiples - 1)/multiples; nw *= multiples;
+
+	recv_tensor = NULL;
+	resize_recv = NULL;
+	if (send_tensor->height == nh && send_tensor->width == nw) {
+		// Normal onnx RPC
+        if (request_send(socket, reqcode, send_tensor) == RET_OK) {
+            recv_tensor = response_recv(socket, &rescode);
+        }
+	} else {
+		// Resize send, Onnx RPC, Resize recv
+		resize_send = tensor_zoom(send_tensor, nh, nw); CHECK_TENSOR(resize_send);
+        if (request_send(socket, reqcode, resize_send) == RET_OK) {
+            resize_recv = response_recv(socket, &rescode);
+        }
+		recv_tensor = tensor_zoom(resize_recv, send_tensor->height, send_tensor->width);
+
+		tensor_destroy(resize_recv);
+		tensor_destroy(resize_send);
+	}
+
+	return recv_tensor;
+}
+

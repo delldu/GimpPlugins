@@ -39,16 +39,16 @@ int normal_input(TENSOR *tensor)
 	}
 
 	// Change RGB To BGR
-	tensor_R = tensor_start_chan(tensor, 0 /*batch*/, 0 /*channel */);
-	tensor_B = tensor_start_chan(tensor, 0 /*batch*/, 2 /*channel */);
-	for (i = 0; i < tensor->height; i++) {
-		for (j = 0; j < tensor->width; j++) {
-			d = *tensor_B;
-			*tensor_B = *tensor_R;
-			*tensor_R = d;
-			tensor_R++; tensor_B++;
-		}
-	}
+	// tensor_R = tensor_start_chan(tensor, 0 /*batch*/, 0 /*channel */);
+	// tensor_B = tensor_start_chan(tensor, 0 /*batch*/, 2 /*channel */);
+	// for (i = 0; i < tensor->height; i++) {
+	// 	for (j = 0; j < tensor->width; j++) {
+	// 		d = *tensor_B;
+	// 		*tensor_B = *tensor_R;
+	// 		*tensor_R = d;
+	// 		tensor_R++; tensor_B++;
+	// 	}
+	// }
 
 	return RET_OK;
 }
@@ -80,10 +80,10 @@ int normal_output(TENSOR *tensor)
 		for (i = 0; i < size; i++, data++) {
 			d = *data - min;
 			d /= max;
-			if (d < 0.f)
-				d = 0.f;
-			if (d > 1.f)
-				d = 1.f;
+			// if (d < 0.f)
+			// 	d = 0.f;
+			// if (d > 1.f)
+			// 	d = 1.f;
 			*data = d;
 		}
 	}
@@ -98,9 +98,17 @@ TENSOR *resize_onnxrpc(int socket, TENSOR *send_tensor)
 
 	CHECK_TENSOR(send_tensor);
 
-	// Matting server limited: only accept 320x320 with RGB !!!
-	nh = nw = 320;
 	send_tensor->chan = 3; // !!!
+
+	// Matting server limited: only accept 4 times tensor !!!
+	nh = (send_tensor->height + 3)/4; nh *= 4;
+	nw = (send_tensor->width + 3)/4; nw *= 4;
+	// Limited memory !!!
+	while(nh > 512)
+		nh /= 2;
+	while (nw > 512)
+		nw /= 2;
+
 	recv_tensor = NULL;
 	resize_recv = NULL;
 	if (send_tensor->height == nh && send_tensor->width == nw) {
@@ -143,10 +151,11 @@ TENSOR *matting(TENSOR *send_tensor)
 	return recv_tensor;
 }
 
-int blend_mask(TENSOR *send_tensor, TENSOR *recv_tensor, float threshold)
+int blend_mask(TENSOR *send_tensor, TENSOR *recv_tensor)
 {
 	int i, j;
-	float *send_R, *send_G, *send_B, *send_A, *recv_A;
+	GimpRGB background;
+	float *send_R, *send_G, *send_B, *send_A, *recv_A, alpha;
 
 	check_tensor(send_tensor);
 	check_tensor(recv_tensor);
@@ -158,53 +167,35 @@ int blend_mask(TENSOR *send_tensor, TENSOR *recv_tensor, float threshold)
 
 	recv_A = tensor_start_chan(recv_tensor, 0 /*batch*/, 0 /*channel*/);
 
-	if (send_tensor->chan == 4) {
-		CheckPoint();
-		for (i = 0; i < send_tensor->height; i++) {
-			for (j = 0; j < send_tensor->width; j++) {
-				if (*recv_A < threshold) { // Green screen with mask
-					*send_R = 0.0;
-					*send_G = 0.0;
-					*send_B = 0.0;
-					*send_A = 0.0;
-				} else {
-					*send_A = 1.0;
-				}
-				send_R++; send_G++; send_B++; send_A++; recv_A++;
-			}
-		}
-		CheckPoint();
-
-		return RET_OK;
+	if (! gimp_palette_get_background(&background)) {
+		// Green Screen
+		background.r = 0.0;
+		background.g = 1.0;
+		background.b = 0.0;
+		background.a = 1.0;
 	}
 
-	if (send_tensor->chan == 3) {	// RGB
+	if (send_tensor->chan >= 3) {
 		for (i = 0; i < send_tensor->height; i++) {
 			for (j = 0; j < send_tensor->width; j++) {
-				if (*recv_A < threshold) { // Green screen
-					*send_R = 0.0;
-					*send_G = 1.0;
-					*send_B = 0.0;
-				}
+				alpha = *recv_A;
+				*send_R = alpha * (*send_R) + (1 - alpha) * background.r;
+				*send_G = alpha * (*send_G) + (1 - alpha) * background.g;
+				*send_B = alpha * (*send_B) + (1 - alpha) * background.b;
 				send_R++; send_G++; send_B++; recv_A++;
 			}
 		}
+
+		if (send_tensor->chan >= 4) {
+			for (i = 0; i < send_tensor->height; i++) {
+				for (j = 0; j < send_tensor->width; j++) {
+					*send_A++ = 1.0;
+				}
+			}
+		}
+
 		return RET_OK;
 	}
-
-	// if (send_tensor->chan == 3) {	// RGB
-	// 	for (i = 0; i < send_tensor->height; i++) {
-	// 		for (j = 0; j < send_tensor->width; j++) {
-	// 			if (*recv_A < threshold) { // Green screen
-	// 				*send_R = 0.0;
-	// 				*send_G = 1.0;
-	// 				*send_R = 0.0;
-	// 			}
-	// 			send_R++; send_G++; send_B++;
-	// 		}
-	// 	}
-	// 	return RET_OK;
-	// }
 
 	// others, we dont know how to deal with ...!!!
 	return RET_ERROR;
@@ -259,6 +250,9 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	// GimpRunMode run_mode;
 	GimpDrawable *drawable;
 
+	// gimp_image_undo_group_start(param[1].data.d_int32);
+
+
 	/* Setting mandatory output values */
 	*nreturn_vals = 1;
 	*return_vals = values;
@@ -293,7 +287,8 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		if (tensor_valid(recv_tensor)) {
 			// Blend(send_tensor + recv_tensor) ==> send_tensor
 			
-			blend_mask(send_clone, recv_tensor, 0.5f);
+			blend_mask(send_clone, recv_tensor);
+
 			tensor_togimp(send_clone, drawable, x, y, width, height);
 
 			tensor_destroy(recv_tensor);
@@ -315,7 +310,9 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	// Flush all ?
 	gimp_displays_flush();
 	gimp_drawable_detach(drawable);
-
+	
 	// Output result for pdb
 	values[0].data.d_status = status;
+
+	// gimp_image_undo_group_end(param[1].data.d_int32);
 }
