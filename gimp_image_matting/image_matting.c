@@ -20,7 +20,7 @@ static void run(const gchar * name,
 int normal_input(TENSOR *tensor)
 {
 	int i, j;
-	float *tensor_R, *tensor_G, *tensor_B, d;
+	float *tensor_R, *tensor_G, *tensor_B;
 
 	check_tensor(tensor);
 
@@ -37,18 +37,6 @@ int normal_input(TENSOR *tensor)
 			tensor_R++; tensor_G++; tensor_B++;
 		}
 	}
-
-	// Change RGB To BGR
-	// tensor_R = tensor_start_chan(tensor, 0 /*batch*/, 0 /*channel */);
-	// tensor_B = tensor_start_chan(tensor, 0 /*batch*/, 2 /*channel */);
-	// for (i = 0; i < tensor->height; i++) {
-	// 	for (j = 0; j < tensor->width; j++) {
-	// 		d = *tensor_B;
-	// 		*tensor_B = *tensor_R;
-	// 		*tensor_R = d;
-	// 		tensor_R++; tensor_B++;
-	// 	}
-	// }
 
 	return RET_OK;
 }
@@ -80,10 +68,6 @@ int normal_output(TENSOR *tensor)
 		for (i = 0; i < size; i++, data++) {
 			d = *data - min;
 			d /= max;
-			// if (d < 0.f)
-			// 	d = 0.f;
-			// if (d > 1.f)
-			// 	d = 1.f;
 			*data = d;
 		}
 	}
@@ -153,47 +137,32 @@ TENSOR *matting(TENSOR *send_tensor)
 
 int blend_mask(TENSOR *send_tensor, TENSOR *recv_tensor)
 {
-	int i, j;
-	GimpRGB background;
-	float *send_R, *send_G, *send_B, *send_A, *recv_A, alpha;
+	int n;
+	// GimpRGB background;
+	// float *send_R, *send_G, *send_B;
+	float *send_A, *recv_A;
 
 	check_tensor(send_tensor);
 	check_tensor(recv_tensor);
 
-	send_R = tensor_start_chan(send_tensor, 0 /*batch*/, 0 /*channel*/);
-	send_G = tensor_start_chan(send_tensor, 0 /*batch*/, 1 /*channel*/);
-	send_B = tensor_start_chan(send_tensor, 0 /*batch*/, 2 /*channel*/);
+	// send_R = tensor_start_chan(send_tensor, 0 /*batch*/, 0 /*channel*/);
+	// send_G = tensor_start_chan(send_tensor, 0 /*batch*/, 1 /*channel*/);
+	// send_B = tensor_start_chan(send_tensor, 0 /*batch*/, 2 /*channel*/);
 	send_A = tensor_start_chan(send_tensor, 0 /*batch*/, 3 /*channel*/);
-
 	recv_A = tensor_start_chan(recv_tensor, 0 /*batch*/, 0 /*channel*/);
 
-	if (! gimp_palette_get_background(&background)) {
-		// Green Screen
-		background.r = 0.0;
-		background.g = 1.0;
-		background.b = 0.0;
-		background.a = 1.0;
-	}
+	// if (! gimp_palette_get_background(&background)) {
+	// 	// Green Screen
+	// 	background.r = 0.0;
+	// 	background.g = 1.0;
+	// 	background.b = 0.0;
+	// 	background.a = 1.0;
+	// }
 
-	if (send_tensor->chan >= 3) {
-		for (i = 0; i < send_tensor->height; i++) {
-			for (j = 0; j < send_tensor->width; j++) {
-				alpha = *recv_A;
-				*send_R = alpha * (*send_R) + (1 - alpha) * background.r;
-				*send_G = alpha * (*send_G) + (1 - alpha) * background.g;
-				*send_B = alpha * (*send_B) + (1 - alpha) * background.b;
-				send_R++; send_G++; send_B++; recv_A++;
-			}
-		}
-
-		if (send_tensor->chan >= 4) {
-			for (i = 0; i < send_tensor->height; i++) {
-				for (j = 0; j < send_tensor->width; j++) {
-					*send_A++ = 1.0;
-				}
-			}
-		}
-
+	// send_tensor->chan == 4
+	if (send_tensor->chan == 4) {
+		n = send_tensor->height * send_tensor->width;
+		memcpy(send_A, recv_A, n * sizeof(float));
 		return RET_OK;
 	}
 
@@ -265,7 +234,15 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	values[0].data.d_status = status;
 
 	// run_mode = (GimpRunMode)param[0].data.d_int32;
+
+	gimp_layer_add_alpha(param[2].data.d_drawable);
+
 	drawable = gimp_drawable_get(param[2].data.d_drawable);
+	if (drawable->bpp < 4) {
+		g_message("Image format is not RGBA.");
+		values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
+		return;
+	}
 
 	if (!gimp_drawable_mask_intersect(drawable->drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
 		// Drawable region is empty.
@@ -310,7 +287,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	// Flush all ?
 	gimp_displays_flush();
 	gimp_drawable_detach(drawable);
-	
+
 	// Output result for pdb
 	values[0].data.d_status = status;
 
