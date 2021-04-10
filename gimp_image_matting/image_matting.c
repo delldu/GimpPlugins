@@ -75,7 +75,7 @@ int normal_output(TENSOR *tensor)
 	return RET_OK;
 }
 
-TENSOR *resize_onnxrpc(int socket, TENSOR *send_tensor)
+TENSOR *matting_send_recv(int socket, TENSOR *send_tensor)
 {
 	int nh, nw, rescode;
 	TENSOR *resize_send, *resize_recv, *recv_tensor;
@@ -119,7 +119,7 @@ TENSOR *resize_onnxrpc(int socket, TENSOR *send_tensor)
 	return recv_tensor;
 }
 
-TENSOR *matting(TENSOR *send_tensor)
+TENSOR *matting_rpc(TENSOR *send_tensor)
 {
 	int socket;
 	TENSOR *recv_tensor = NULL;
@@ -129,7 +129,7 @@ TENSOR *matting(TENSOR *send_tensor)
 		g_message("Error: connect server.");
 		return NULL;
 	}
-	recv_tensor = resize_onnxrpc(socket, send_tensor);
+	recv_tensor = matting_send_recv(socket, send_tensor);
 	client_close(socket);
 
 	return recv_tensor;
@@ -259,7 +259,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 		send_clone = tensor_copy(send_tensor);
 
-		recv_tensor = matting(send_tensor);
+		recv_tensor = matting_rpc(send_tensor);
 
 		gimp_progress_update(0.8);
 		if (tensor_valid(recv_tensor)) {

@@ -150,7 +150,7 @@ free_layers:
 	return ret;
 }
 
-TENSOR *resize_onnxrpc(int socket, TENSOR *send_tensor)
+TENSOR *color_send_recv(int socket, TENSOR *send_tensor)
 {
 	int nh, nw, rescode;
 	TENSOR *resize_send, *resize_recv, *recv_tensor;
@@ -181,50 +181,30 @@ TENSOR *resize_onnxrpc(int socket, TENSOR *send_tensor)
 	return recv_tensor;
 }
 
-int color(gint32 image_id)
+TENSOR *color_rpc(TENSOR *send_rgb_tensor)
 {
-	int socket, ret = RET_ERROR;
-	TENSOR *source[2], *target, *blend_result;
+	int socket;
+	TENSOR *recv_rgb_tensor = NULL;
+	TENSOR *send_lab_tensor, *recv_lab_tensor;
+
+	CHECK_TENSOR(send_rgb_tensor);
 
 	socket = client_open(IMAGE_COLOR_URL);
 	if (socket < 0) {
 		g_message("Error: connect server.");
-		return RET_ERROR;
+		return NULL;
 	}
-	gimp_progress_init("Color ...");
+	// Send Lab tensor
+	send_lab_tensor = NULL;
 
-	gimp_progress_update(0.1);
+	recv_lab_tensor = color_send_recv(socket, send_lab_tensor);
+	// Receive Fake lab
 
-	if (color_source(image_id, source) != RET_OK) {
-		client_close(socket);
-		return RET_ERROR;
-	}
-	gimp_progress_update(0.2);
+	recv_rgb_tensor = NULL;
 
-	target = resize_onnxrpc(socket, source[0]);
 	client_close(socket);
 
-	gimp_progress_update(0.9);
-
-	if (tensor_valid(target)) {
-		blend_result = blend_fake(source[1], target);
-		if (tensor_valid(blend_result)) {
-			tensor_display(blend_result, "color");	// Now source has target information !!!
-			tensor_destroy(blend_result);
-
-			ret = RET_OK;
-		}
-		tensor_destroy(target);
-	} else {
-		g_message("Error: Remote color service is not availabe (maybe timeout).");
-	}
-
-	tensor_destroy(source[0]);
-	tensor_destroy(source[1]);
-
-	gimp_progress_update(1.0);
-
-	return ret;
+	return recv_rgb_tensor;
 }
 
 GimpPlugInInfo PLUG_IN_INFO = {
@@ -265,7 +245,7 @@ static void query(void)
 }
 
 static void
-run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
+run1(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
@@ -285,5 +265,72 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	if (color(param[1].data.d_image) != RET_OK)
 		status = GIMP_PDB_EXECUTION_ERROR;
 
+	values[0].data.d_status = status;
+}
+
+static void
+run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
+{
+	int x, y, height, width;
+	TENSOR *send_tensor, *recv_tensor;
+
+	static GimpParam values[1];
+	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
+	// GimpRunMode run_mode;
+	GimpDrawable *drawable;
+
+	/* Setting mandatory output values */
+	*nreturn_vals = 1;
+	*return_vals = values;
+	values[0].type = GIMP_PDB_STATUS;
+
+	if (strcmp(name, PLUG_IN_PROC) != 0 || nparams < 3) {
+		values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
+		return;
+	}
+	values[0].data.d_status = status;
+
+	// run_mode = (GimpRunMode)param[0].data.d_int32;
+	drawable = gimp_drawable_get(param[2].data.d_drawable);
+
+	if (!gimp_drawable_mask_intersect(drawable->drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
+		// Drawable region is empty.
+		height = drawable->height;
+		width = drawable->width;
+	}
+
+	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
+	if (tensor_valid(send_tensor)) {
+		gimp_progress_init("Coloring ...");
+
+		gimp_progress_update(0.1);
+
+		recv_tensor = color_rpc(send_tensor);
+
+		gimp_progress_update(0.8);
+		if (tensor_valid(recv_tensor)) {
+			tensor_togimp(recv_tensor, drawable, x, y, width, height);
+			tensor_destroy(recv_tensor);
+		}
+		else {
+			g_message("Error: Color remote service.");
+		}
+		tensor_destroy(send_tensor);
+		gimp_progress_update(1.0);
+	} else {
+		g_message("Error: Color image error.");
+		status = GIMP_PDB_EXECUTION_ERROR;
+	}
+
+	// Update modified region
+	gimp_drawable_flush(drawable);
+	// gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
+	gimp_drawable_update(drawable->drawable_id, x, y, width, height);
+
+	// Flush all ?
+	gimp_displays_flush();
+	gimp_drawable_detach(drawable);
+
+	// Output result for pdb
 	values[0].data.d_status = status;
 }

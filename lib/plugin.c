@@ -235,6 +235,7 @@ int tensor_togimp(TENSOR * tensor, GimpDrawable * drawable, int x, int y, int wi
 	return RET_OK;
 }
 
+// xxxx8888
 int image_layers(int image_id, int max_layers, IMAGE *layers[])
 {
 	gint i;
@@ -255,6 +256,7 @@ int image_layers(int image_id, int max_layers, IMAGE *layers[])
 	return layer_count;
 }
 
+// xxxx8888
 int tensor_layers(int image_id, int max_layers, TENSOR *layers[])
 {
 	gint i;

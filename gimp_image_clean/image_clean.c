@@ -17,7 +17,7 @@ static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-TENSOR *clean(TENSOR *send_tensor)
+TENSOR *clean_rpc(TENSOR *send_tensor)
 {
 	int ret, socket, rescode;
 	TENSOR *recv_tensor = NULL;
@@ -118,14 +118,16 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 		gimp_progress_update(0.1);
 
-		recv_tensor = clean(send_tensor);
+		recv_tensor = clean_rpc(send_tensor);
 
 		gimp_progress_update(0.8);
 		if (tensor_valid(recv_tensor)) {
 			tensor_togimp(recv_tensor, drawable, x, y, width, height);
 			tensor_destroy(recv_tensor);
 		}
-
+		else {
+			g_message("Error: Clean remote service.");
+		}
 		tensor_destroy(send_tensor);
 		gimp_progress_update(1.0);
 	} else {
@@ -135,7 +137,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	// Update modified region
 	gimp_drawable_flush(drawable);
-	gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
+	// gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
 	gimp_drawable_update(drawable->drawable_id, x, y, width, height);
 
 	// Flush all ?
