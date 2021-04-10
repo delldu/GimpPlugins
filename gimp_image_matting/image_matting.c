@@ -218,9 +218,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	// GimpRunMode run_mode;
 	GimpDrawable *drawable;
-
-	// gimp_image_undo_group_start(param[1].data.d_int32);
-
+	gint32 image_id, drawable_id;
 
 	/* Setting mandatory output values */
 	*nreturn_vals = 1;
@@ -235,16 +233,19 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	// run_mode = (GimpRunMode)param[0].data.d_int32;
 
-	gimp_layer_add_alpha(param[2].data.d_drawable);
+	image_id = param[1].data.d_int32;
+	drawable_id = param[2].data.d_drawable;
 
-	drawable = gimp_drawable_get(param[2].data.d_drawable);
+	gimp_layer_add_alpha(drawable_id);
+
+	drawable = gimp_drawable_get(drawable_id);
 	if (drawable->bpp < 4) {
 		g_message("Image format is not RGBA.");
 		values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
 		return;
 	}
 
-	if (!gimp_drawable_mask_intersect(drawable->drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
+	if (!gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
 		// Drawable region is empty.
 		height = drawable->height;
 		width = drawable->width;
@@ -266,7 +267,9 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 			
 			blend_mask(send_clone, recv_tensor);
 
+			gimp_image_undo_group_start(image_id);
 			tensor_togimp(send_clone, drawable, x, y, width, height);
+			gimp_image_undo_group_end(image_id);
 
 			tensor_destroy(recv_tensor);
 		}
@@ -281,8 +284,8 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	// Update modified region
 	gimp_drawable_flush(drawable);
-	gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
-	gimp_drawable_update(drawable->drawable_id, x, y, width, height);
+	// gimp_drawable_merge_shadow(drawable_id, TRUE);
+	gimp_drawable_update(drawable_id, x, y, width, height);
 
 	// Flush all ?
 	gimp_displays_flush();
@@ -290,6 +293,4 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	// Output result for pdb
 	values[0].data.d_status = status;
-
-	// gimp_image_undo_group_end(param[1].data.d_int32);
 }
