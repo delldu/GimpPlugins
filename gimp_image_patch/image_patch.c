@@ -25,6 +25,11 @@ TENSOR *patch_rpc(TENSOR *send_tensor)
 
 	CHECK_TENSOR(send_tensor);
 
+	if (send_tensor->chan != 4) {
+		g_message("Image is not RGBA format");
+		return NULL;
+	}
+
 	socket = client_open(IMAGE_PATCH_URL);
 	if (socket < 0) {
 		g_message("Error: connect server.");
@@ -38,79 +43,6 @@ TENSOR *patch_rpc(TENSOR *send_tensor)
 	return recv_tensor;
 }
 
-
-TENSOR *patch_source(int image_id)
-{
-	int i, j, n_layers;
-	IMAGE *layers[2], *source, *mask;
-	TENSOR *result = NULL;
-
-	n_layers = image_layers(image_id, ARRAY_SIZE(layers), layers);
-
-	if (n_layers < 1) {
-		g_message("Error: Image must at least have 1 layes, general 2, one for source and the other for mask.");
-		goto free_layers;
-	}
-	if (n_layers == 2) {
-		if (layers[0]->height != layers[1]->height || layers[0]->width != layers[1]->width) {
-			g_message("Error: The size of source and mask layer is not same.");
-			goto free_layers;
-		}
-	}
-
-	if (n_layers == 2) {
-		mask = layers[0];
-		source = layers[1];
-		image_foreach(source, i, j) {
-			source->ie[i][j].a = (mask->ie[i][j].a > 128)? 0 : 255;
-		}
-	} else {
-		source = layers[0];
-	}
-
-	result = tensor_from_image(source, 1 /* with alpha */);
-
-free_layers:
-	for (i = 0; i < n_layers; i++)
-		image_destroy(layers[i]);
-
-	return result;
-}
-
-int patch(gint32 image_id)
-{
-	int ret = RET_ERROR;
-	TENSOR *source, *target = NULL;
-
-	gimp_progress_init("Patch ...");
-
-	gimp_progress_update(0.1);
-
-	source = patch_source(image_id);
-	if (! tensor_valid(source)) {
-		g_message("Error: Could not got patch source.");
-		return RET_ERROR;
-	}
-	gimp_progress_update(0.2);
-
-	target = patch_rpc(source);
-	gimp_progress_update(0.9);
-
-	if (tensor_valid(target)) {
-		tensor_display(target, "patch");	// Now source has target information !!!
-		tensor_destroy(target);
-
-		ret = RET_OK;
-	} else {
-		g_message("Error: Remote patch service is not availabe (maybe timeout).");
-	}
-
-	tensor_destroy(source);
-
-	gimp_progress_update(1.0);
-
-	return ret;
-}
 
 GimpPlugInInfo PLUG_IN_INFO = {
     NULL,
@@ -151,11 +83,16 @@ static void query(void)
 static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
+	int x, y, height, width;
+	TENSOR *send_tensor, *recv_tensor;
+
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	// GimpRunMode run_mode;
+	GimpDrawable *drawable;
+	gint32 drawable_id;
 
-	/* Setting output values */
+	/* Setting mandatory output values */
 	*nreturn_vals = 1;
 	*return_vals = values;
 	values[0].type = GIMP_PDB_STATUS;
@@ -166,8 +103,53 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	}
 	values[0].data.d_status = status;
 
-	if (patch(param[1].data.d_image) != RET_OK)
-		status = GIMP_PDB_EXECUTION_ERROR;
+	// run_mode = (GimpRunMode)param[0].data.d_int32;
+	drawable_id = param[2].data.d_drawable;
 
+	// Add alpha channel !!!
+	gimp_layer_add_alpha(drawable_id);
+
+	drawable = gimp_drawable_get(drawable_id);
+
+	x = y = 0;
+	if (!gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
+		// Drawable region is empty.
+		height = drawable->height;
+		width = drawable->width;
+	}
+
+	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
+	if (tensor_valid(send_tensor)) {
+		gimp_progress_init("Patching ...");
+
+		gimp_progress_update(0.1);
+
+		recv_tensor = patch_rpc(send_tensor);
+
+		gimp_progress_update(0.8);
+		if (tensor_valid(recv_tensor)) {
+			tensor_display(recv_tensor, "patch");
+			tensor_destroy(recv_tensor);
+		}
+		else {
+			g_message("Error: Patch remote service.");
+		}
+		tensor_destroy(send_tensor);
+		gimp_progress_update(1.0);
+	} else {
+		g_message("Error: Patch image error.");
+		status = GIMP_PDB_EXECUTION_ERROR;
+	}
+
+	// Update modified region
+	gimp_drawable_flush(drawable);
+	// gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
+	gimp_drawable_update(drawable_id, x, y, width, height);
+
+	// Flush all ?
+	gimp_displays_flush();
+	gimp_drawable_detach(drawable);
+
+	// Output result for pdb
 	values[0].data.d_status = status;
 }

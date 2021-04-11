@@ -235,47 +235,27 @@ int tensor_togimp(TENSOR * tensor, GimpDrawable * drawable, int x, int y, int wi
 	return RET_OK;
 }
 
-// xxxx8888
-int image_layers(int image_id, int max_layers, IMAGE *layers[])
-{
-	gint i;
-	gint32 layer_count, *layer_id_list;
-	GimpDrawable *drawable;
+// xxxx3333
+// int image_layers(int image_id, int max_layers, IMAGE *layers[])
+// {
+// 	gint i;
+// 	gint32 layer_count, *layer_id_list;
+// 	GimpDrawable *drawable;
 	
-	layer_id_list = gimp_image_get_layers ((gint32)image_id, &layer_count);
-	if (layer_count > max_layers)
-		layer_count = max_layers;
+// 	layer_id_list = gimp_image_get_layers ((gint32)image_id, &layer_count);
+// 	if (layer_count > max_layers)
+// 		layer_count = max_layers;
 
-	for (i = 0; i < layer_count; i++) {
-		drawable = gimp_drawable_get(layer_id_list[i]);
-		layers[i] = image_fromgimp(drawable, 0, 0, drawable->width, drawable->height);
-		gimp_drawable_detach(drawable);
-	}
-	g_free (layer_id_list);
+// 	for (i = 0; i < layer_count; i++) {
+// 		drawable = gimp_drawable_get(layer_id_list[i]);
+// 		layers[i] = image_fromgimp(drawable, 0, 0, drawable->width, drawable->height);
+// 		gimp_drawable_detach(drawable);
+// 	}
+// 	g_free (layer_id_list);
 
-	return layer_count;
-}
+// 	return layer_count;
+// }
 
-// xxxx8888
-int tensor_layers(int image_id, int max_layers, TENSOR *layers[])
-{
-	gint i;
-	gint32 layer_count, *layer_id_list;
-	GimpDrawable *drawable;
-	
-	layer_id_list = gimp_image_get_layers ((gint32)image_id, &layer_count);
-	if (layer_count > max_layers)
-		layer_count = max_layers;
-
-	for (i = 0; i < layer_count; i++) {
-		drawable = gimp_drawable_get(layer_id_list[i]);
-		layers[i] = tensor_fromgimp(drawable, 0, 0, drawable->width, drawable->height);
-		gimp_drawable_detach(drawable);
-	}
-	g_free (layer_id_list);
-
-	return layer_count;
-}
 
 int tensor_display(TENSOR *tensor, gchar *name_prefix)
 {

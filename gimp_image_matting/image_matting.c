@@ -139,15 +139,11 @@ int blend_mask(TENSOR *send_tensor, TENSOR *recv_tensor)
 {
 	int n;
 	// GimpRGB background;
-	// float *send_R, *send_G, *send_B;
 	float *send_A, *recv_A;
 
 	check_tensor(send_tensor);
 	check_tensor(recv_tensor);
 
-	// send_R = tensor_start_chan(send_tensor, 0 /*batch*/, 0 /*channel*/);
-	// send_G = tensor_start_chan(send_tensor, 0 /*batch*/, 1 /*channel*/);
-	// send_B = tensor_start_chan(send_tensor, 0 /*batch*/, 2 /*channel*/);
 	send_A = tensor_start_chan(send_tensor, 0 /*batch*/, 3 /*channel*/);
 	recv_A = tensor_start_chan(recv_tensor, 0 /*batch*/, 0 /*channel*/);
 

@@ -35,7 +35,6 @@ extern "C" {
 
 	// Load layers ...
 	int image_layers(int image_id, int max_layers, IMAGE *layers[]);
-	int tensor_layers(int image_id, int max_layers, TENSOR *layers[]);
 
 	// Create new image and display
 	int tensor_display(TENSOR *tensor, gchar *name_prefix);

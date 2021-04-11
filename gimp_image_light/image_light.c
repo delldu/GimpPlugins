@@ -54,82 +54,52 @@ static void query(void)
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI");
 }
 
-TENSOR *light_source(int image_id)
+TENSOR *light_send_recv(int socket, TENSOR *send_tensor)
 {
-	int i, n_layers;
-	IMAGE *layers[2];
-	TENSOR *result = NULL;
+	int rescode;
+	TENSOR *recv_tensor = NULL;
 
-	n_layers = image_layers(image_id, ARRAY_SIZE(layers), layers);
+	CHECK_TENSOR(send_tensor);
 
-	if (n_layers < 1) {
-		g_message("Error: Image must at least have 1 layes.");
-		goto free_layers;
-	}
+    if (request_send(socket, IMAGE_LIGHT_REQCODE, send_tensor) == RET_OK) {
+        recv_tensor = response_recv(socket, &rescode);
+    }
 
-	result = tensor_from_image(layers[0], 0 /* without alpha */);
-
-free_layers:
-	for (i = 0; i < n_layers; i++)
-		image_destroy(layers[i]);
-
-	return result;
+	return recv_tensor;
 }
 
-int light(gint32 image_id)
+TENSOR *light_rpc(TENSOR *send_tensor)
 {
-	int socket, rescode, ret = RET_ERROR;
-	TENSOR *source, *target = NULL;
+	int socket;
+	TENSOR *recv_tensor = NULL;
+
+	CHECK_TENSOR(send_tensor);
 
 	socket = client_open(IMAGE_LIGHT_URL);
 	if (socket < 0) {
 		g_message("Error: connect server.");
-		return RET_ERROR;
+		return NULL;
 	}
-	gimp_progress_init("Light ...");
+	recv_tensor = light_send_recv(socket, send_tensor);
 
-	gimp_progress_update(0.1);
-
-	source = light_source(image_id);
-	if (! tensor_valid(source)) {
-		g_message("Error: Could not got patch source.");
-		client_close(socket);
-		return RET_ERROR;
-	}
-	gimp_progress_update(0.2);
-
-    if (request_send(socket, IMAGE_LIGHT_REQCODE, source) == RET_OK) {
-        target = response_recv(socket, &rescode);
-    }
 	client_close(socket);
 
-	gimp_progress_update(0.9);
-
-	if (tensor_valid(target)) {
-		tensor_display(target, "light");	// Now source has target information !!!
-		tensor_destroy(target);
-
-		ret = RET_OK;
-	} else {
-		g_message("Error: Remote light service is not availabe (maybe timeout).");
-	}
-
-	tensor_destroy(source);
-
-	gimp_progress_update(1.0);
-
-	return ret;
+	return recv_tensor;
 }
-
 
 static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
+	int x, y, height, width;
+	TENSOR *send_tensor, *recv_tensor;
+
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	// GimpRunMode run_mode;
+	GimpDrawable *drawable;
+	gint32 drawable_id;
 
-	/* Setting output values */
+	/* Setting mandatory output values */
 	*nreturn_vals = 1;
 	*return_vals = values;
 	values[0].type = GIMP_PDB_STATUS;
@@ -140,8 +110,49 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	}
 	values[0].data.d_status = status;
 
-	if (light(param[1].data.d_image) != RET_OK)
-		status = GIMP_PDB_EXECUTION_ERROR;
+	// run_mode = (GimpRunMode)param[0].data.d_int32;
+	drawable_id = param[2].data.d_drawable;
+	drawable = gimp_drawable_get(drawable_id);
 
+	x = y = 0;
+	if (!gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
+		// Drawable region is empty.
+		height = drawable->height;
+		width = drawable->width;
+	}
+
+	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
+	if (tensor_valid(send_tensor)) {
+		gimp_progress_init("Lighting ...");
+
+		gimp_progress_update(0.1);
+
+		recv_tensor = light_rpc(send_tensor);
+
+		gimp_progress_update(0.8);
+		if (tensor_valid(recv_tensor)) {
+			tensor_togimp(recv_tensor, drawable, x, y, width, height);
+			tensor_destroy(recv_tensor);
+		}
+		else {
+			g_message("Error: Light remote service.");
+		}
+		tensor_destroy(send_tensor);
+		gimp_progress_update(1.0);
+	} else {
+		g_message("Error: Light image error.");
+		status = GIMP_PDB_EXECUTION_ERROR;
+	}
+
+	// Update modified region
+	gimp_drawable_flush(drawable);
+	// gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
+	gimp_drawable_update(drawable_id, x, y, width, height);
+
+	// Flush all ?
+	gimp_displays_flush();
+	gimp_drawable_detach(drawable);
+
+	// Output result for pdb
 	values[0].data.d_status = status;
 }

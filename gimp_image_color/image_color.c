@@ -30,11 +30,6 @@ TENSOR *image_color_rgb2lab(TENSOR *send_rgb_tensor)
 
 	CHECK_TENSOR(send_rgb_tensor);
 
-	if (send_rgb_tensor->chan < 3) {
-		g_message("Error: image is not RGB format.");
-		return NULL;
-	}
-
 	// Lab + alpha channel
 	send_lab_tensor = tensor_create(send_rgb_tensor->batch, 4, send_rgb_tensor->height, send_rgb_tensor->width);
 	CHECK_TENSOR(send_lab_tensor);
@@ -42,9 +37,13 @@ TENSOR *image_color_rgb2lab(TENSOR *send_rgb_tensor)
 	n = send_rgb_tensor->height * send_rgb_tensor->width;
 
 	for (batch = 0; batch < send_rgb_tensor->batch; batch++) {
-		send_rgb_rc = tensor_start_chan(send_rgb_tensor, batch, 0);	// R
-		send_rgb_gc = tensor_start_chan(send_rgb_tensor, batch, 1);	// G
-		send_rgb_bc = tensor_start_chan(send_rgb_tensor, batch, 2);	// B
+		if (send_rgb_tensor->chan >= 3) {
+			send_rgb_rc = tensor_start_chan(send_rgb_tensor, batch, 0);	// R
+			send_rgb_gc = tensor_start_chan(send_rgb_tensor, batch, 1);	// G
+			send_rgb_bc = tensor_start_chan(send_rgb_tensor, batch, 2);	// B
+		} else {
+			send_rgb_rc = send_rgb_gc = send_rgb_bc = tensor_start_chan(send_rgb_tensor, batch, 0);	// R
+		}
 
 		send_lab_lc = tensor_start_chan(send_lab_tensor, batch, 0);	// L
 		send_lab_ac = tensor_start_chan(send_lab_tensor, batch, 1);	// a
@@ -61,10 +60,16 @@ TENSOR *image_color_rgb2lab(TENSOR *send_rgb_tensor)
 			*send_lab_lc++ = (L - 50.0)/100.0;
 			*send_lab_ac++ = a/110.0;
 			*send_lab_bc++ = b/110.0;
-			if (R == G && R == B) {	// Gray point
-				*send_lab_mc++ = 0.0;
-			} else {	// Color Point
+
+			// Black or white, set 1.0, lambda >= 2% (255 * 2% == 5)
+			if ((R < 5 && G < 5 && B < 5) || (R > 250 && G > 250 && B > 250)) {
 				*send_lab_mc++ = 1.0;
+			} else {
+				if (R == G && R == B) {	// Gray point
+					*send_lab_mc++ = 0.0;
+				} else {	// Color Point
+					*send_lab_mc++ = 1.0;
+				}
 			}
 		}
 	}
@@ -132,7 +137,6 @@ TENSOR *image_color_lab2rgb(TENSOR *send_lab_tensor, TENSOR *recv_ab_tensor)
 	return blend_rgb_tensor;
 }
 
-
 TENSOR *color_send_recv(int socket, TENSOR *send_tensor)
 {
 	int nh, nw, rescode;
@@ -180,8 +184,10 @@ TENSOR *color_rpc(TENSOR *send_rgb_tensor)
 
 	send_lab_tensor = image_color_rgb2lab(send_rgb_tensor);
 	recv_ab_tensor = color_send_recv(socket, send_lab_tensor);
-	recv_rgb_tensor = image_color_lab2rgb(send_lab_tensor, recv_ab_tensor);
-	tensor_destroy(recv_ab_tensor);
+	if (tensor_valid(recv_ab_tensor)) {
+		recv_rgb_tensor = image_color_lab2rgb(send_lab_tensor, recv_ab_tensor);
+		tensor_destroy(recv_ab_tensor);
+	}
 	tensor_destroy(send_lab_tensor);
 
 	client_close(socket);
@@ -236,6 +242,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	// GimpRunMode run_mode;
 	GimpDrawable *drawable;
+	gint32 drawable_id;
 
 	/* Setting mandatory output values */
 	*nreturn_vals = 1;
@@ -249,7 +256,8 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	values[0].data.d_status = status;
 
 	// run_mode = (GimpRunMode)param[0].data.d_int32;
-	drawable = gimp_drawable_get(param[2].data.d_drawable);
+	drawable_id = param[2].data.d_drawable;
+	drawable = gimp_drawable_get(drawable_id);
 
 	x = y = 0;
 	height = drawable->height;
