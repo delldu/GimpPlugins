@@ -21,28 +21,18 @@ extern "C" {
 
 	#include <libgimp/gimp.h>
 
-	// Get image from Gimp
-	IMAGE *image_fromgimp(GimpDrawable * drawable, int x, int y, int width, int height);
-
-	// Set image to gimp
-	int image_togimp(IMAGE * image, GimpDrawable * drawable, int x, int y, int width, int height);
-
-	// Get tensor from Gimp
+	// Get image
 	TENSOR *tensor_fromgimp(GimpDrawable * drawable, int x, int y, int width, int height);
 
-	// Set tensor to gimp
+	// Update image
 	int tensor_togimp(TENSOR * tensor, GimpDrawable * drawable, int x, int y, int width, int height);
 
-	// Load layers ...
-	int image_layers(int image_id, int max_layers, IMAGE *layers[]);
-
-	// Create new image and display
+	// Display new image
 	int tensor_display(TENSOR *tensor, gchar *name_prefix);
 
-
+	TENSOR *normal_rpc(int socket, TENSOR *send_tensor, int reqcode);
 	TENSOR *resize_rpc(int socket, TENSOR *send_tensor, int reqcode, int multiples);
 	TENSOR *zeropad_rpc(int socket, TENSOR *send_tensor, int reqcode, int multiples);
-
 
 #if defined(__cplusplus)
 }

@@ -19,7 +19,7 @@ static void run(const gchar * name,
 
 TENSOR *clean_rpc(TENSOR *send_tensor)
 {
-	int ret, socket, rescode;
+	int socket;
 	TENSOR *recv_tensor = NULL;
 
 	socket = client_open(IMAGE_CLEAN_URL);
@@ -28,13 +28,11 @@ TENSOR *clean_rpc(TENSOR *send_tensor)
 		return NULL;
 	}
 
-	ret = request_send(socket, IMAGE_CLEAN_REQCODE, send_tensor);
-	if (ret == RET_OK) {
-		recv_tensor = response_recv(socket, &rescode);
-		if (! tensor_valid(recv_tensor) || rescode != IMAGE_CLEAN_REQCODE) {
-			g_message("Error: Remote service is not valid or timeout.");
-		}
-	}	
+	recv_tensor = normal_rpc(socket, send_tensor, IMAGE_CLEAN_REQCODE);
+	if (! tensor_valid(recv_tensor)) {
+		g_message("Error: Remote service is not available.");
+	}
+
 	client_close(socket);
 
 	return recv_tensor;
@@ -129,12 +127,12 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 			tensor_destroy(recv_tensor);
 		}
 		else {
-			g_message("Error: Clean remote service.");
+			g_message("Error: Clean remote service is not avaible..");
 		}
 		tensor_destroy(send_tensor);
 		gimp_progress_update(1.0);
 	} else {
-		g_message("Error: Clean image error.");
+		g_message("Error: Clean image is not valid (NOT RGB ?).");
 		status = GIMP_PDB_EXECUTION_ERROR;
 	}
 

@@ -137,37 +137,6 @@ TENSOR *image_color_lab2rgb(TENSOR *send_lab_tensor, TENSOR *recv_ab_tensor)
 	return blend_rgb_tensor;
 }
 
-TENSOR *color_send_recv(int socket, TENSOR *send_tensor)
-{
-	int nh, nw, rescode;
-	TENSOR *resize_send, *resize_recv, *recv_tensor;
-
-	CHECK_TENSOR(send_tensor);
-
-	// Color server limited: max 512, only accept 8 times !!!
-	resize(send_tensor->height, send_tensor->width, 512, 8, &nh, &nw);
-	recv_tensor = NULL;
-	resize_recv = NULL;
-	if (send_tensor->height == nh && send_tensor->width == nw) {
-		// Normal onnx RPC
-        if (request_send(socket, IMAGE_COLOR_REQCODE, send_tensor) == RET_OK) {
-            recv_tensor = response_recv(socket, &rescode);
-        }
-	} else {
-		// Resize send, Onnx RPC, Resize recv
-		resize_send = tensor_zoom(send_tensor, nh, nw); CHECK_TENSOR(resize_send);
-        if (request_send(socket, IMAGE_COLOR_REQCODE, resize_send) == RET_OK) {
-            resize_recv = response_recv(socket, &rescode);
-        }
-		recv_tensor = tensor_zoom(resize_recv, send_tensor->height, send_tensor->width);
-
-		tensor_destroy(resize_recv);
-		tensor_destroy(resize_send);
-	}
-
-	return recv_tensor;
-}
-
 TENSOR *color_rpc(TENSOR *send_rgb_tensor)
 {
 	int socket;
@@ -183,7 +152,10 @@ TENSOR *color_rpc(TENSOR *send_rgb_tensor)
 	}
 
 	send_lab_tensor = image_color_rgb2lab(send_rgb_tensor);
-	recv_ab_tensor = color_send_recv(socket, send_lab_tensor);
+
+	// Color server only accept 8 times !!!
+	recv_ab_tensor = resize_rpc(socket, send_lab_tensor, IMAGE_COLOR_REQCODE, 8);
+
 	if (tensor_valid(recv_ab_tensor)) {
 		recv_rgb_tensor = image_color_lab2rgb(send_lab_tensor, recv_ab_tensor);
 		tensor_destroy(recv_ab_tensor);
@@ -263,6 +235,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	height = drawable->height;
 	width = drawable->width;
 	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
+	gimp_drawable_detach(drawable);
 
 	if (tensor_valid(send_tensor)) {
 		gimp_progress_init("Coloring ...");
@@ -273,27 +246,21 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 		gimp_progress_update(0.8);
 		if (tensor_valid(recv_tensor)) {
-			tensor_display(recv_tensor, "color");	// Now source has target information !!!
+			tensor_display(recv_tensor, "color");
 			tensor_destroy(recv_tensor);
 		}
 		else {
-			g_message("Error: Color remote service.");
+			g_message("Error: Color remote service is not avaible.");
 		}
 		tensor_destroy(send_tensor);
 		gimp_progress_update(1.0);
 	} else {
-		g_message("Error: Color image error.");
+		g_message("Error: Color source.");
 		status = GIMP_PDB_EXECUTION_ERROR;
 	}
 
-	// Update modified region
-	// gimp_drawable_flush(drawable);
-	// gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
-	// gimp_drawable_update(drawable->drawable_id, x, y, width, height);
-
 	// Flush all ?
 	gimp_displays_flush();
-	gimp_drawable_detach(drawable);
 
 	// Output result for pdb
 	values[0].data.d_status = status;

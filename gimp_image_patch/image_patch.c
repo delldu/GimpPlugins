@@ -112,13 +112,12 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	drawable = gimp_drawable_get(drawable_id);
 
 	x = y = 0;
-	if (!gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
-		// Drawable region is empty.
-		height = drawable->height;
-		width = drawable->width;
-	}
+	height = drawable->height;
+	width = drawable->width;
 
 	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
+	gimp_drawable_detach(drawable);
+
 	if (tensor_valid(send_tensor)) {
 		gimp_progress_init("Patching ...");
 
@@ -132,23 +131,17 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 			tensor_destroy(recv_tensor);
 		}
 		else {
-			g_message("Error: Patch remote service.");
+			g_message("Error: Patch remote service is not avaible.");
 		}
 		tensor_destroy(send_tensor);
 		gimp_progress_update(1.0);
 	} else {
-		g_message("Error: Patch image error.");
+		g_message("Error: Patch image is not valid (NO RGB).");
 		status = GIMP_PDB_EXECUTION_ERROR;
 	}
 
-	// Update modified region
-	gimp_drawable_flush(drawable);
-	// gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
-	gimp_drawable_update(drawable_id, x, y, width, height);
-
 	// Flush all ?
 	gimp_displays_flush();
-	gimp_drawable_detach(drawable);
 
 	// Output result for pdb
 	values[0].data.d_status = status;

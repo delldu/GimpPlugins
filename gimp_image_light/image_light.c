@@ -54,19 +54,6 @@ static void query(void)
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI");
 }
 
-TENSOR *light_send_recv(int socket, TENSOR *send_tensor)
-{
-	int rescode;
-	TENSOR *recv_tensor = NULL;
-
-	CHECK_TENSOR(send_tensor);
-
-    if (request_send(socket, IMAGE_LIGHT_REQCODE, send_tensor) == RET_OK) {
-        recv_tensor = response_recv(socket, &rescode);
-    }
-
-	return recv_tensor;
-}
 
 TENSOR *light_rpc(TENSOR *send_tensor)
 {
@@ -80,7 +67,7 @@ TENSOR *light_rpc(TENSOR *send_tensor)
 		g_message("Error: connect server.");
 		return NULL;
 	}
-	recv_tensor = light_send_recv(socket, send_tensor);
+	recv_tensor = normal_rpc(socket, send_tensor, IMAGE_LIGHT_REQCODE);
 
 	client_close(socket);
 
@@ -135,12 +122,12 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 			tensor_destroy(recv_tensor);
 		}
 		else {
-			g_message("Error: Light remote service.");
+			g_message("Error: Light remote service is not avaible.");
 		}
 		tensor_destroy(send_tensor);
 		gimp_progress_update(1.0);
 	} else {
-		g_message("Error: Light image error.");
+		g_message("Error: Light image is not valid (NO RGB).");
 		status = GIMP_PDB_EXECUTION_ERROR;
 	}
 

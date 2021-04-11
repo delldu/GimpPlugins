@@ -8,152 +8,87 @@
 
 #include "plugin.h"
 
-IMAGE *image_fromgimp(GimpDrawable * drawable, int x, int y, int width, int height)
-{
-	gint i, j;
-	gint channels;
-	GimpPixelRgn input_rgn;
-	IMAGE *image = NULL;
-	guchar *rgn_data, *d;
+// Just for reference
+// IMAGE *image_fromgimp(GimpDrawable * drawable, int x, int y, int width, int height)
+// {
+// 	gint i, j;
+// 	gint channels;
+// 	GimpPixelRgn input_rgn;
+// 	IMAGE *image = NULL;
+// 	guchar *rgn_data, *d;
 
-	channels = drawable->bpp;
-	gimp_pixel_rgn_init(&input_rgn, drawable, 0, 0, drawable->width, drawable->height, FALSE, FALSE);
+// 	channels = drawable->bpp;
+// 	gimp_pixel_rgn_init(&input_rgn, drawable, 0, 0, drawable->width, drawable->height, FALSE, FALSE);
 
-	image = image_create(height, width);
-	if (!image_valid(image)) {
-		g_print("Create image failure.\n");
-		return NULL;
-	}
+// 	image = image_create(height, width);
+// 	if (!image_valid(image)) {
+// 		g_print("Create image failure.\n");
+// 		return NULL;
+// 	}
 
-	rgn_data = g_new(guchar, height * width * channels);
-	if (!rgn_data) {
-		g_print("Memory allocate (%d bytes) failure.\n", height * width * channels);
-		image_destroy(image);
-		return NULL;
-	}
+// 	rgn_data = g_new(guchar, height * width * channels);
+// 	if (!rgn_data) {
+// 		g_print("Memory allocate (%d bytes) failure.\n", height * width * channels);
+// 		image_destroy(image);
+// 		return NULL;
+// 	}
 
-	gimp_pixel_rgn_get_rect(&input_rgn, rgn_data, x, y, width, height);
+// 	gimp_pixel_rgn_get_rect(&input_rgn, rgn_data, x, y, width, height);
 
-	d = rgn_data;
-	switch (channels) {
-	case 1:
-		for (i = 0; i < height; i++) {
-			for (j = 0; j < width; j++) {
-				image->ie[i][j].r = *d++;
-				image->ie[i][j].g = image->ie[i][j].r;
-				image->ie[i][j].b = image->ie[i][j].r;
-				image->ie[i][j].a = 255;
-			}
-		}
-		break;
-	case 2:
-		// Mono Gray + Alpha
-		for (i = 0; i < height; i++) {
-			for (j = 0; j < width; j++) {
-				image->ie[i][j].r = *d++;
-				image->ie[i][j].g = image->ie[i][j].r;
-				image->ie[i][j].b = image->ie[i][j].r;
-				image->ie[i][j].a = *d++;
-			}
-		}
-		break;
-	case 3:
-		for (i = 0; i < height; i++) {
-			for (j = 0; j < width; j++) {
-				image->ie[i][j].r = *d++;
-				image->ie[i][j].g = *d++;
-				image->ie[i][j].b = *d++;
-				image->ie[i][j].a = 255;
-			}
-		}
-		break;
-	case 4:
-		for (i = 0; i < height; i++) {
-			for (j = 0; j < width; j++) {
-				image->ie[i][j].r = *d++;
-				image->ie[i][j].g = *d++;
-				image->ie[i][j].b = *d++;
-				image->ie[i][j].a = *d++;
-			}
-		}
-		break;
-	default:
-		// Error ?
-		g_print("Invalid channels: %d\n", channels);
-		break;
-	}
+// 	d = rgn_data;
+// 	switch (channels) {
+// 	case 1:
+// 		for (i = 0; i < height; i++) {
+// 			for (j = 0; j < width; j++) {
+// 				image->ie[i][j].r = *d++;
+// 				image->ie[i][j].g = image->ie[i][j].r;
+// 				image->ie[i][j].b = image->ie[i][j].r;
+// 				image->ie[i][j].a = 255;
+// 			}
+// 		}
+// 		break;
+// 	case 2:
+// 		// Mono Gray + Alpha
+// 		for (i = 0; i < height; i++) {
+// 			for (j = 0; j < width; j++) {
+// 				image->ie[i][j].r = *d++;
+// 				image->ie[i][j].g = image->ie[i][j].r;
+// 				image->ie[i][j].b = image->ie[i][j].r;
+// 				image->ie[i][j].a = *d++;
+// 			}
+// 		}
+// 		break;
+// 	case 3:
+// 		for (i = 0; i < height; i++) {
+// 			for (j = 0; j < width; j++) {
+// 				image->ie[i][j].r = *d++;
+// 				image->ie[i][j].g = *d++;
+// 				image->ie[i][j].b = *d++;
+// 				image->ie[i][j].a = 255;
+// 			}
+// 		}
+// 		break;
+// 	case 4:
+// 		for (i = 0; i < height; i++) {
+// 			for (j = 0; j < width; j++) {
+// 				image->ie[i][j].r = *d++;
+// 				image->ie[i][j].g = *d++;
+// 				image->ie[i][j].b = *d++;
+// 				image->ie[i][j].a = *d++;
+// 			}
+// 		}
+// 		break;
+// 	default:
+// 		// Error ?
+// 		g_print("Invalid channels: %d\n", channels);
+// 		break;
+// 	}
 
-	g_free(rgn_data);
+// 	g_free(rgn_data);
 
-	return image;
-}
+// 	return image;
+// }
 
-// Set image to gimp
-int image_togimp(IMAGE * image, GimpDrawable * drawable, int x, int y, int width, int height)
-{
-	gint i, j;
-	gint channels;
-	GimpPixelRgn output_rgn;
-	guchar *rgn_data, *d;
-
-	channels = drawable->bpp;
-	gimp_pixel_rgn_init(&output_rgn, drawable, 0, 0, drawable->width, drawable->height, TRUE, FALSE);
-
-	rgn_data = g_new(guchar, height * width * channels);
-	if (!rgn_data) {
-		g_print("Memory allocate (%d bytes) failure.\n", height * width * channels);
-		return RET_ERROR;
-	}
-
-	d = rgn_data;
-	switch (channels) {
-	case 1:
-		for (i = 0; i < height; i++) {
-			for (j = 0; j < width; j++) {
-				*d++ = image->ie[i][j].r;
-			}
-		}
-		break;
-	case 2:
-		// Mono Gray + Alpha
-		for (i = 0; i < height; i++) {
-			for (j = 0; j < width; j++) {
-				*d++ = image->ie[i][j].r;
-				*d++ = image->ie[i][j].a;
-			}
-		}
-		break;
-	case 3:
-		for (i = 0; i < height; i++) {
-			for (j = 0; j < width; j++) {
-				*d++ = image->ie[i][j].r;
-				*d++ = image->ie[i][j].g;
-				*d++ = image->ie[i][j].b;
-			}
-		}
-		break;
-	case 4:
-		for (i = 0; i < height; i++) {
-			for (j = 0; j < width; j++) {
-				*d++ = image->ie[i][j].r;
-				*d++ = image->ie[i][j].g;
-				*d++ = image->ie[i][j].b;
-				*d++ = image->ie[i][j].a;
-			}
-		}
-		break;
-	default:
-		// Error ?
-		g_print("Invalid channels: %d\n", channels);
-		break;
-	}
-
-	gimp_pixel_rgn_set_rect(&output_rgn, rgn_data, x, y, width, height);
-
-	g_free(rgn_data);
-
-	return RET_OK;
-}
 
 TENSOR *tensor_fromgimp(GimpDrawable * drawable, int x, int y, int width, int height)
 {
@@ -235,7 +170,7 @@ int tensor_togimp(TENSOR * tensor, GimpDrawable * drawable, int x, int y, int wi
 	return RET_OK;
 }
 
-// xxxx3333
+// Just for reference
 // int image_layers(int image_id, int max_layers, IMAGE *layers[])
 // {
 // 	gint i;
@@ -304,15 +239,29 @@ int tensor_display(TENSOR *tensor, gchar *name_prefix)
 	return RET_OK;
 }
 
+TENSOR *normal_rpc(int socket, TENSOR *send_tensor, int reqcode)
+{
+	int rescode;
+	TENSOR *recv_tensor = NULL;
+
+	CHECK_TENSOR(send_tensor);
+
+    if (request_send(socket, reqcode, send_tensor) == RET_OK) {
+        recv_tensor = response_recv(socket, &rescode);
+    }
+
+	return recv_tensor;
+}
+
 
 TENSOR *zeropad_rpc(int socket, TENSOR *send_tensor, int reqcode, int multiples)
 {
-	int nh, nw, rescode;
+	int nh, nw;
 	TENSOR *resize_send, *resize_recv, *recv_tensor;
 
 	CHECK_TENSOR(send_tensor);
 
-	// Server limited: only accept 128 times tensor !!!
+	// Server only accept 128 times tensor !!!
 	nh = (send_tensor->height + multiples - 1)/multiples; nh *= multiples;
 	nw = (send_tensor->width + multiples - 1)/multiples; nw *= multiples;
 
@@ -320,15 +269,11 @@ TENSOR *zeropad_rpc(int socket, TENSOR *send_tensor, int reqcode, int multiples)
 	resize_recv = NULL;
 	if (send_tensor->height == nh && send_tensor->width == nw) {
 		// Normal onnx RPC
-        if (request_send(socket, reqcode, send_tensor) == RET_OK) {
-            recv_tensor = response_recv(socket, &rescode);
-        }
+		recv_tensor = normal_rpc(socket, send_tensor, reqcode);
 	} else {
 		// Resize send, Onnx RPC, Resize recv
 		resize_send = tensor_zeropad(send_tensor, nh, nw); CHECK_TENSOR(resize_send);
-        if (request_send(socket, reqcode, resize_send) == RET_OK) {
-            resize_recv = response_recv(socket, &rescode);
-        }
+		resize_recv = normal_rpc(socket, resize_send, reqcode);
 		recv_tensor = tensor_zeropad(resize_recv, send_tensor->height, send_tensor->width);
 
 		tensor_destroy(resize_recv);
@@ -340,12 +285,12 @@ TENSOR *zeropad_rpc(int socket, TENSOR *send_tensor, int reqcode, int multiples)
 
 TENSOR *resize_rpc(int socket, TENSOR *send_tensor, int reqcode, int multiples)
 {
-	int nh, nw, rescode;
+	int nh, nw;
 	TENSOR *resize_send, *resize_recv, *recv_tensor;
 
 	CHECK_TENSOR(send_tensor);
 
-	// Server limited: only multiples times tensor !!!
+	// Server only multiples times tensor !!!
 	nh = (send_tensor->height + multiples - 1)/multiples; nh *= multiples;
 	nw = (send_tensor->width + multiples - 1)/multiples; nw *= multiples;
 
@@ -353,15 +298,11 @@ TENSOR *resize_rpc(int socket, TENSOR *send_tensor, int reqcode, int multiples)
 	resize_recv = NULL;
 	if (send_tensor->height == nh && send_tensor->width == nw) {
 		// Normal onnx RPC
-        if (request_send(socket, reqcode, send_tensor) == RET_OK) {
-            recv_tensor = response_recv(socket, &rescode);
-        }
+		resize_recv = normal_rpc(socket, send_tensor, reqcode);
 	} else {
 		// Resize send, Onnx RPC, Resize recv
 		resize_send = tensor_zoom(send_tensor, nh, nw); CHECK_TENSOR(resize_send);
-        if (request_send(socket, reqcode, resize_send) == RET_OK) {
-            resize_recv = response_recv(socket, &rescode);
-        }
+		resize_recv = normal_rpc(socket, resize_send, reqcode);
 		recv_tensor = tensor_zoom(resize_recv, send_tensor->height, send_tensor->width);
 
 		tensor_destroy(resize_recv);

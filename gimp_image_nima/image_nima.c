@@ -42,7 +42,7 @@ TENSOR *image_nima(TENSOR *send_tensor)
 	if (ret == RET_OK) {
 		recv_tensor = response_recv(socket, &rescode);
 		if (! tensor_valid(recv_tensor) || rescode != IMAGE_NIMA_REQCODE) {
-			g_message("Error: Remote service is not valid or timeout.");
+			g_message("Error: Remote service is not available.");
 		}
 	}	
 	client_close(socket);
@@ -146,6 +146,8 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	}
 
 	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
+	gimp_drawable_detach(drawable);
+
 	if (tensor_valid(send_tensor)) {
 		gimp_progress_init("Nima ...");
 
@@ -168,5 +170,4 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	// Output result for pdb
 	values[0].data.d_status = status;
-	gimp_drawable_detach(drawable);
 }

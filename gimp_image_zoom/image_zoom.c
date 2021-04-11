@@ -69,7 +69,7 @@ TENSOR *zoom_rpc(TENSOR *send_tensor)
 		return NULL;
 	}
 
-	recv_tensor = zeropad_rpc(socket, send_tensor, IMAGE_ZOOM_REQCODE, 1);
+	recv_tensor = normal_rpc(socket, send_tensor, IMAGE_ZOOM_REQCODE);
 	client_close(socket);
 
 	return recv_tensor;
@@ -104,13 +104,11 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	drawable = gimp_drawable_get(drawable_id);
 
 	x = y = 0;
-	if (!gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
-		// Drawable region is empty.
-		height = drawable->height;
-		width = drawable->width;
-	}
-
+	height = drawable->height;
+	width = drawable->width;
 	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
+	gimp_drawable_detach(drawable);
+
 	if (tensor_valid(send_tensor)) {
 		gimp_progress_init("Zoomin ...");
 
@@ -124,18 +122,17 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 			tensor_destroy(recv_tensor);
 		}
 		else {
-			g_message("Error: Zoom remote service.");
+			g_message("Error: Zoom remote service is not available.");
 		}
 		tensor_destroy(send_tensor);
 		gimp_progress_update(1.0);
 	} else {
-		g_message("Error: Zoom image error.");
+		g_message("Error: Zoom image is not valid (NO RGB).");
 		status = GIMP_PDB_EXECUTION_ERROR;
 	}
 
 	// Flush all ?
 	gimp_displays_flush();
-	gimp_drawable_detach(drawable);
 
 	// Output result for pdb
 	values[0].data.d_status = status;
