@@ -19,136 +19,119 @@ static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-TENSOR *blend_fake(TENSOR *gray, TENSOR *fake)
+TENSOR *image_color_rgb2lab(TENSOR *send_rgb_tensor)
 {
-	int i, j;
-	IMAGE *image;
-	TENSOR *result;
-	float *gray_a, *gray_b, *gray_m, *fake_a, *fake_b;
+	int batch, i, n;
+	float *send_rgb_rc, *send_rgb_gc, *send_rgb_bc;
+	float *send_lab_lc, *send_lab_ac, *send_lab_bc, *send_lab_mc;	// mask channel
+	BYTE R, G, B;
+	float L, a, b;
+	TENSOR *send_lab_tensor = NULL;
 
-	CHECK_TENSOR(gray);	// 1x4xHxW
-	CHECK_TENSOR(fake);	// 1x2xHxW
+	CHECK_TENSOR(send_rgb_tensor);
 
-	if (gray->batch != 1 || gray->chan != 4 || fake->batch != 1 || fake->chan != 2) {
-		g_message("Bad source or fake tensor.");
-		return NULL;
-	}
-	if (gray->height != fake->height || gray->width != fake->width) {
-		g_message("Source tensor size is not same as fake.");
+	if (send_rgb_tensor->chan < 3) {
+		g_message("Error: image is not RGB format.");
 		return NULL;
 	}
 
-	gray_a = tensor_start_chan(gray, 0 /*batch*/, 1 /*channel*/);
-	gray_b = tensor_start_chan(gray, 0 /*batch*/, 2 /*channel*/);
-	gray_m = tensor_start_chan(gray, 0 /*batch*/, 3 /*channel*/);
+	// Lab + alpha channel
+	send_lab_tensor = tensor_create(send_rgb_tensor->batch, 4, send_rgb_tensor->height, send_rgb_tensor->width);
+	CHECK_TENSOR(send_lab_tensor);
 
-	fake_a = tensor_start_chan(fake, 0 /*batch*/, 0 /*channel*/);
-	fake_b = tensor_start_chan(fake, 0 /*batch*/, 1 /*channel*/);
+	n = send_rgb_tensor->height * send_rgb_tensor->width;
 
-	for (i = 0; i < gray->height; i++) {
-		for (j = 0; j < gray->width; j++) {
-			*gray_a++ = *fake_a++;
-			*gray_b++ = *fake_b++;
-			*gray_m++ = 1.0;	// We just want to show, so set 1.0 !!!
-		}
-	}
+	for (batch = 0; batch < send_rgb_tensor->batch; batch++) {
+		send_rgb_rc = tensor_start_chan(send_rgb_tensor, batch, 0);	// R
+		send_rgb_gc = tensor_start_chan(send_rgb_tensor, batch, 1);	// G
+		send_rgb_bc = tensor_start_chan(send_rgb_tensor, batch, 2);	// B
 
-	image = tensor_lab2rgb(gray, 0); CHECK_IMAGE(image);
-	result = tensor_from_image(image, 1 /*with alpha */); CHECK_TENSOR(result);
-	image_destroy(image);
+		send_lab_lc = tensor_start_chan(send_lab_tensor, batch, 0);	// L
+		send_lab_ac = tensor_start_chan(send_lab_tensor, batch, 1);	// a
+		send_lab_bc = tensor_start_chan(send_lab_tensor, batch, 2);	// b
+		send_lab_mc = tensor_start_chan(send_lab_tensor, batch, 3);	// m -- mask 
 
-	return result;
-}
+		for (i = 0; i < n; i++) {
+			R = (BYTE)((*send_rgb_rc++)*255.0);
+			G = (BYTE)((*send_rgb_gc++)*255.0);
+			B = (BYTE)((*send_rgb_bc++)*255.0);
 
-TENSOR *auto_paint(IMAGE *gray)
-{
-	TENSOR *source;
-	// Alpha must be 255(RGBA) for image_fromgimp !
-	source = tensor_rgb2lab(gray);
-	// if user paint nothing, we trust it !!!
-	tensor_setmask(source, 0.0f);
+			color_rgb2lab(R, G, B, &L, &a, &b);
 
-	return source;
-}
-
-TENSOR *user_paint(IMAGE *gray, IMAGE *color)
-{
-	int i, j;
-	TENSOR *source;
-	float *source_a, *source_b, *source_m, L, a, b;
-
-	CHECK_IMAGE(gray);
-	CHECK_IMAGE(color);
-
-	// Suppose same size between gray and color
-	// if (gray->height != color->height || gray->width != color->width) {
-	// 	g_message("Error: The size of gray and color layer is not same.");
-	// 	return NULL;
-	// }
-	source = tensor_rgb2lab(gray); CHECK_TENSOR(source);
-	for (i = 0; i < color->height; i++) {
-		// source_L = tensor_start_row(source, 0, 0, i);
-		source_a = tensor_start_row(source, 0, 1, i);
-		source_b = tensor_start_row(source, 0, 2, i);
-		source_m = tensor_start_row(source, 0, 3, i);
-		for (j = 0; j < color->width; j++) {
-			// if user paint some something, we trust it !!!
-			if (color->ie[i][j].a > 128) {
-				color_rgb2lab(color->ie[i][j].r, color->ie[i][j].g, color->ie[i][j].b, &L, &a, &b);
-				a /= 110.f; b /= 110.f;
-				*source_a++ = a;
-				*source_b++ = b;
-				*source_m++ = 1.0f;
-			}
-			else {
-				source_a++;	// skip
-				source_b++;	// skip
-				*source_m++ = 0.f;
+			*send_lab_lc++ = (L - 50.0)/100.0;
+			*send_lab_ac++ = a/110.0;
+			*send_lab_bc++ = b/110.0;
+			if (R == G && R == B) {	// Gray point
+				*send_lab_mc++ = 0.0;
+			} else {	// Color Point
+				*send_lab_mc++ = 1.0;
 			}
 		}
 	}
 
-	return source;
+	return send_lab_tensor;
 }
 
-// Layers: ["user layer"] + "auto layer"
-int color_source(int image_id, TENSOR *tensors[2])
+TENSOR *image_color_lab2rgb(TENSOR *send_lab_tensor, TENSOR *recv_ab_tensor)
 {
-	int i, n_layers, ret = RET_ERROR;
-	IMAGE *layers[2];
+	int i, n;
+	float *send_lab_lc, *recv_ab_ac, *recv_ab_bc;	// channels
+	float *blend_rgb_rc, *blend_rgb_gc, *blend_rgb_bc;
+	float L, a, b;
+	BYTE R, G, B;
+	TENSOR *blend_rgb_tensor = NULL;
 
-	n_layers = image_layers(image_id, ARRAY_SIZE(layers), layers);
+	CHECK_TENSOR(send_lab_tensor);
+	CHECK_TENSOR(recv_ab_tensor);
 
-	// Checking ...
-	if (n_layers < 1) {
-		g_message("Error: Image must at least have 1 layes, general 2, one for gray texture and the other for color.");
-		goto free_layers;
-	}
-	if (n_layers == 2) {
-		if (layers[0]->height != layers[1]->height || layers[0]->width != layers[1]->width) {
-			g_message("Error: The size of source layers is not same.");
-			goto free_layers;
-		}
+	if (send_lab_tensor->chan != 4) {
+		g_message("Error: send tensor is not LAB + alpha format.");
+		return NULL;
 	}
 
-	// Create tensors ...
-	if (n_layers == 2) {
-		tensors[0] = user_paint(layers[1], layers[0]);	// Will send to remote server
-		tensors[1] = auto_paint(layers[1]);				// Save source
-	} else {
-		tensors[0] = auto_paint(layers[0]);				// Will send to remote server
-		tensors[1] = tensor_copy(tensors[0]);			// Simple copy for save source
+	if (recv_ab_tensor->chan != 2) {
+		g_message("Error: this tensor is not genearated by color server.");
+		return NULL;
 	}
 
-	// PASS !!!
-	ret = RET_OK;
+	if (send_lab_tensor->batch != recv_ab_tensor->batch) {
+		g_message("Error: send tensor batch is not same as recvs");
+		return NULL;
+	}
 
-free_layers:
-	for (i = 0; i < n_layers; i++)
-		image_destroy(layers[i]);
+	if (send_lab_tensor->height != recv_ab_tensor->height || send_lab_tensor->width != recv_ab_tensor->width) {
+		g_message("Error: send tensor size is not same as recvs.");
+		return NULL;
+	}
 
-	return ret;
+	blend_rgb_tensor = tensor_create(send_lab_tensor->batch, 3, send_lab_tensor->height, send_lab_tensor->width);
+	CHECK_TENSOR(blend_rgb_tensor);
+
+
+	send_lab_lc = tensor_start_chan(send_lab_tensor, 0, 0);	// L
+	recv_ab_ac = tensor_start_chan(recv_ab_tensor, 0, 0);	// a
+	recv_ab_bc = tensor_start_chan(recv_ab_tensor, 0, 1);	// b
+
+	blend_rgb_rc = tensor_start_chan(blend_rgb_tensor, 0, 0);	// R
+	blend_rgb_gc = tensor_start_chan(blend_rgb_tensor, 0, 1);	// G
+	blend_rgb_bc = tensor_start_chan(blend_rgb_tensor, 0, 2);	// B
+
+	n = send_lab_tensor->height * send_lab_tensor->width;
+	for (i = 0; i < n; i++) {
+		L = *send_lab_lc++; L += 0.5; L *= 100.0;
+		a = *recv_ab_ac++; a *= 110.0;
+		b = *recv_ab_bc++; b *= 110;
+
+		color_lab2rgb(L, a, b, &R, &G, &B);
+
+		*blend_rgb_rc++ = (float)R/255.0;
+		*blend_rgb_gc++ = (float)G/255.0;
+		*blend_rgb_bc++ = (float)B/255.0;
+	}
+
+	return blend_rgb_tensor;
 }
+
 
 TENSOR *color_send_recv(int socket, TENSOR *send_tensor)
 {
@@ -185,7 +168,7 @@ TENSOR *color_rpc(TENSOR *send_rgb_tensor)
 {
 	int socket;
 	TENSOR *recv_rgb_tensor = NULL;
-	TENSOR *send_lab_tensor, *recv_lab_tensor;
+	TENSOR *send_lab_tensor, *recv_ab_tensor;
 
 	CHECK_TENSOR(send_rgb_tensor);
 
@@ -194,13 +177,12 @@ TENSOR *color_rpc(TENSOR *send_rgb_tensor)
 		g_message("Error: connect server.");
 		return NULL;
 	}
-	// Send Lab tensor
-	send_lab_tensor = NULL;
 
-	recv_lab_tensor = color_send_recv(socket, send_lab_tensor);
-	// Receive Fake lab
-
-	recv_rgb_tensor = NULL;
+	send_lab_tensor = image_color_rgb2lab(send_rgb_tensor);
+	recv_ab_tensor = color_send_recv(socket, send_lab_tensor);
+	recv_rgb_tensor = image_color_lab2rgb(send_lab_tensor, recv_ab_tensor);
+	tensor_destroy(recv_ab_tensor);
+	tensor_destroy(send_lab_tensor);
 
 	client_close(socket);
 
@@ -245,30 +227,6 @@ static void query(void)
 }
 
 static void
-run1(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
-{
-	static GimpParam values[1];
-	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
-	// GimpRunMode run_mode;
-
-	/* Setting mandatory output values */
-	*nreturn_vals = 1;
-	*return_vals = values;
-	values[0].type = GIMP_PDB_STATUS;
-
-	if (strcmp(name, PLUG_IN_PROC) != 0 || nparams < 3) {
-		values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
-		return;
-	}
-	values[0].data.d_status = status;
-
-	if (color(param[1].data.d_image) != RET_OK)
-		status = GIMP_PDB_EXECUTION_ERROR;
-
-	values[0].data.d_status = status;
-}
-
-static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
 	int x, y, height, width;
@@ -293,13 +251,11 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	// run_mode = (GimpRunMode)param[0].data.d_int32;
 	drawable = gimp_drawable_get(param[2].data.d_drawable);
 
-	if (!gimp_drawable_mask_intersect(drawable->drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
-		// Drawable region is empty.
-		height = drawable->height;
-		width = drawable->width;
-	}
-
+	x = y = 0;
+	height = drawable->height;
+	width = drawable->width;
 	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
+
 	if (tensor_valid(send_tensor)) {
 		gimp_progress_init("Coloring ...");
 
@@ -309,7 +265,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 		gimp_progress_update(0.8);
 		if (tensor_valid(recv_tensor)) {
-			tensor_togimp(recv_tensor, drawable, x, y, width, height);
+			tensor_display(recv_tensor, "color");	// Now source has target information !!!
 			tensor_destroy(recv_tensor);
 		}
 		else {
@@ -323,9 +279,9 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	}
 
 	// Update modified region
-	gimp_drawable_flush(drawable);
+	// gimp_drawable_flush(drawable);
 	// gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
-	gimp_drawable_update(drawable->drawable_id, x, y, width, height);
+	// gimp_drawable_update(drawable->drawable_id, x, y, width, height);
 
 	// Flush all ?
 	gimp_displays_flush();
