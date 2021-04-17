@@ -51,25 +51,25 @@ TENSOR *image_color_rgb2lab(TENSOR *send_rgb_tensor)
 		send_lab_mc = tensor_start_chan(send_lab_tensor, batch, 3);	// m -- mask 
 
 		for (i = 0; i < n; i++) {
-			R = (BYTE)((*send_rgb_rc++)*255.0);
-			G = (BYTE)((*send_rgb_gc++)*255.0);
-			B = (BYTE)((*send_rgb_bc++)*255.0);
+			R = (BYTE)(send_rgb_rc[i] * 255.0);
+			G = (BYTE)(send_rgb_gc[i] * 255.0);
+			B = (BYTE)(send_rgb_bc[i] * 255.0);
 
 			color_rgb2lab(R, G, B, &L, &a, &b);
 
-			*send_lab_lc++ = (L - 50.0)/100.0;
-			*send_lab_ac++ = a/110.0;
-			*send_lab_bc++ = b/110.0;
+			L = (L - 50.0)/100.0;
+			a /= 110.0;
+			b /= 110.0;
 
-			// Black or white, set 1.0, lambda >= 2% (255 * 2% == 5)
-			if ((R < 5 && G < 5 && B < 5) || (R > 250 && G > 250 && B > 250)) {
-				*send_lab_mc++ = 1.0;
+			send_lab_lc[i] = L;
+			send_lab_ac[i] = a;
+			send_lab_bc[i] = b;
+
+			// Black or white ?
+			if ((R < 10 && G < 10 && B < 10) || (R > 245 && G > 245 && B > 245)) {
+				send_lab_mc[i] = 1.0;
 			} else {
-				if (R == G && R == B) {	// Gray point
-					*send_lab_mc++ = 0.0;
-				} else {	// Color Point
-					*send_lab_mc++ = 1.0;
-				}
+				send_lab_mc[i] = (ABS(a) > 0.1 ||  ABS(b) > 0.1)? 1.0 : 0.0;
 			}
 		}
 	}

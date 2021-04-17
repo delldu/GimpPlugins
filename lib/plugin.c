@@ -241,13 +241,31 @@ int tensor_display(TENSOR *tensor, gchar *name_prefix)
 
 TENSOR *normal_rpc(int socket, TENSOR *send_tensor, int reqcode)
 {
-	int rescode;
+	int rescode = -1;
 	TENSOR *recv_tensor = NULL;
 
 	CHECK_TENSOR(send_tensor);
 
+#if 1
+	int i, n, debug;
+	float *mc = tensor_start_chan(send_tensor, 0, 3);
+	n = send_tensor->height * send_tensor->width;
+	debug = 0;
+	for (i = 0; i < n; i++)
+		if (mc[i] > 0.5)
+			debug++;
+	CheckPoint("debug = %d, n = %d, percent: %.2f", debug, n, (float)debug/(float)n);
+#endif
+	
     if (request_send(socket, reqcode, send_tensor) == RET_OK) {
         recv_tensor = response_recv(socket, &rescode);
+    }
+
+    if (rescode != reqcode) {
+    	// Bad service response
+    	syslog_error("reqcode = 0x%x, rescode = 0x%x", reqcode, rescode);
+    	tensor_destroy(recv_tensor);
+    	return NULL;
     }
 
 	return recv_tensor;
@@ -298,12 +316,12 @@ TENSOR *resize_rpc(int socket, TENSOR *send_tensor, int reqcode, int multiples)
 	resize_recv = NULL;
 	if (send_tensor->height == nh && send_tensor->width == nw) {
 		// Normal onnx RPC
-		resize_recv = normal_rpc(socket, send_tensor, reqcode);
+		recv_tensor = normal_rpc(socket, send_tensor, reqcode);
 	} else {
 		// Resize send, Onnx RPC, Resize recv
 		resize_send = tensor_zoom(send_tensor, nh, nw); CHECK_TENSOR(resize_send);
-		resize_recv = normal_rpc(socket, resize_send, reqcode);
-		recv_tensor = tensor_zoom(resize_recv, send_tensor->height, send_tensor->width);
+		resize_recv = normal_rpc(socket, resize_send, reqcode); CHECK_TENSOR(resize_recv);
+		recv_tensor = tensor_zoom(resize_recv, send_tensor->height, send_tensor->width); CHECK_TENSOR(recv_tensor);
 
 		tensor_destroy(resize_recv);
 		tensor_destroy(resize_send);
