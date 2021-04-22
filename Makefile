@@ -6,6 +6,7 @@
 #***
 #************************************************************************************/
 #
+export INSTALL_DIR=~/snap/gimp/current/.config/GIMP/2.10/plug-ins
 
 XSUBDIRS :=  \
 	lib \
@@ -19,6 +20,7 @@ XSUBDIRS :=  \
 
 
 BSUBDIRS :=
+
 
 all: 
 	@for d in $(XSUBDIRS)  ; do \
@@ -47,5 +49,12 @@ clean:
 	@for d in $(XSUBDIRS) ; do \
 		if [ -d $$d ] ; then \
 			$(MAKE) -C $$d clean || exit 1; \
+		fi \
+	done	
+
+test:
+	@for d in $(XSUBDIRS) ; do \
+		if [ -d $$d ] ; then \
+			$(MAKE) -C $$d test || exit 1; \
 		fi \
 	done	

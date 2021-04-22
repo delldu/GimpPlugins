@@ -246,17 +246,6 @@ TENSOR *normal_rpc(int socket, TENSOR *send_tensor, int reqcode)
 
 	CHECK_TENSOR(send_tensor);
 
-#if 1
-	int i, n, debug;
-	float *mc = tensor_start_chan(send_tensor, 0, 3);
-	n = send_tensor->height * send_tensor->width;
-	debug = 0;
-	for (i = 0; i < n; i++)
-		if (mc[i] > 0.5)
-			debug++;
-	CheckPoint("debug = %d, n = %d, percent: %.2f", debug, n, (float)debug/(float)n);
-#endif
-	
     if (request_send(socket, reqcode, send_tensor) == RET_OK) {
         recv_tensor = response_recv(socket, &rescode);
     }

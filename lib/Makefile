@@ -17,7 +17,7 @@ SOURCE :=  \
 	plugin.c
 
 DEFINES := 
-CFLAGS := -O2 -fPIC -Wall -Wextra
+CFLAGS := -O2 -fPIC -Wall -Wextra -Wno-deprecated-declarations
 LDFLAGS := -fPIC
 
 #****************************************************************************
@@ -55,6 +55,7 @@ depend:
 
 %.o : %.c
 	${CC} ${CFLAGS} ${INCS} -c $< -o $@
+
 
 install:
 	@echo "Nothing to do."

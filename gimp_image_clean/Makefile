@@ -6,8 +6,10 @@
 #***
 #************************************************************************************/
 #
-INSTALL_DIR := ~/snap/gimp/current/.config/GIMP/2.10/plug-ins
+INSTALL_DIR := $(shell grep INSTALL_DIR ../Makefile | cut -d '=' -f 2)
+
 TARGET := gimp_image_clean
+
 
 SOURCE :=  \
 	image_clean.c
@@ -17,7 +19,7 @@ LIBS	:= -L../lib -lplugin $(shell gimptool-2.0 --libs) $(shell nimagetool --libs
 
 DEFINES :=
 
-CFLAGS := -O2 -fPIC -Wall -Wextra
+CFLAGS := -O2 -fPIC -Wall -Wextra -Wno-deprecated-declarations
 LDFLAGS := -fPIC
 
 #****************************************************************************
@@ -35,6 +37,7 @@ all: ${TARGET}
 
 ${TARGET}: ${OBJECT}
 	${CC} ${LDFLAGS} -o ${TARGET} ${OBJECT} ${LIBS}
+
 
 install: ${TARGET}
 	install -m 755 ${TARGET} ${INSTALL_DIR}

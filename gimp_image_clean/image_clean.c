@@ -29,6 +29,7 @@ TENSOR *clean_rpc(TENSOR *send_tensor)
 	}
 
 	recv_tensor = normal_rpc(socket, send_tensor, IMAGE_CLEAN_REQCODE);
+
 	if (! tensor_valid(recv_tensor)) {
 		g_message("Error: Remote service is not available.");
 	}
@@ -85,6 +86,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	// GimpRunMode run_mode;
 	GimpDrawable *drawable;
+	gint32 image_id;
 	gint32 drawable_id;
 
 	/* Setting mandatory output values */
@@ -99,6 +101,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	values[0].data.d_status = status;
 
 	// run_mode = (GimpRunMode)param[0].data.d_int32;
+	image_id = param[1].data.d_drawable;
 	drawable_id = param[2].data.d_drawable;
 	drawable = gimp_drawable_get(drawable_id);
 
@@ -123,7 +126,10 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 		gimp_progress_update(0.8);
 		if (tensor_valid(recv_tensor)) {
+			gimp_image_undo_group_start(image_id);
 			tensor_togimp(recv_tensor, drawable, x, y, width, height);
+			gimp_image_undo_group_end(image_id);
+
 			tensor_destroy(recv_tensor);
 		}
 		else {

@@ -6,8 +6,6 @@
 #***
 #************************************************************************************/
 #
-INSTALL_DIR := ~/snap/gimp/current/.config/GIMP/2.10/plug-ins
-
 TARGET := gimp_image_blur
 
 SOURCE :=  \
