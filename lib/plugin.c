@@ -246,8 +246,8 @@ TENSOR *normal_rpc(int socket, TENSOR *send_tensor, int reqcode)
 
 	CHECK_TENSOR(send_tensor);
 
-    if (request_send(socket, reqcode, send_tensor) == RET_OK) {
-        recv_tensor = response_recv(socket, &rescode);
+    if (tensor_send(socket, reqcode, send_tensor) == RET_OK) {
+        recv_tensor = tensor_recv(socket, &rescode);
     }
 
     if (rescode != reqcode) {

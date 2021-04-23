@@ -38,9 +38,9 @@ TENSOR *image_nima(TENSOR *send_tensor)
 		return NULL;
 	}
 
-	ret = request_send(socket, IMAGE_NIMA_REQCODE, stand_tensor);
+	ret = tensor_send(socket, IMAGE_NIMA_REQCODE, stand_tensor);
 	if (ret == RET_OK) {
-		recv_tensor = response_recv(socket, &rescode);
+		recv_tensor = tensor_recv(socket, &rescode);
 		if (! tensor_valid(recv_tensor) || rescode != IMAGE_NIMA_REQCODE) {
 			g_message("Error: Remote service is not available.");
 		}

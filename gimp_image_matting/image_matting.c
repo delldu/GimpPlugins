@@ -98,16 +98,16 @@ TENSOR *matting_send_recv(int socket, TENSOR *send_tensor)
 	if (send_tensor->height == nh && send_tensor->width == nw) {
 		// Normal onnx RPC
 		normal_input(send_tensor);
-        if (request_send(socket, IMAGE_MATTING_REQCODE, send_tensor) == RET_OK) {
-            recv_tensor = response_recv(socket, &rescode);
+        if (tensor_send(socket, IMAGE_MATTING_REQCODE, send_tensor) == RET_OK) {
+            recv_tensor = tensor_recv(socket, &rescode);
             normal_output(recv_tensor);
         }
 	} else {
 		// Resize send, Onnx RPC, Resize recv
 		resize_send = tensor_zoom(send_tensor, nh, nw); CHECK_TENSOR(resize_send);
 		normal_input(resize_send);
-        if (request_send(socket, IMAGE_MATTING_REQCODE, resize_send) == RET_OK) {
-            resize_recv = response_recv(socket, &rescode);
+        if (tensor_send(socket, IMAGE_MATTING_REQCODE, resize_send) == RET_OK) {
+            resize_recv = tensor_recv(socket, &rescode);
         }
         normal_output(resize_recv);
 		recv_tensor = tensor_zoom(resize_recv, send_tensor->height, send_tensor->width);
