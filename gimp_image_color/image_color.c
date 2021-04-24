@@ -226,9 +226,13 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	drawable_id = param[2].data.d_drawable;
 	drawable = gimp_drawable_get(drawable_id);
 
+	// Support local color
 	x = y = 0;
-	height = drawable->height;
-	width = drawable->width;
+	if (! gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || height * width < 64) {
+		height = drawable->height;
+		width = drawable->width;
+	}
+
 	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
 	gimp_drawable_detach(drawable);
 

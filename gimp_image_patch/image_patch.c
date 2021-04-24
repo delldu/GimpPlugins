@@ -9,8 +9,6 @@
 #include "plugin.h"
 
 #define PLUG_IN_PROC "plug-in-gimp_image_patch"
-#define IMAGE_PATCH_SERVICE 0x0104
-#define IMAGE_PATCH_URL "tcp://127.0.0.1:9104"
 
 static void query(void);
 static void run(const gchar * name,
@@ -110,9 +108,12 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	drawable = gimp_drawable_get(drawable_id);
 
+	// Support local patch
 	x = y = 0;
-	height = drawable->height;
-	width = drawable->width;
+	if (! gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || height * width < 64) {
+		height = drawable->height;
+		width = drawable->width;
+	}
 
 	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
 	gimp_drawable_detach(drawable);

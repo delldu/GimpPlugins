@@ -136,8 +136,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	drawable = gimp_drawable_get(drawable_id);
 
 	x = y = 0;
-	if (!gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
-		// Drawable region is empty.
+	if (! gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || height * width < 64) {
 		height = drawable->height;
 		width = drawable->width;
 	}

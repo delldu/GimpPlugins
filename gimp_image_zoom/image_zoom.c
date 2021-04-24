@@ -66,12 +66,11 @@ TENSOR *zoom_rpc(TENSOR *send_tensor)
 		return NULL;
 	}
 
-	recv_tensor = normal_rpc(socket, send_tensor, IMAGE_ZOOM_SERVICE);
+	recv_tensor = normal_rpc(socket, send_tensor, IMAGE_ZOOM_SERVICE_WITH_PAN);
 	client_close(socket);
 
 	return recv_tensor;
 }
-
 
 static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
@@ -100,9 +99,13 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	drawable_id = param[2].data.d_drawable;
 	drawable = gimp_drawable_get(drawable_id);
 
+	// Support local zoom4x
 	x = y = 0;
-	height = drawable->height;
-	width = drawable->width;
+	if (! gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || height * width < 64) {
+		height = drawable->height;
+		width = drawable->width;
+	}
+
 	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
 	gimp_drawable_detach(drawable);
 
@@ -111,7 +114,13 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 		gimp_progress_update(0.1);
 
-		recv_tensor = zoom_rpc(send_tensor);
+		if (send_tensor->chan == 2 || send_tensor->chan == 4) {
+			send_tensor->chan = send_tensor->chan - 1;
+			recv_tensor = zoom_rpc(send_tensor);
+			send_tensor->chan = send_tensor->chan + 1;	// Restore
+		} else {
+			recv_tensor = zoom_rpc(send_tensor);
+		}
 
 		gimp_progress_update(0.8);
 		if (tensor_valid(recv_tensor)) {

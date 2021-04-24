@@ -103,8 +103,8 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	drawable = gimp_drawable_get(drawable_id);
 
 	x = y = 0;
-	if (!gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
-		// Drawable region is empty.
+	if (! gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || height * width  < 64) {
+		// Drawable region is too small
 		height = drawable->height;
 		width = drawable->width;
 	}
@@ -112,6 +112,13 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	// Clean server limited: only accept 4 times tensor, 'crop' is against crashing !!!
 	width = width/4; width *= 4;
 	height = height/4; height *= 4;
+
+	if (width < 4 || height < 4) {
+		g_message("Error: Clean image region is too small.");
+		gimp_drawable_detach(drawable);
+		values[0].data.d_status = GIMP_PDB_EXECUTION_ERROR;
+		return;
+	}
 
 	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
 	if (tensor_valid(send_tensor)) {
