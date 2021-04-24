@@ -112,7 +112,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		width = drawable->width;
 	}
 
-	// Clean server limited: only accept 4 times tensor, 'zoom out' is against crashing !!!
+	// Clean server limited: only accept 4 times tensor, 'crop' is against crashing !!!
 	width = width/4; width *= 4;
 	height = height/4; height *= 4;
 
@@ -122,14 +122,29 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 		gimp_progress_update(0.1);
 
-		recv_tensor = clean_rpc(send_tensor);
+		// Clean server accept 1x3xhxw
+		if (send_tensor->chan == 2) {
+			send_tensor->chan = 1;
+			recv_tensor = clean_rpc(send_tensor);
+			send_tensor->chan = 2;
+		} else {
+			recv_tensor = clean_rpc(send_tensor);
+		}
 
 		gimp_progress_update(0.8);
 		if (tensor_valid(recv_tensor)) {
-			gimp_image_undo_group_start(image_id);
-			tensor_togimp(recv_tensor, drawable, x, y, width, height);
-			gimp_image_undo_group_end(image_id);
+			TENSOR *final_tensor = tensor_reshape(recv_tensor, 
+				send_tensor->batch, send_tensor->chan, send_tensor->height, send_tensor->width);
 
+			if (tensor_valid(final_tensor)) {
+				if (send_tensor->chan == 2 || send_tensor->chan == 4)
+					tensor_setmask(final_tensor, 1.0);
+
+				gimp_image_undo_group_start(image_id);
+				tensor_togimp(final_tensor, drawable, x, y, width, height);
+				gimp_image_undo_group_end(image_id);
+				tensor_destroy(final_tensor);
+			}
 			tensor_destroy(recv_tensor);
 		}
 		else {
