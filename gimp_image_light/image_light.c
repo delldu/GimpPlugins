@@ -9,9 +9,6 @@
 #include "plugin.h"
 
 #define PLUG_IN_PROC "plug-in-gimp_image_light"
-#define IMAGE_LIGHT_REQCODE 0x0106
-// #define IMAGE_LIGHT_URL "ipc:///tmp/image_light.ipc"
-#define IMAGE_LIGHT_URL "tcp://127.0.0.1:9106"
 
 static void query(void);
 static void run(const gchar * name,
@@ -67,7 +64,7 @@ TENSOR *light_rpc(TENSOR *send_tensor)
 		g_message("Error: connect server.");
 		return NULL;
 	}
-	recv_tensor = normal_rpc(socket, send_tensor, IMAGE_LIGHT_REQCODE);
+	recv_tensor = normal_rpc(socket, send_tensor, IMAGE_LIGHT_SERVICE);
 
 	client_close(socket);
 

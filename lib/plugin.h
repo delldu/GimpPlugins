@@ -21,6 +21,29 @@ extern "C" {
 
 	#include <libgimp/gimp.h>
 
+
+	#define IMAGE_CLEAN_SERVICE 0x0101
+	#define IMAGE_CLEAN_URL "tcp://127.0.0.1:9101"
+
+	#define IMAGE_COLOR_SERVICE 0x0102
+	#define IMAGE_COLOR_URL "tcp://127.0.0.1:9102"
+
+	#define IMAGE_NIMA_SERVICE 0x0103
+	#define IMAGE_NIMA_URL "tcp://127.0.0.1:9103"
+
+	#define IMAGE_PATCH_SERVICE 0x0104
+	#define IMAGE_PATCH_URL "tcp://127.0.0.1:9104"
+
+	#define IMAGE_ZOOM_SERVICE 0x0105
+	#define IMAGE_ZOOM_URL "tcp://127.0.0.1:9105"
+
+	#define IMAGE_LIGHT_SERVICE 0x0106
+	#define IMAGE_LIGHT_URL "tcp://127.0.0.1:9106"
+
+	#define IMAGE_MATTING_SERVICE 0x0107
+	#define IMAGE_MATTING_URL "tcp://127.0.0.1:9107"
+
+
 	// Get image
 	TENSOR *tensor_fromgimp(GimpDrawable * drawable, int x, int y, int width, int height);
 

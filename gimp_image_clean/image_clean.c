@@ -9,9 +9,6 @@
 #include "plugin.h"
 
 #define PLUG_IN_PROC "plug-in-gimp_image_clean"
-#define IMAGE_CLEAN_REQCODE 0x0101
-// #define IMAGE_CLEAN_URL "ipc:///tmp/image_clean.ipc"
-#define IMAGE_CLEAN_URL "tcp://127.0.0.1:9101"
 
 static void query(void);
 static void run(const gchar * name,
@@ -28,7 +25,7 @@ TENSOR *clean_rpc(TENSOR *send_tensor)
 		return NULL;
 	}
 
-	recv_tensor = normal_rpc(socket, send_tensor, IMAGE_CLEAN_REQCODE);
+	recv_tensor = normal_rpc(socket, send_tensor, IMAGE_CLEAN_SERVICE);
 
 	if (! tensor_valid(recv_tensor)) {
 		g_message("Error: Remote service is not available.");

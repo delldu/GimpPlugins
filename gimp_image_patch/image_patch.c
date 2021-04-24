@@ -9,8 +9,7 @@
 #include "plugin.h"
 
 #define PLUG_IN_PROC "plug-in-gimp_image_patch"
-#define IMAGE_PATCH_REQCODE 0x0104
-// #define IMAGE_PATCH_URL "ipc:///tmp/image_patch.ipc"
+#define IMAGE_PATCH_SERVICE 0x0104
 #define IMAGE_PATCH_URL "tcp://127.0.0.1:9104"
 
 static void query(void);
@@ -37,7 +36,7 @@ TENSOR *patch_rpc(TENSOR *send_tensor)
 	}
 
 	// Server only accept 128 multiples
-	recv_tensor = zeropad_rpc(socket, send_tensor, IMAGE_PATCH_REQCODE, 128);
+	recv_tensor = zeropad_rpc(socket, send_tensor, IMAGE_PATCH_SERVICE, 128);
 	client_close(socket);
 
 	return recv_tensor;

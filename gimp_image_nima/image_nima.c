@@ -9,9 +9,6 @@
 #include "plugin.h"
 
 #define PLUG_IN_PROC "plug-in-gimp_image_nima"
-// #define IMAGE_NIMA_URL "ipc:///tmp/image_nima.ipc"
-#define IMAGE_NIMA_URL "tcp://127.0.0.1:9103"
-#define IMAGE_NIMA_REQCODE 0x0103
 
 static void query(void);
 static void run(const gchar * name,
@@ -38,10 +35,10 @@ TENSOR *image_nima(TENSOR *send_tensor)
 		return NULL;
 	}
 
-	ret = tensor_send(socket, IMAGE_NIMA_REQCODE, stand_tensor);
+	ret = tensor_send(socket, IMAGE_NIMA_SERVICE, stand_tensor);
 	if (ret == RET_OK) {
 		recv_tensor = tensor_recv(socket, &rescode);
-		if (! tensor_valid(recv_tensor) || rescode != IMAGE_NIMA_REQCODE) {
+		if (! tensor_valid(recv_tensor) || rescode != IMAGE_NIMA_SERVICE) {
 			g_message("Error: Remote service is not available.");
 		}
 	}	

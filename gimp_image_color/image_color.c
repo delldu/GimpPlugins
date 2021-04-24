@@ -10,11 +10,6 @@
 
 #define PLUG_IN_PROC "plug-in-gimp_image_color"
 
-#define IMAGE_COLOR_REQCODE 0x0102
-// #define IMAGE_COLOR_URL "ipc:///tmp/image_color.ipc"
-#define IMAGE_COLOR_URL "tcp://127.0.0.1:9102"
-
-
 static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
@@ -154,7 +149,7 @@ TENSOR *color_rpc(TENSOR *send_rgb_tensor)
 	send_lab_tensor = image_color_rgb2lab(send_rgb_tensor);
 
 	// Color server only accept 8 times !!!
-	recv_ab_tensor = resize_rpc(socket, send_lab_tensor, IMAGE_COLOR_REQCODE, 8);
+	recv_ab_tensor = resize_rpc(socket, send_lab_tensor, IMAGE_COLOR_SERVICE, 8);
 
 	if (tensor_valid(recv_ab_tensor)) {
 		recv_rgb_tensor = image_color_lab2rgb(send_lab_tensor, recv_ab_tensor);

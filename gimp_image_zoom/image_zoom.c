@@ -9,9 +9,6 @@
 #include "plugin.h"
 
 #define PLUG_IN_PROC "plug-in-gimp_image_zoom"
-#define IMAGE_ZOOM_REQCODE 0x0105
-// #define IMAGE_ZOOM_URL "ipc:///tmp/image_zoom.ipc"
-#define IMAGE_ZOOM_URL "tcp://127.0.0.1:9105"
 
 static void query(void);
 static void run(const gchar * name,
@@ -69,7 +66,7 @@ TENSOR *zoom_rpc(TENSOR *send_tensor)
 		return NULL;
 	}
 
-	recv_tensor = normal_rpc(socket, send_tensor, IMAGE_ZOOM_REQCODE);
+	recv_tensor = normal_rpc(socket, send_tensor, IMAGE_ZOOM_SERVICE);
 	client_close(socket);
 
 	return recv_tensor;
