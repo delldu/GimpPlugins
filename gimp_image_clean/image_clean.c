@@ -7,26 +7,13 @@
 ************************************************************************************/
 
 #include "plugin.h"
-#include <libgimp/gimpui.h>
+#include "clean_dialog.c"
 
 #define PLUG_IN_PROC "plug-in-gimp_image_clean"
 
 static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
-
-typedef struct {
-	gint32 method;
-	gint radius;
-} CleanOptions;
-
-/* Set up default values for options */
-static CleanOptions clean_options = {
-	IMAGE_CLEAN_SERVICE,		/* method */
-	3							/* radius */
-};
-
-static gboolean clean_dialog();
 
 
 TENSOR *clean_rpc(TENSOR *send_tensor)
@@ -40,6 +27,7 @@ TENSOR *clean_rpc(TENSOR *send_tensor)
 		return NULL;
 	}
 
+	// xxxx8888 Need add clean_options to msgcode here 
 	recv_tensor = normal_rpc(socket, send_tensor, IMAGE_CLEAN_SERVICE);
 
 	if (! tensor_valid(recv_tensor)) {
@@ -117,7 +105,6 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	drawable_id = param[2].data.d_drawable;
 	drawable = gimp_drawable_get(drawable_id);
 
-
 	switch (run_mode) {
 	case GIMP_RUN_INTERACTIVE:
 		/* Get options last values if needed */
@@ -131,7 +118,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 			status = GIMP_PDB_CALLING_ERROR;
 		if (status == GIMP_PDB_SUCCESS) {
 			clean_options.method = param[2].data.d_int32;
-			clean_options.radius = param[3].data.d_int32;
+			clean_options.strength = param[3].data.d_int32;
 		}
 		break;
 
@@ -225,101 +212,3 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 }
 
 
-static gboolean clean_dialog()
-{
-	GtkWidget *dialog;
-	GtkWidget *frame;
-	GtkWidget *main_vbox;
-
-	GtkWidget *method_hbox;
-	GtkWidget *radius_hbox;
-
-	GtkWidget *method_label;
-	GtkWidget *radius_label;
-	GtkWidget *method_spinbutton;
-	GtkWidget *radius_spinbutton;
-	GtkWidget *frame_label;
-
-	GtkObject *method_spinbutton_adj;
-	GtkObject *radius_spinbutton_adj;
-	gboolean run;
-
-	gimp_ui_init("clean", FALSE);
-
-	dialog = gimp_dialog_new("Image Clean", "clean",
-							 NULL, 0,
-							 gimp_standard_help_func, PLUG_IN_PROC,
-							 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_OK, GTK_RESPONSE_OK, NULL);
-
-	// Create Frame and add to window
-	frame = gtk_frame_new(NULL);
-	gtk_container_set_border_width(GTK_CONTAINER(frame), 6);
-
-	frame_label = gtk_label_new("<b>Modify</b>");
-	gtk_widget_show(frame_label);
-	gtk_frame_set_label_widget(GTK_FRAME(frame), frame_label);
-	gtk_label_set_use_markup(GTK_LABEL(frame_label), TRUE);
-	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), frame);
-	gtk_widget_show(frame);
-
-	// Create main_vbox and add tp frame
-	main_vbox = gtk_vbox_new(FALSE, 0);
-	gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 12);
-	gtk_container_add(GTK_CONTAINER(GTK_FRAME(frame)), main_vbox);
-	gtk_widget_show (main_vbox);
-
-	// Create method hbox and pack to main_vbox
-	method_hbox = gtk_hbox_new(FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (main_vbox), method_hbox, TRUE, TRUE, 0);
-	gtk_widget_show(method_hbox);
-
-	method_label = gtk_label_new_with_mnemonic("_Method:");
-	gtk_widget_show(method_label);
-	gtk_box_pack_start(GTK_BOX(method_hbox), method_label, FALSE, FALSE, 6);
-	gtk_label_set_justify(GTK_LABEL(method_label), GTK_JUSTIFY_RIGHT);
-
-	method_spinbutton = gimp_spin_button_new(&method_spinbutton_adj, clean_options.method, 1, 32, 1, 1, 1, 5, 0);
-	gtk_box_pack_start(GTK_BOX(method_hbox), method_spinbutton, FALSE, FALSE, 0);
-	gtk_widget_show(method_spinbutton);
-
-	// // GtkWidget *fixed = gtk_fixed_new();
-
-	// // GtkWidget *combo = gtk_combo_box_new_text();
-	// // gtk_combo_box_append_text(GTK_COMBO_BOX(combo), "Ubuntu");
-	// // gtk_combo_box_append_text(GTK_COMBO_BOX(combo), "Mandriva");
-	// // gtk_combo_box_append_text(GTK_COMBO_BOX(combo), "Fedora");
-	// // gtk_combo_box_append_text(GTK_COMBO_BOX(combo), "Mint");
-	// // gtk_combo_box_append_text(GTK_COMBO_BOX(combo), "Gentoo");
-	// // gtk_combo_box_append_text(GTK_COMBO_BOX(combo), "Debian");
-
-	// // gtk_fixed_put(GTK_FIXED(fixed), combo, 50, 50);
-	// // // gtk_box_pack_start(GTK_BOX(method_hbox), fixed, FALSE, FALSE, 6);
-	// // gtk_container_add(GTK_BOX(method_hbox), fixed);
-
-	// Create radius_hbox and packaed to main_vbox
-	radius_hbox = gtk_hbox_new(FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (main_vbox), radius_hbox, TRUE, TRUE, 0);
-
-	gtk_widget_show(radius_hbox);
-
-	radius_label = gtk_label_new_with_mnemonic("_Radius:");
-	gtk_widget_show(radius_label);
-	gtk_box_pack_start(GTK_BOX(radius_hbox), radius_label, FALSE, FALSE, 6);
-	gtk_label_set_justify(GTK_LABEL(radius_label), GTK_JUSTIFY_RIGHT);
-
-	radius_spinbutton = gimp_spin_button_new(&radius_spinbutton_adj, clean_options.radius, 1, 32, 1, 1, 1, 5, 0);
-	gtk_box_pack_start(GTK_BOX(radius_hbox), radius_spinbutton, FALSE, FALSE, 0);
-	gtk_widget_show(radius_spinbutton);
-
-	// Create connection signal for clean_options
-	g_signal_connect(method_spinbutton_adj, "value_changed", G_CALLBACK(gimp_int_adjustment_update), &clean_options.method);
-	g_signal_connect(radius_spinbutton_adj, "value_changed", G_CALLBACK(gimp_int_adjustment_update), &clean_options.radius);
-
-	gtk_widget_show(dialog);
-
-	run = (gimp_dialog_run(GIMP_DIALOG(dialog)) == GTK_RESPONSE_OK);
-
-	gtk_widget_destroy(dialog);
-
-	return run;
-}

@@ -6,7 +6,7 @@
 #***
 #************************************************************************************/
 #
-INSTALL_DIR := $(shell grep INSTALL_DIR ../Makefile | cut -d '=' -f 2)
+INSTALL_DIR := $(shell grep -w INSTALL_DIR ../Makefile | cut -d '=' -f 2)
 
 TARGET := gimp_image_light
 

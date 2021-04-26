@@ -6,7 +6,7 @@
 #***
 #************************************************************************************/
 #
-export INSTALL_DIR=~/snap/gimp/current/.config/GIMP/2.10/plug-ins
+INSTALL_DIR=~/snap/gimp/current/.config/GIMP/2.10/plug-ins
 
 XSUBDIRS :=  \
 	lib \

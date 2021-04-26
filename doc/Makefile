@@ -6,10 +6,10 @@
 #***
 #************************************************************************************/
 #
-TARGET := gimp_image_blur
+TARGET := gimp-plugin-template-2.2.0
 
-SOURCE :=  \
-	image_blur.c
+SOURCE :=  interface.c  main.c  render.c
+
 
 INCS	:= -I../lib $(shell gimptool-2.0 --cflags) $(shell nimagetool --cflags)
 LIBS	:= -L../lib -lplugin $(shell gimptool-2.0 --libs) $(shell nimagetool --libs)
