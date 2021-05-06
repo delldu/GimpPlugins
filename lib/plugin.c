@@ -250,7 +250,7 @@ TENSOR *normal_rpc(int socket, TENSOR *send_tensor, int reqcode)
         recv_tensor = tensor_recv(socket, &rescode);
     }
 
-    if (rescode != reqcode) {
+    if (SERVICE_CODE(rescode) != SERVICE_CODE(reqcode)) {
     	// Bad service response
     	syslog_error("reqcode = 0x%x, rescode = 0x%x", reqcode, rescode);
     	tensor_destroy(recv_tensor);

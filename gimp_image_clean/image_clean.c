@@ -16,7 +16,7 @@ static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
 
-TENSOR *clean_rpc(TENSOR *send_tensor)
+TENSOR *clean_rpc(TENSOR *send_tensor, int msgcode)
 {
 	int socket;
 	TENSOR *recv_tensor = NULL;
@@ -28,7 +28,7 @@ TENSOR *clean_rpc(TENSOR *send_tensor)
 	}
 
 	// xxxx8888 Need add clean_options to msgcode here 
-	recv_tensor = normal_rpc(socket, send_tensor, IMAGE_CLEAN_SERVICE);
+	recv_tensor = normal_rpc(socket, send_tensor, msgcode);
 
 	if (! tensor_valid(recv_tensor)) {
 		g_message("Error: Remote service is not available.");
@@ -79,7 +79,7 @@ static void query(void)
 static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
-	int x, y, height, width;
+	int x, y, height, width, msgcode;
 	TENSOR *send_tensor, *recv_tensor;
 
 	static GimpParam values[1];
@@ -131,6 +131,8 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		break;
 	}
 
+	msgcode = DEFINE_SERVICE(clean_options.method, clean_options.strength);
+
 	x = y = 0;
 	if (! gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || height * width  < 64) {
 		// Drawable region is too small
@@ -159,10 +161,10 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		// Clean server accept 1x3xhxw
 		if (send_tensor->chan == 2) {
 			send_tensor->chan = 1;
-			recv_tensor = clean_rpc(send_tensor);
+			recv_tensor = clean_rpc(send_tensor, msgcode);
 			send_tensor->chan = 2;
 		} else {
-			recv_tensor = clean_rpc(send_tensor);
+			recv_tensor = clean_rpc(send_tensor, msgcode);
 		}
 
 		gimp_progress_update(0.8);

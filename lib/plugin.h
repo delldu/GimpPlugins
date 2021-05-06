@@ -18,7 +18,7 @@ extern "C" {
 #include <stdlib.h>
 
 	#include <nimage/image.h>
-	#include <onnx_service.h>
+	#include <vision_service.h>
 
 	#include <libgimp/gimp.h>
 	#include <libgimp/gimpui.h>
