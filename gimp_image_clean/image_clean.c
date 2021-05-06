@@ -27,7 +27,6 @@ TENSOR *clean_rpc(TENSOR *send_tensor, int msgcode)
 		return NULL;
 	}
 
-	// xxxx8888 Need add clean_options to msgcode here 
 	recv_tensor = normal_rpc(socket, send_tensor, msgcode);
 
 	if (! tensor_valid(recv_tensor)) {
