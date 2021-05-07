@@ -10,6 +10,9 @@
 
 #define PLUG_IN_PROC "plug-in-gimp_image_zoom"
 
+#include "zoom_dialog.c"
+
+
 static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
@@ -53,7 +56,7 @@ static void query(void)
 
 
 // remote_procee_call
-TENSOR *zoom_rpc(TENSOR *send_tensor)
+TENSOR *zoom_rpc(TENSOR *send_tensor, int msgcode)
 {
 	int socket;
 	TENSOR *recv_tensor = NULL;
@@ -66,7 +69,7 @@ TENSOR *zoom_rpc(TENSOR *send_tensor)
 		return NULL;
 	}
 
-	recv_tensor = normal_rpc(socket, send_tensor, IMAGE_ZOOM_SERVICE_WITH_PAN);
+	recv_tensor = normal_rpc(socket, send_tensor, msgcode);
 	client_close(socket);
 
 	return recv_tensor;
@@ -75,12 +78,12 @@ TENSOR *zoom_rpc(TENSOR *send_tensor)
 static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
-	int x, y, height, width;
+	int x, y, height, width, msgcode;
 	TENSOR *send_tensor, *recv_tensor;
 
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
-	// GimpRunMode run_mode;
+	GimpRunMode run_mode;
 	GimpDrawable *drawable;
 	gint32 drawable_id;
 
@@ -95,9 +98,36 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	}
 	values[0].data.d_status = status;
 
-	// run_mode = (GimpRunMode)param[0].data.d_int32;
+	run_mode = (GimpRunMode)param[0].data.d_int32;
 	drawable_id = param[2].data.d_drawable;
 	drawable = gimp_drawable_get(drawable_id);
+
+	switch (run_mode) {
+	case GIMP_RUN_INTERACTIVE:
+		/* Get options last values if needed */
+		gimp_get_data(PLUG_IN_PROC, &zoom_options);
+		if (! zoom_dialog())
+			return;
+		break;
+
+	case GIMP_RUN_NONINTERACTIVE:
+		if (nparams != 4)
+			status = GIMP_PDB_CALLING_ERROR;
+		if (status == GIMP_PDB_SUCCESS) {
+			zoom_options.method = param[2].data.d_int32;
+		}
+		break;
+
+	case GIMP_RUN_WITH_LAST_VALS:
+		/*  Get options last values if needed  */
+		gimp_get_data(PLUG_IN_PROC, &zoom_options);
+		break;
+
+	default:
+		break;
+	}
+
+	msgcode = DEFINE_SERVICE(zoom_options.method, 0);
 
 	// Support local zoom4x
 	x = y = 0;
@@ -116,10 +146,10 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 		if (send_tensor->chan == 2 || send_tensor->chan == 4) {
 			send_tensor->chan = send_tensor->chan - 1;
-			recv_tensor = zoom_rpc(send_tensor);
+			recv_tensor = zoom_rpc(send_tensor, msgcode);
 			send_tensor->chan = send_tensor->chan + 1;	// Restore
 		} else {
-			recv_tensor = zoom_rpc(send_tensor);
+			recv_tensor = zoom_rpc(send_tensor, msgcode);
 		}
 
 		gimp_progress_update(0.8);

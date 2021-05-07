@@ -11,33 +11,30 @@
 
 typedef struct {
 	gint32 method;
-	gint strength;				// Noise level
-} CleanOptions;
+} ZoomOptions;
 
 /* Set up default values for options */
-static CleanOptions clean_options = {
-	IMAGE_CLEAN_SERVICE,		/* method */
-	5							/* strength */
+static ZoomOptions zoom_options = {
+	IMAGE_ZOOM_SERVICE_WITH_PAN,		/* method */
 };
 
 #define SCALE_WIDTH        256
 #define SPIN_BUTTON_WIDTH   96
 
-gboolean clean_dialog()
+gboolean zoom_dialog()
 {
 	GtkWidget *dialog;
 	GtkWidget *main_vbox;
 	GtkWidget *frame;
 	GtkWidget *table;
 	GtkWidget *combo;
-	GtkObject *adj;
 	gboolean run;
 
 	gimp_ui_init("clean", FALSE);
 
-	dialog = gimp_dialog_new("Image Clean", "clean",
+	dialog = gimp_dialog_new("Image Zoom", "zoom",
 							 NULL, 0,
-							 gimp_standard_help_func, "plug-in-gimp_image_clean",
+							 gimp_standard_help_func, "plug-in-gimp_image_zoom",
 							 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_OK, GTK_RESPONSE_OK, NULL);
 	// gtk_widget_set_size_request(dialog, 640, 480);
 
@@ -48,7 +45,7 @@ gboolean clean_dialog()
 	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), main_vbox);
 
 	// Create method frame and add to main_vbox
-	frame = gimp_frame_new("Clean Parameters");
+	frame = gimp_frame_new("Zoom Parameters");
 	// void gtk_box_pack_start (GtkBox *box, GtkWidget *child, gboolean expand, gboolean fill, guint padding);  
 	gtk_box_pack_start(GTK_BOX(main_vbox), frame, FALSE, FALSE, 8);
 	gtk_container_set_border_width(GTK_CONTAINER(frame), 2);
@@ -64,34 +61,17 @@ gboolean clean_dialog()
 	gtk_widget_show(table);
 
 	// GtkWidget * gimp_int_combo_box_new (const gchar *first_label, gint first_value, ...)
-	combo = gimp_int_combo_box_new("Deep Cleaning", IMAGE_CLEAN_SERVICE,
-								   "CUDA BM3d", IMAGE_CLEAN_SERVICE_WITH_BM3D,
-								   "Guided Filter", IMAGE_CLEAN_SERVICE_WITH_GUIDED_FILTER,
-								   "Haze Filter", IMAGE_CLEAN_SERVICE_WITH_DEHAZE,
+	combo = gimp_int_combo_box_new("Fast", IMAGE_ZOOM_SERVICE_WITH_PAN,
+								   "Normal", IMAGE_ZOOM_SERVICE,
 								    NULL);
-	gimp_int_combo_box_set_active(GIMP_INT_COMBO_BOX(combo), clean_options.method);
-	g_signal_connect(combo, "changed", G_CALLBACK(gimp_int_combo_box_get_active), &clean_options.method);
+	gimp_int_combo_box_set_active(GIMP_INT_COMBO_BOX(combo), zoom_options.method);
+	g_signal_connect(combo, "changed", G_CALLBACK(gimp_int_combo_box_get_active), &zoom_options.method);
 
 	// GtkWidget *gimp_table_attach_aligned(GtkTable *table, gint column, gint row,
 	//                   const gchar *label_text, gfloat xalign, gfloat yalign,
 	//                   GtkWidget *widget, gint colspan, gboolean left_align);
 	gimp_table_attach_aligned(GTK_TABLE(table), 0, 0, "Method: ", 0.0, 0.5, combo, 1, FALSE);
 
-	// GtkObject *gimp_scale_entry_new(GtkTable *table, gint column, gint row,
-	//  const gchar *text, gint scale_width, gint spinbutton_width,
-	//  gdouble value, gdouble lower, gdouble upper,
-	//  gdouble step_increment, gdouble  page_increment,
-	//  guint digits,
-	//  gboolean constrain,
-	//  gdouble unconstrained_lower,
-	//  gdouble unconstrained_upper,
-	//  const gchar *tooltip, const gchar *help_id);
-
-	adj = gimp_scale_entry_new(GTK_TABLE(table), 0, 1,
-							   "Strength: ", SCALE_WIDTH, SPIN_BUTTON_WIDTH,
-							   clean_options.strength, 0, 100 /*[lo, up] */ , 1, 10 /*step */ , 0, TRUE, 0, 0,
-							   "Clean Strength", NULL);
-	g_signal_connect(adj, "value_changed", G_CALLBACK(gimp_int_adjustment_update), &clean_options.strength);
 
 	gtk_widget_show(main_vbox);
 	gtk_widget_show(dialog);

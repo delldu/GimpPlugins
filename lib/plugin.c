@@ -268,7 +268,7 @@ TENSOR *zeropad_rpc(int socket, TENSOR *send_tensor, int reqcode, int multiples)
 
 	CHECK_TENSOR(send_tensor);
 
-	// Server only accept 128 times tensor !!!
+	// Server only accept multiples tensor !!!
 	nh = (send_tensor->height + multiples - 1)/multiples; nh *= multiples;
 	nw = (send_tensor->width + multiples - 1)/multiples; nw *= multiples;
 

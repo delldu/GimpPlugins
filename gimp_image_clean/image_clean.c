@@ -152,6 +152,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	}
 
 	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
+
 	if (tensor_valid(send_tensor)) {
 		gimp_progress_init("Clean ...");
 
