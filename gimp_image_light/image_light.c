@@ -10,6 +10,8 @@
 
 #define PLUG_IN_PROC "plug-in-gimp_image_light"
 
+#include "light_dialog.c"
+
 static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
@@ -48,11 +50,11 @@ static void query(void)
 						   "Copyright Dell Du <18588220928@163.com>",
 						   "2020-2021", "_Light", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
 }
 
 
-TENSOR *light_rpc(TENSOR *send_tensor)
+TENSOR *light_rpc(TENSOR *send_tensor, int msgcode)
 {
 	int socket;
 	TENSOR *recv_tensor = NULL;
@@ -64,7 +66,7 @@ TENSOR *light_rpc(TENSOR *send_tensor)
 		g_message("Error: connect server.");
 		return NULL;
 	}
-	recv_tensor = normal_rpc(socket, send_tensor, IMAGE_LIGHT_SERVICE);
+	recv_tensor = normal_rpc(socket, send_tensor, msgcode);
 
 	client_close(socket);
 
@@ -74,12 +76,12 @@ TENSOR *light_rpc(TENSOR *send_tensor)
 static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
-	int x, y, height, width;
+	int x, y, height, width, msgcode;
 	TENSOR *send_tensor, *recv_tensor;
 
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
-	// GimpRunMode run_mode;
+	GimpRunMode run_mode;
 	GimpDrawable *drawable;
 	gint32 image_id;
 	gint32 drawable_id;
@@ -95,10 +97,37 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	}
 	values[0].data.d_status = status;
 
-	// run_mode = (GimpRunMode)param[0].data.d_int32;
+	run_mode = (GimpRunMode)param[0].data.d_int32;
 	image_id = param[1].data.d_drawable;
 	drawable_id = param[2].data.d_drawable;
 	drawable = gimp_drawable_get(drawable_id);
+
+	switch (run_mode) {
+	case GIMP_RUN_INTERACTIVE:
+		/* Get options last values if needed */
+		gimp_get_data(PLUG_IN_PROC, &light_options);
+		if (! light_dialog())
+			return;
+		break;
+
+	case GIMP_RUN_NONINTERACTIVE:
+		if (nparams != 4)
+			status = GIMP_PDB_CALLING_ERROR;
+		if (status == GIMP_PDB_SUCCESS) {
+			light_options.method = param[2].data.d_int32;
+		}
+		break;
+
+	case GIMP_RUN_WITH_LAST_VALS:
+		/*  Get options last values if needed  */
+		gimp_get_data(PLUG_IN_PROC, &light_options);
+		break;
+
+	default:
+		break;
+	}
+
+	msgcode = DEFINE_SERVICE(light_options.method, 0);
 
 	// Support local lighting
 	x = y = 0;
@@ -113,7 +142,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 		gimp_progress_update(0.1);
 
-		recv_tensor = light_rpc(send_tensor);
+		recv_tensor = light_rpc(send_tensor, msgcode);
 
 		gimp_progress_update(0.8);
 		if (tensor_valid(recv_tensor)) {

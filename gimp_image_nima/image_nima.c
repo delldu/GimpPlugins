@@ -65,8 +65,8 @@ void dump_result(TENSOR *recv_tensor)
 		mean += recv_tensor->data[i] * (i + 1.0);
 	}
 
-	snprintf(str, sizeof(str), "%6.4f", mean);
-	g_message("Image Nima: %s", str);
+	snprintf(str, sizeof(str), "%6.2f", mean);
+	g_message("Quality: %s\n", str);
 }
 
 
@@ -104,7 +104,7 @@ static void query(void)
 						   "Copyright Dell Du <18588220928@163.com>",
 						   "2020-2021", "_Nima", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
 }
 
 static void

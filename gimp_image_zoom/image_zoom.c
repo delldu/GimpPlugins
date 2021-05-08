@@ -51,7 +51,7 @@ static void query(void)
 						   "Copyright Dell Du <18588220928@163.com>",
 						   "2020-2021", "_Zoom4x", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
 }
 
 
