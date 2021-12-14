@@ -10,9 +10,7 @@
 #include "plugin.h"
 
 #define IMAGE_CLEAN_SERVICE 0x01
-#define IMAGE_CLEAN_SERVICE_WITH_GUIDED_FILTER 0x02
-#define IMAGE_CLEAN_SERVICE_WITH_BM3D 0x03
-#define IMAGE_CLEAN_SERVICE_WITH_WEATHER 0x04
+#define IMAGE_CLEAN_SERVICE_WITH_WEATHER 0x02
 
 typedef struct {
 	gint32 method;
@@ -22,7 +20,7 @@ typedef struct {
 /* Set up default values for options */
 static CleanOptions clean_options = {
 	IMAGE_CLEAN_SERVICE,		/* method */
-	5							/* strength */
+	10							/* strength */
 };
 
 #define SCALE_WIDTH        256
@@ -70,8 +68,8 @@ gboolean clean_dialog()
 
 	// GtkWidget * gimp_int_combo_box_new (const gchar *first_label, gint first_value, ...)
 	combo = gimp_int_combo_box_new("Deep Cleaning", IMAGE_CLEAN_SERVICE,
-								   "CUDA BM3d", IMAGE_CLEAN_SERVICE_WITH_BM3D,
-								   "Guided Filter", IMAGE_CLEAN_SERVICE_WITH_GUIDED_FILTER,
+								   // "CUDA BM3d", IMAGE_CLEAN_SERVICE_WITH_BM3D,
+								   // "Guided Filter", IMAGE_CLEAN_SERVICE_WITH_GUIDED_FILTER,
 								   "Weather Filter", IMAGE_CLEAN_SERVICE_WITH_WEATHER,
 								    NULL);
 	gimp_int_combo_box_set_active(GIMP_INT_COMBO_BOX(combo), clean_options.method);

@@ -206,13 +206,20 @@ IMAGE *normal_service(char *service_name, IMAGE *send_image, char *addon)
 	TASKSET *tasks;
 	TIME start_time, wait_time;
 	IMAGE *recv_image = NULL;
-	char input_file[256], output_file[256], command[TASK_BUFFER_LEN];
+	char input_file[256], output_file[256], command[TASK_BUFFER_LEN], home_workspace[256];
 
 	CHECK_IMAGE(send_image);
 
-	make_dir(PAI_WORKSPACE);
-	get_temp_fname(PAI_WORKSPACE, ".png", input_file, sizeof(input_file));
-	get_temp_fname(PAI_WORKSPACE, ".png", output_file, sizeof(output_file));
+	snprintf(home_workspace, sizeof(home_workspace), "%s/%s", getenv("HOME"), PAI_WORKSPACE);
+
+	make_dir(home_workspace);
+	get_temp_fname(home_workspace, ".png", input_file, sizeof(input_file));
+	get_temp_fname(home_workspace, ".png", output_file, sizeof(output_file));
+
+	image_save(send_image, input_file);
+
+	CheckPoint("input_file = %s", input_file);
+	CheckPoint("output_file = %s", output_file);
 
 	if (addon) {
 		snprintf(command, sizeof(command), "%s(input_file=%s,%s,output_file=%s)", 
@@ -221,6 +228,8 @@ IMAGE *normal_service(char *service_name, IMAGE *send_image, char *addon)
 		snprintf(command, sizeof(command), "%s(input_file=%s,output_file=%s)", 
 			service_name, input_file, output_file);
 	}
+
+	CheckPoint("command = %s", command);
 
 	tasks = taskset_create(PAI_TASKSET);
 	if (set_queue_task(tasks, command, &taska) != RET_OK)
@@ -237,8 +246,12 @@ IMAGE *normal_service(char *service_name, IMAGE *send_image, char *addon)
 	}
 	gimp_progress_update(0.9);
 	if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
+		CheckPoint("OK !!!");
 		recv_image = image_load(output_file);
+	} else {
+		CheckPoint("NOK !!!");
 	}
+
 	// unlink(input_file);
 	// unlink(output_file);
 

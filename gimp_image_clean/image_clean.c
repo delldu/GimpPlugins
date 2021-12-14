@@ -17,18 +17,14 @@ static void run(const gchar * name,
 
 IMAGE *clean_service(IMAGE *send_image, int msgcode)
 {
-	// xxxx8888 sigma ?
-	if (msgcode == IMAGE_CLEAN_SERVICE_WITH_GUIDED_FILTER)
-		return normal_service("image_clean_with_guided_filter", send_image, NULL);
+	char addon[256];
 
-	if (msgcode == IMAGE_CLEAN_SERVICE_WITH_BM3D)
-		return normal_service("image_clean_with_bm3d", send_image, NULL);
-
-	// Deep learning
+	snprintf(addon, sizeof(addon), "sigma=%d", clean_options.strength);
+	// TransWeather model
 	if (msgcode == IMAGE_CLEAN_SERVICE_WITH_WEATHER)
-		return normal_service("image_clean_with_weather", send_image, NULL);
+		return normal_service("image_clean_with_weather", send_image, addon);
 
-	return normal_service("image_clean", send_image, NULL);
+	return normal_service("image_clean", send_image, addon);
 }
 
 GimpPlugInInfo PLUG_IN_INFO = {

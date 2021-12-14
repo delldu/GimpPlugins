@@ -6,7 +6,6 @@
 ***
 ************************************************************************************/
 
-
 #ifndef _PLUGIN_H
 #define _PLUGIN_H
 
@@ -18,7 +17,6 @@ extern "C" {
 #include <stdlib.h>
 
 	#include <nimage/image.h>
-	// #include <vision_service.h>
 	#include <redos/redos.h>
 
 	#include <libgimp/gimp.h>
@@ -26,7 +24,7 @@ extern "C" {
 
 	#define GIMP_PLUGIN_VERSION "1.1.0"
 	#define PAI_TASKSET "PAI"
-	#define PAI_WORKSPACE "/tmp/gimp/"
+	#define PAI_WORKSPACE "tmp/"
 
 	IMAGE *image_fromgimp(GimpDrawable * drawable, int x, int y, int width, int height);
 	int image_togimp(IMAGE * image, GimpDrawable * drawable, int x, int y, int width, int height);
