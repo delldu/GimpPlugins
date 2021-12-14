@@ -26,6 +26,15 @@ GimpPlugInInfo PLUG_IN_INFO = {
 
 MAIN()
 
+IMAGE *light_service(IMAGE *send_image, gint32 msgcode)
+{
+	if (msgcode == IMAGE_LIGHT_SERVICE_WITH_CLAHE)
+		return normal_service("image_light_with_clahe", send_image, NULL);
+	// else
+	return normal_service("image_light", send_image, NULL);
+}
+
+
 static void query(void)
 {
 	static GimpParamDef args[] = {
@@ -53,31 +62,11 @@ static void query(void)
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
 }
 
-
-TENSOR *light_rpc(TENSOR *send_tensor, int msgcode)
-{
-	int socket;
-	TENSOR *recv_tensor = NULL;
-
-	CHECK_TENSOR(send_tensor);
-
-	socket = client_open(IMAGE_LIGHT_URL);
-	if (socket < 0) {
-		g_message("Error: connect server.");
-		return NULL;
-	}
-	recv_tensor = normal_rpc(socket, send_tensor, msgcode);
-
-	client_close(socket);
-
-	return recv_tensor;
-}
-
 static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
-	int x, y, height, width, msgcode;
-	TENSOR *send_tensor, *recv_tensor;
+	int x, y, height, width;
+	IMAGE *send_image, *recv_image;
 
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
@@ -127,8 +116,6 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		break;
 	}
 
-	msgcode = DEFINE_SERVICE(light_options.method, 0);
-
 	// Support local lighting
 	x = y = 0;
 	if (! gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || height * width < 64) {
@@ -136,27 +123,23 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		width = drawable->width;
 	}
 
-	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
-	if (tensor_valid(send_tensor)) {
+	send_image = image_fromgimp(drawable, x, y, width, height);
+	if (image_valid(send_image)) {
 		gimp_progress_init("Lighting ...");
 
-		gimp_progress_update(0.1);
+		recv_image = light_service(send_image, light_options.method);
 
-		recv_tensor = light_rpc(send_tensor, msgcode);
-
-		gimp_progress_update(0.8);
-		if (tensor_valid(recv_tensor)) {
-
+		if (image_valid(recv_image)) {
 			gimp_image_undo_group_start(image_id);
-			tensor_togimp(recv_tensor, drawable, x, y, width, height);
+			image_togimp(recv_image, drawable, x, y, width, height);
 			gimp_image_undo_group_end(image_id);
 
-			tensor_destroy(recv_tensor);
+			image_destroy(recv_image);
 		}
 		else {
 			g_message("Error: Light remote service is not avaible.");
 		}
-		tensor_destroy(send_tensor);
+		image_destroy(send_image);
 		gimp_progress_update(1.0);
 	} else {
 		g_message("Error: Light image is not valid (NO RGB).");

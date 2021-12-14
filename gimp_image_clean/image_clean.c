@@ -15,27 +15,20 @@ static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-
-TENSOR *clean_rpc(TENSOR *send_tensor, int msgcode)
+IMAGE *clean_service(IMAGE *send_image, int msgcode)
 {
-	int socket;
-	TENSOR *recv_tensor = NULL;
+	// xxxx8888 sigma ?
+	if (msgcode == IMAGE_CLEAN_SERVICE_WITH_GUIDED_FILTER)
+		return normal_service("image_clean_with_guided_filter", send_image, NULL);
 
-	socket = client_open(IMAGE_CLEAN_URL);
-	if (socket < 0) {
-		g_message("Error: connect server.");
-		return NULL;
-	}
+	if (msgcode == IMAGE_CLEAN_SERVICE_WITH_BM3D)
+		return normal_service("image_clean_with_bm3d", send_image, NULL);
 
-	recv_tensor = normal_rpc(socket, send_tensor, msgcode);
+	// Deep learning
+	if (msgcode == IMAGE_CLEAN_SERVICE_WITH_WEATHER)
+		return normal_service("image_clean_with_weather", send_image, NULL);
 
-	if (! tensor_valid(recv_tensor)) {
-		g_message("Error: Remote service is not available.");
-	}
-
-	client_close(socket);
-
-	return recv_tensor;
+	return normal_service("image_clean", send_image, NULL);
 }
 
 GimpPlugInInfo PLUG_IN_INFO = {
@@ -78,8 +71,8 @@ static void query(void)
 static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
-	int x, y, height, width, msgcode;
-	TENSOR *send_tensor, *recv_tensor;
+	int x, y, height, width;
+	IMAGE *send_image, *recv_image;
 
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
@@ -130,8 +123,6 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		break;
 	}
 
-	msgcode = DEFINE_SERVICE(clean_options.method, clean_options.strength);
-
 	x = y = 0;
 	if (! gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || height * width  < 64) {
 		// Drawable region is too small
@@ -151,43 +142,23 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		return;
 	}
 
-	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
+	send_image = image_fromgimp(drawable, x, y, width, height);
 
-	if (tensor_valid(send_tensor)) {
+	if (image_valid(send_image)) {
 		gimp_progress_init("Clean ...");
 
-		gimp_progress_update(0.1);
-
-		// Clean server accept 1x3xhxw
-		if (send_tensor->chan == 2) {
-			send_tensor->chan = 1;
-			recv_tensor = clean_rpc(send_tensor, msgcode);
-			send_tensor->chan = 2;
+		recv_image = clean_service(send_image, clean_options.method);
+		if (image_valid(recv_image)) {
+			gimp_image_undo_group_start(image_id);
+			image_togimp(recv_image, drawable, x, y, width, height);
+			gimp_image_undo_group_end(image_id);
+			image_destroy(recv_image);
 		} else {
-			recv_tensor = clean_rpc(send_tensor, msgcode);
-		}
-
-		gimp_progress_update(0.8);
-		if (tensor_valid(recv_tensor)) {
-			TENSOR *final_tensor = tensor_reshape(recv_tensor, 
-				send_tensor->batch, send_tensor->chan, send_tensor->height, send_tensor->width);
-
-			if (tensor_valid(final_tensor)) {
-				if (send_tensor->chan == 2 || send_tensor->chan == 4)
-					tensor_setmask(final_tensor, 1.0);
-
-				gimp_image_undo_group_start(image_id);
-				tensor_togimp(final_tensor, drawable, x, y, width, height);
-				gimp_image_undo_group_end(image_id);
-				tensor_destroy(final_tensor);
-			}
-			tensor_destroy(recv_tensor);
-		}
-		else {
 		    if (run_mode != GIMP_RUN_NONINTERACTIVE)
 				g_message("Clean remote service is not avaible.\n");
 		}
-		tensor_destroy(send_tensor);
+
+		image_destroy(send_image);
 		gimp_progress_update(1.0);
 	} else {
 	    if (run_mode != GIMP_RUN_NONINTERACTIVE)
@@ -212,5 +183,3 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	// Output result for pdb
 	values[0].data.d_status = status;
 }
-
-

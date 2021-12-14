@@ -54,32 +54,20 @@ static void query(void)
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
 }
 
-
 // remote_procee_call
-TENSOR *zoom_rpc(TENSOR *send_tensor, int msgcode)
+IMAGE *zoom_service(IMAGE *send_image, int msgcode)
 {
-	int socket;
-	TENSOR *recv_tensor = NULL;
+	if (msgcode == IMAGE_ZOOM_SERVICE_WITH_PAN)
+		return normal_service("image_zoom_with_pan", send_image, NULL);
 
-	CHECK_TENSOR(send_tensor);
-
-	socket = client_open(IMAGE_ZOOM_URL);
-	if (socket < 0) {
-		g_message("Error: connect server.");
-		return NULL;
-	}
-
-	recv_tensor = normal_rpc(socket, send_tensor, msgcode);
-	client_close(socket);
-
-	return recv_tensor;
+	return normal_service("image_zoom", send_image, NULL);
 }
 
 static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
-	int x, y, height, width, msgcode;
-	TENSOR *send_tensor, *recv_tensor;
+	int x, y, height, width;
+	IMAGE *send_image, *recv_image;
 
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
@@ -127,8 +115,6 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		break;
 	}
 
-	msgcode = DEFINE_SERVICE(zoom_options.method, 0);
-
 	// Support local zoom4x
 	x = y = 0;
 	if (! gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || height * width < 64) {
@@ -136,31 +122,22 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		width = drawable->width;
 	}
 
-	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
+	send_image = image_fromgimp(drawable, x, y, width, height);
 	gimp_drawable_detach(drawable);
 
-	if (tensor_valid(send_tensor)) {
+	if (image_valid(send_image)) {
 		gimp_progress_init("Zoomin ...");
 
-		gimp_progress_update(0.1);
+		recv_image = zoom_service(send_image, zoom_options.method);
 
-		if (send_tensor->chan == 2 || send_tensor->chan == 4) {
-			send_tensor->chan = send_tensor->chan - 1;
-			recv_tensor = zoom_rpc(send_tensor, msgcode);
-			send_tensor->chan = send_tensor->chan + 1;	// Restore
-		} else {
-			recv_tensor = zoom_rpc(send_tensor, msgcode);
-		}
-
-		gimp_progress_update(0.8);
-		if (tensor_valid(recv_tensor)) {
-			tensor_display(recv_tensor, "zoom4x");
-			tensor_destroy(recv_tensor);
+		if (image_valid(recv_image)) {
+			image_display(recv_image, "zoom4x");
+			image_destroy(recv_image);
 		}
 		else {
 			g_message("Error: Zoom remote service is not available.");
 		}
-		tensor_destroy(send_tensor);
+		image_destroy(send_image);
 		gimp_progress_update(1.0);
 	} else {
 		g_message("Error: Zoom image is not valid (NO RGB).");

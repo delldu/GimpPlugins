@@ -13,6 +13,10 @@ typedef struct {
 	gint32 method;
 } ZoomOptions;
 
+#define IMAGE_ZOOM_SERVICE 0x01
+#define IMAGE_ZOOM_SERVICE_WITH_PAN 0x02
+
+
 /* Set up default values for options */
 static ZoomOptions zoom_options = {
 	IMAGE_ZOOM_SERVICE_WITH_PAN,		/* method */

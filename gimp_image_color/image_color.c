@@ -14,152 +14,10 @@ static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-TENSOR *image_color_rgb2lab(TENSOR *send_rgb_tensor)
+
+IMAGE *color_service(IMAGE *send_image)
 {
-	int batch, i, n;
-	float *send_rgb_rc, *send_rgb_gc, *send_rgb_bc;
-	float *send_lab_lc, *send_lab_ac, *send_lab_bc, *send_lab_mc;	// mask channel
-	BYTE R, G, B;
-	float L, a, b;
-	TENSOR *send_lab_tensor = NULL;
-
-	CHECK_TENSOR(send_rgb_tensor);
-
-	// Lab + alpha channel
-	send_lab_tensor = tensor_create(send_rgb_tensor->batch, 4, send_rgb_tensor->height, send_rgb_tensor->width);
-	CHECK_TENSOR(send_lab_tensor);
-
-	n = send_rgb_tensor->height * send_rgb_tensor->width;
-
-	for (batch = 0; batch < send_rgb_tensor->batch; batch++) {
-		if (send_rgb_tensor->chan >= 3) {
-			send_rgb_rc = tensor_start_chan(send_rgb_tensor, batch, 0);	// R
-			send_rgb_gc = tensor_start_chan(send_rgb_tensor, batch, 1);	// G
-			send_rgb_bc = tensor_start_chan(send_rgb_tensor, batch, 2);	// B
-		} else {
-			send_rgb_rc = send_rgb_gc = send_rgb_bc = tensor_start_chan(send_rgb_tensor, batch, 0);	// R
-		}
-
-		send_lab_lc = tensor_start_chan(send_lab_tensor, batch, 0);	// L
-		send_lab_ac = tensor_start_chan(send_lab_tensor, batch, 1);	// a
-		send_lab_bc = tensor_start_chan(send_lab_tensor, batch, 2);	// b
-		send_lab_mc = tensor_start_chan(send_lab_tensor, batch, 3);	// m -- mask 
-
-		for (i = 0; i < n; i++) {
-			R = (BYTE)(send_rgb_rc[i] * 255.0);
-			G = (BYTE)(send_rgb_gc[i] * 255.0);
-			B = (BYTE)(send_rgb_bc[i] * 255.0);
-
-			color_rgb2lab(R, G, B, &L, &a, &b);
-
-			L = (L - 50.0)/100.0;
-			a /= 110.0;
-			b /= 110.0;
-
-			send_lab_lc[i] = L;
-			send_lab_ac[i] = a;
-			send_lab_bc[i] = b;
-
-			// Black or white ?
-			if ((R < 10 && G < 10 && B < 10) || (R > 245 && G > 245 && B > 245)) {
-				send_lab_mc[i] = 1.0;
-			} else {
-				send_lab_mc[i] = (ABS(a) > 0.1 ||  ABS(b) > 0.1)? 1.0 : 0.0;
-			}
-		}
-	}
-
-	return send_lab_tensor;
-}
-
-TENSOR *image_color_lab2rgb(TENSOR *send_lab_tensor, TENSOR *recv_ab_tensor)
-{
-	int i, n;
-	float *send_lab_lc, *recv_ab_ac, *recv_ab_bc;	// channels
-	float *blend_rgb_rc, *blend_rgb_gc, *blend_rgb_bc;
-	float L, a, b;
-	BYTE R, G, B;
-	TENSOR *blend_rgb_tensor = NULL;
-
-	CHECK_TENSOR(send_lab_tensor);
-	CHECK_TENSOR(recv_ab_tensor);
-
-	if (send_lab_tensor->chan != 4) {
-		g_message("Error: send tensor is not LAB + alpha format.");
-		return NULL;
-	}
-
-	if (recv_ab_tensor->chan != 2) {
-		g_message("Error: this tensor is not genearated by color server.");
-		return NULL;
-	}
-
-	if (send_lab_tensor->batch != recv_ab_tensor->batch) {
-		g_message("Error: send tensor batch is not same as recvs");
-		return NULL;
-	}
-
-	if (send_lab_tensor->height != recv_ab_tensor->height || send_lab_tensor->width != recv_ab_tensor->width) {
-		g_message("Error: send tensor size is not same as recvs.");
-		return NULL;
-	}
-
-	blend_rgb_tensor = tensor_create(send_lab_tensor->batch, 3, send_lab_tensor->height, send_lab_tensor->width);
-	CHECK_TENSOR(blend_rgb_tensor);
-
-
-	send_lab_lc = tensor_start_chan(send_lab_tensor, 0, 0);	// L
-	recv_ab_ac = tensor_start_chan(recv_ab_tensor, 0, 0);	// a
-	recv_ab_bc = tensor_start_chan(recv_ab_tensor, 0, 1);	// b
-
-	blend_rgb_rc = tensor_start_chan(blend_rgb_tensor, 0, 0);	// R
-	blend_rgb_gc = tensor_start_chan(blend_rgb_tensor, 0, 1);	// G
-	blend_rgb_bc = tensor_start_chan(blend_rgb_tensor, 0, 2);	// B
-
-	n = send_lab_tensor->height * send_lab_tensor->width;
-	for (i = 0; i < n; i++) {
-		L = *send_lab_lc++; L += 0.5; L *= 100.0;
-		a = *recv_ab_ac++; a *= 110.0;
-		b = *recv_ab_bc++; b *= 110;
-
-		color_lab2rgb(L, a, b, &R, &G, &B);
-
-		*blend_rgb_rc++ = (float)R/255.0;
-		*blend_rgb_gc++ = (float)G/255.0;
-		*blend_rgb_bc++ = (float)B/255.0;
-	}
-
-	return blend_rgb_tensor;
-}
-
-TENSOR *color_rpc(TENSOR *send_rgb_tensor)
-{
-	int socket;
-	TENSOR *recv_rgb_tensor = NULL;
-	TENSOR *send_lab_tensor, *recv_ab_tensor;
-
-	CHECK_TENSOR(send_rgb_tensor);
-
-	socket = client_open(IMAGE_COLOR_URL);
-	if (socket < 0) {
-		g_message("Error: connect server.");
-		return NULL;
-	}
-
-	send_lab_tensor = image_color_rgb2lab(send_rgb_tensor);
-
-	// Color server only accept 8 times !!!
-	recv_ab_tensor = resize_rpc(socket, send_lab_tensor, IMAGE_COLOR_SERVICE, 8);
-
-	if (tensor_valid(recv_ab_tensor)) {
-		recv_rgb_tensor = image_color_lab2rgb(send_lab_tensor, recv_ab_tensor);
-		tensor_destroy(recv_ab_tensor);
-	}
-	tensor_destroy(send_lab_tensor);
-
-	client_close(socket);
-
-	return recv_rgb_tensor;
+	return normal_service("image_color", send_image, NULL);
 }
 
 GimpPlugInInfo PLUG_IN_INFO = {
@@ -203,7 +61,7 @@ static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
 	int x, y, height, width;
-	TENSOR *send_tensor, *recv_tensor;
+	IMAGE *send_image, *recv_image;
 
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
@@ -233,25 +91,22 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		width = drawable->width;
 	}
 
-	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
+	send_image = image_fromgimp(drawable, x, y, width, height);
 	gimp_drawable_detach(drawable);
 
-	if (tensor_valid(send_tensor)) {
+	if (image_valid(send_image)) {
 		gimp_progress_init("Coloring ...");
 
-		gimp_progress_update(0.1);
+		recv_image = color_service(send_image);
 
-		recv_tensor = color_rpc(send_tensor);
-
-		gimp_progress_update(0.8);
-		if (tensor_valid(recv_tensor)) {
-			tensor_display(recv_tensor, "color");
-			tensor_destroy(recv_tensor);
+		if (image_valid(recv_image)) {
+			image_display(recv_image, "color");
+			image_destroy(recv_image);
 		}
 		else {
 			g_message("Error: Color remote service is not avaible.");
 		}
-		tensor_destroy(send_tensor);
+		image_destroy(send_image);
 		gimp_progress_update(1.0);
 	} else {
 		g_message("Error: Color source.");

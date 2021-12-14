@@ -14,61 +14,6 @@ static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-TENSOR *image_nima(TENSOR *send_tensor)
-{
-	int socket, ret, rescode;
-	TENSOR *stand_tensor, *recv_tensor = NULL;
-
-	CHECK_TENSOR(send_tensor);
-	stand_tensor = tensor_zoom(send_tensor, 224, 224);
-	CHECK_TENSOR(stand_tensor);
-
-	// Server only accept 1x3x224x224 tensor
-	if (stand_tensor->batch > 1)
-		stand_tensor->batch = 1;
-	if (stand_tensor->chan > 3)
-		stand_tensor->chan = 3;
-
-	socket = client_open(IMAGE_NIMA_URL);
-	if (socket < 0) {
-		g_message("Error: connect server.");
-		return NULL;
-	}
-
-	ret = tensor_send(socket, IMAGE_NIMA_SERVICE, stand_tensor);
-	if (ret == RET_OK) {
-		recv_tensor = tensor_recv(socket, &rescode);
-		if (! tensor_valid(recv_tensor) || rescode != IMAGE_NIMA_SERVICE) {
-			g_message("Error: Remote service is not available.");
-		}
-	}	
-	client_close(socket);
-	tensor_destroy(stand_tensor);
-
-	return recv_tensor;
-}
-
-void dump_result(TENSOR *recv_tensor)
-{
-	// dump scores ...
-	int i;
-	float mean;
-	char str[32];
-
-	if (! tensor_valid(recv_tensor)) {
-		syslog_error("Bad tensor.");
-		return;
-	}
-
-	mean = 0.0;
-	for (i = 0; i < 10; i++) {
-		mean += recv_tensor->data[i] * (i + 1.0);
-	}
-
-	snprintf(str, sizeof(str), "%6.2f", mean);
-	g_message("Quality: %s\n", str);
-}
-
 
 GimpPlugInInfo PLUG_IN_INFO = {
     NULL,
@@ -111,7 +56,8 @@ static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
 	int x, y, height, width;
-	TENSOR *send_tensor, *recv_tensor;
+	IMAGE *send_image;
+	char *recv_text = NULL;
 
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
@@ -141,23 +87,20 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		width = drawable->width;
 	}
 
-	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
+	send_image = image_fromgimp(drawable, x, y, width, height);
 	gimp_drawable_detach(drawable);
 
-	if (tensor_valid(send_tensor)) {
+	if (image_valid(send_image)) {
 		gimp_progress_init("Nima ...");
 
-		gimp_progress_update(0.1);
+		recv_text = nima_service(send_image);
 
-		recv_tensor = image_nima(send_tensor);
-
-		gimp_progress_update(0.8);
-		if (tensor_valid(recv_tensor)) {
-			dump_result(recv_tensor);
-			tensor_destroy(recv_tensor);
+		if (recv_text != NULL) {
+			g_message("Quality: %s\n", recv_text);
+			free(recv_text);
 		}
 
-		tensor_destroy(send_tensor);
+		image_destroy(send_image);
 		gimp_progress_update(1.0);
 	} else {
 		g_message("Error: Image Nima.");

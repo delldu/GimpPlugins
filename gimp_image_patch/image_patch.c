@@ -15,29 +15,9 @@ static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
 // remote_procee_call
-TENSOR *patch_rpc(TENSOR *send_tensor)
+IMAGE *patch_service(IMAGE *send_image)
 {
-	int socket;
-	TENSOR *recv_tensor = NULL;
-
-	CHECK_TENSOR(send_tensor);
-
-	if (send_tensor->chan != 4) {
-		g_message("Image is not RGBA format");
-		return NULL;
-	}
-
-	socket = client_open(IMAGE_PATCH_URL);
-	if (socket < 0) {
-		g_message("Error: connect server.");
-		return NULL;
-	}
-
-	// Server only accept 128 multiples
-	recv_tensor = zeropad_rpc(socket, send_tensor, IMAGE_PATCH_SERVICE, 128);
-	client_close(socket);
-
-	return recv_tensor;
+	return normal_service("image_patch", send_image, NULL);
 }
 
 
@@ -81,7 +61,7 @@ static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
 	int x, y, height, width;
-	TENSOR *send_tensor, *recv_tensor;
+	IMAGE *send_image, *recv_image;
 
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
@@ -115,25 +95,22 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		width = drawable->width;
 	}
 
-	send_tensor = tensor_fromgimp(drawable, x, y, width, height);
+	send_image = image_fromgimp(drawable, x, y, width, height);
 	gimp_drawable_detach(drawable);
 
-	if (tensor_valid(send_tensor)) {
+	if (image_valid(send_image)) {
 		gimp_progress_init("Patching ...");
 
-		gimp_progress_update(0.1);
+		recv_image = patch_service(send_image);
 
-		recv_tensor = patch_rpc(send_tensor);
-
-		gimp_progress_update(0.8);
-		if (tensor_valid(recv_tensor)) {
-			tensor_display(recv_tensor, "patch");
-			tensor_destroy(recv_tensor);
+		if (image_valid(recv_image)) {
+			image_display(recv_image, "patch");
+			image_destroy(recv_image);
 		}
 		else {
 			g_message("Error: Patch remote service is not avaible.");
 		}
-		tensor_destroy(send_tensor);
+		image_destroy(send_image);
 		gimp_progress_update(1.0);
 	} else {
 		g_message("Error: Patch image is not valid (NO RGB).");

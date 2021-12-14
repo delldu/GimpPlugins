@@ -9,6 +9,9 @@
 
 #include "plugin.h"
 
+# define IMAGE_LIGHT_SERVICE 0x01
+# define IMAGE_LIGHT_SERVICE_WITH_CLAHE 0x02
+
 typedef struct {
 	gint32 method;
 } LightOptions;

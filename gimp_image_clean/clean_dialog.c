@@ -9,6 +9,11 @@
 
 #include "plugin.h"
 
+#define IMAGE_CLEAN_SERVICE 0x01
+#define IMAGE_CLEAN_SERVICE_WITH_GUIDED_FILTER 0x02
+#define IMAGE_CLEAN_SERVICE_WITH_BM3D 0x03
+#define IMAGE_CLEAN_SERVICE_WITH_WEATHER 0x04
+
 typedef struct {
 	gint32 method;
 	gint strength;				// Noise level
@@ -67,7 +72,7 @@ gboolean clean_dialog()
 	combo = gimp_int_combo_box_new("Deep Cleaning", IMAGE_CLEAN_SERVICE,
 								   "CUDA BM3d", IMAGE_CLEAN_SERVICE_WITH_BM3D,
 								   "Guided Filter", IMAGE_CLEAN_SERVICE_WITH_GUIDED_FILTER,
-								   "Haze Filter", IMAGE_CLEAN_SERVICE_WITH_DEHAZE,
+								   "Weather Filter", IMAGE_CLEAN_SERVICE_WITH_WEATHER,
 								    NULL);
 	gimp_int_combo_box_set_active(GIMP_INT_COMBO_BOX(combo), clean_options.method);
 	g_signal_connect(combo, "changed", G_CALLBACK(gimp_int_combo_box_get_active), &clean_options.method);
