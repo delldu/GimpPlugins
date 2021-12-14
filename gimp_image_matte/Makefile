@@ -8,10 +8,10 @@
 #
 INSTALL_DIR := $(shell grep -w INSTALL_DIR ../Makefile | cut -d '=' -f 2)
 
-TARGET := gimp_image_matting
+TARGET := gimp_image_matte
 
 SOURCE :=  \
-	image_matting.c
+	image_matte.c
 
 INCS	:= -I../lib $(shell gimptool-2.0 --cflags) $(shell nimagetool --cflags)
 LIBS	:= -L../lib -lplugin $(shell gimptool-2.0 --libs) $(shell nimagetool --libs)

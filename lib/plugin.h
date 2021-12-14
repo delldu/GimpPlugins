@@ -23,6 +23,8 @@ extern "C" {
 	#include <libgimp/gimp.h>
 	#include <libgimp/gimpui.h>
 
+	#define GIMP_PLUGIN_VERSION "1.0.0"
+
 	// Get image
 	TENSOR *tensor_fromgimp(GimpDrawable * drawable, int x, int y, int width, int height);
 

@@ -16,7 +16,7 @@ XSUBDIRS :=  \
 	gimp_image_patch \
 	gimp_image_nima \
 	gimp_image_light \
-	gimp_image_matting
+	gimp_image_matte
 
 
 BSUBDIRS :=
