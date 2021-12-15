@@ -15,7 +15,7 @@ static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-IMAGE *clean_service(IMAGE *send_image, int msgcode)
+static IMAGE *clean_service(IMAGE * send_image, int msgcode)
 {
 	char addon[256];
 
@@ -26,6 +26,50 @@ IMAGE *clean_service(IMAGE *send_image, int msgcode)
 
 	return normal_service("image_clean", send_image, addon);
 }
+
+static GimpPDBStatusType image_clean(GimpDrawable * drawable)
+{
+	int x, y, height, width;
+	IMAGE *send_image, *recv_image;
+	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
+
+	x = y = 0;
+	if (!gimp_drawable_mask_intersect(drawable->drawable_id, &x, &y, &width, &height)) {
+		// Drawable region is too small
+		height = drawable->height;
+		width = drawable->width;
+	}
+	if (width < 4 || height < 4) {
+		g_message("Select region is too small.\n");
+		return GIMP_PDB_EXECUTION_ERROR;
+	}
+
+	send_image = image_fromgimp(drawable, x, y, width, height);
+
+	if (image_valid(send_image)) {
+		recv_image = clean_service(send_image, clean_options.method);
+		if (image_valid(recv_image)) {
+			image_togimp(recv_image, drawable, x, y, width, height);
+			image_destroy(recv_image);
+
+			gimp_progress_update(1.0);
+			/*  merge the shadow, update the drawable  */
+			gimp_drawable_flush(drawable);
+			gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
+			gimp_drawable_update(drawable->drawable_id, x, y, width, height);
+		} else {
+			status = GIMP_PDB_EXECUTION_ERROR;
+			g_message("Clean service is not avaible.\n");
+		}
+		image_destroy(send_image);
+	} else {
+		status = GIMP_PDB_EXECUTION_ERROR;
+		g_message("Error: Clean source(drawable channel is not 1-4 ?).\n");
+	}
+
+	return status;
+}
+
 
 GimpPlugInInfo PLUG_IN_INFO = {
 	NULL,
@@ -40,18 +84,11 @@ MAIN()
 static void query(void)
 {
 	static GimpParamDef args[] = {
-		{
-		 GIMP_PDB_INT32,
-		 "run-mode",
-		 "Run mode"},
-		{
-		 GIMP_PDB_IMAGE,
-		 "image",
-		 "Input image"},
-		{
-		 GIMP_PDB_DRAWABLE,
-		 "drawable",
-		 "Input drawable"}
+		{GIMP_PDB_INT32, "run-mode", "Run mode"},
+		{GIMP_PDB_IMAGE, "image", "Input image"},
+		{GIMP_PDB_DRAWABLE, "drawable", "Input drawable"},
+		{GIMP_PDB_INT32, "method", "Clean method"},
+		{GIMP_PDB_INT32, "strength", "Noise level/Clean strength"},
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
@@ -67,47 +104,36 @@ static void query(void)
 static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
-	int x, y, height, width;
-	IMAGE *send_image, *recv_image;
-
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	GimpRunMode run_mode;
 	GimpDrawable *drawable;
-	gint32 image_id;
 	gint32 drawable_id;
 
 	/* Setting mandatory output values */
 	*nreturn_vals = 1;
 	*return_vals = values;
 	values[0].type = GIMP_PDB_STATUS;
+	values[0].data.d_status = status;
 
-	if (strcmp(name, PLUG_IN_PROC) != 0 || nparams < 3) {
+	if (strcmp(name, PLUG_IN_PROC) != 0 || nparams < 5) {
 		values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
 		return;
 	}
-	values[0].data.d_status = status;
-
-	run_mode = (GimpRunMode)param[0].data.d_int32;
-	image_id = param[1].data.d_drawable;
+	run_mode = (GimpRunMode) param[0].data.d_int32;
 	drawable_id = param[2].data.d_drawable;
-	drawable = gimp_drawable_get(drawable_id);
 
 	switch (run_mode) {
 	case GIMP_RUN_INTERACTIVE:
 		/* Get options last values if needed */
 		gimp_get_data(PLUG_IN_PROC, &clean_options);
-		if (! clean_dialog())
+		if (!clean_dialog())
 			return;
 		break;
 
 	case GIMP_RUN_NONINTERACTIVE:
-		if (nparams != 4)
-			status = GIMP_PDB_CALLING_ERROR;
-		if (status == GIMP_PDB_SUCCESS) {
-			clean_options.method = param[2].data.d_int32;
-			clean_options.strength = param[3].data.d_int32;
-		}
+		clean_options.method = param[3].data.d_int32;
+		clean_options.strength = param[4].data.d_int32;
 		break;
 
 	case GIMP_RUN_WITH_LAST_VALS:
@@ -119,63 +145,26 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		break;
 	}
 
-	x = y = 0;
-	if (! gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || height * width  < 64) {
-		// Drawable region is too small
-		height = drawable->height;
-		width = drawable->width;
-	}
-
-	// Clean server limited: only accept 4 times tensor, 'crop' is against crashing !!!
-	width = width/4; width *= 4;
-	height = height/4; height *= 4;
-
-	if (width < 4 || height < 4) {
-	    if (run_mode != GIMP_RUN_NONINTERACTIVE)
-			g_message("Clean image region is too small.\n");
-		gimp_drawable_detach(drawable);
-		values[0].data.d_status = GIMP_PDB_EXECUTION_ERROR;
-		return;
-	}
-
-	send_image = image_fromgimp(drawable, x, y, width, height);
-
-	if (image_valid(send_image)) {
+	drawable = gimp_drawable_get(drawable_id);
+	/*  Make sure that the drawable is RGB or GRAY color  */
+	if (gimp_drawable_is_rgb(drawable_id) || gimp_drawable_is_gray(drawable_id)) {
 		gimp_progress_init("Clean ...");
 
-		recv_image = clean_service(send_image, clean_options.method);
-		if (image_valid(recv_image)) {
-			gimp_image_undo_group_start(image_id);
-			image_togimp(recv_image, drawable, x, y, width, height);
-			gimp_image_undo_group_end(image_id);
-			image_destroy(recv_image);
-		} else {
-		    if (run_mode != GIMP_RUN_NONINTERACTIVE)
-				g_message("Clean remote service is not avaible.\n");
-		}
+		status = image_clean(drawable);
 
-		image_destroy(send_image);
-		gimp_progress_update(1.0);
+		if (run_mode != GIMP_RUN_NONINTERACTIVE)
+			gimp_displays_flush();
+
+		/*  Store data  */
+		if (run_mode == GIMP_RUN_INTERACTIVE)
+			gimp_set_data(PLUG_IN_PROC, &clean_options, sizeof(CleanOptions));
 	} else {
-	    if (run_mode != GIMP_RUN_NONINTERACTIVE)
-			g_message("Clean image is not RGB.\n");
 		status = GIMP_PDB_EXECUTION_ERROR;
+		g_message("Cannot clean on indexed color images.");
 	}
-
-	// Update modified region
-	gimp_drawable_flush(drawable);
-	// gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
-	gimp_drawable_update(drawable_id, x, y, width, height);
-
-
-	// Flush all ?
-	gimp_displays_flush();
-	gimp_drawable_detach(drawable);
-
-	/*  Finally, set options in the core  */
-	if (run_mode == GIMP_RUN_INTERACTIVE)
-		gimp_set_data(PLUG_IN_PROC, &clean_options, sizeof(CleanOptions));
 
 	// Output result for pdb
 	values[0].data.d_status = status;
+
+	gimp_drawable_detach(drawable);
 }

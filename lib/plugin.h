@@ -30,7 +30,6 @@ extern "C" {
 	int image_togimp(IMAGE * image, GimpDrawable * drawable, int x, int y, int width, int height);
 	int image_display(IMAGE *image, gchar *name_prefix);
 	IMAGE *normal_service(char *service_name, IMAGE *send_image, char *addon);
-	char *nima_service(IMAGE *send_image);
 
 	#if 0
 		// Get image

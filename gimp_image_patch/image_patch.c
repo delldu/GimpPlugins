@@ -14,12 +14,51 @@ static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-// remote_procee_call
-IMAGE *patch_service(IMAGE *send_image)
+static IMAGE *patch_service(IMAGE *send_image)
 {
 	return normal_service("image_patch", send_image, NULL);
 }
 
+static GimpPDBStatusType do_image_patch(GimpDrawable * drawable)
+{
+	int x, y, height, width;
+	IMAGE *send_image, *recv_image;
+	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
+
+	x = y = 0;
+	if (! gimp_drawable_mask_intersect(drawable->drawable_id, &x, &y, &width, &height)) {
+		height = drawable->height;
+		width = drawable->width;
+	}
+	if (width < 4 || height < 4) {
+		g_message("Select region is too small.\n");
+		return GIMP_PDB_EXECUTION_ERROR;
+	}
+
+	send_image = image_fromgimp(drawable, x, y, width, height);
+	if (image_valid(send_image)) {
+		recv_image = patch_service(send_image);
+		if (image_valid(recv_image)) {
+			image_togimp(recv_image, drawable, x, y, width, height);
+			image_destroy(recv_image);
+
+			gimp_progress_update(1.0);
+			/*  merge the shadow, update the drawable  */
+			gimp_drawable_flush(drawable);
+			gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
+			gimp_drawable_update(drawable->drawable_id, x, y, width, height);
+		} else {
+			status = GIMP_PDB_EXECUTION_ERROR;
+			g_message("Patch service is not avaible.\n");
+		}
+		image_destroy(send_image);
+	} else {
+		status = GIMP_PDB_EXECUTION_ERROR;
+		g_message("Error: Patch source(drawable channel is not 1-4 ?).\n");
+	}
+
+ 	return status;
+}
 
 GimpPlugInInfo PLUG_IN_INFO = {
     NULL,
@@ -33,18 +72,9 @@ MAIN()
 static void query(void)
 {
 	static GimpParamDef args[] = {
-		{
-		 GIMP_PDB_INT32,
-		 "run-mode",
-		 "Run mode"},
-		{
-		 GIMP_PDB_IMAGE,
-		 "image",
-		 "Input image"},
-		{
-		 GIMP_PDB_DRAWABLE,
-		 "drawable",
-		 "Input drawable"}
+		{ GIMP_PDB_INT32, "run-mode", "Run mode" },
+		{ GIMP_PDB_IMAGE, "image", "Input image" },
+		{ GIMP_PDB_DRAWABLE, "drawable", "Input drawable" }
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
@@ -60,65 +90,42 @@ static void query(void)
 static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
-	int x, y, height, width;
-	IMAGE *send_image, *recv_image;
-
 	static GimpParam values[1];
-	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
-	// GimpRunMode run_mode;
+	GimpRunMode run_mode;
 	GimpDrawable *drawable;
 	gint32 drawable_id;
+	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
 	/* Setting mandatory output values */
 	*nreturn_vals = 1;
 	*return_vals = values;
 	values[0].type = GIMP_PDB_STATUS;
+	values[0].data.d_status = status;
 
 	if (strcmp(name, PLUG_IN_PROC) != 0 || nparams < 3) {
 		values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
 		return;
 	}
-	values[0].data.d_status = status;
 
-	// run_mode = (GimpRunMode)param[0].data.d_int32;
+	run_mode = (GimpRunMode)param[0].data.d_int32;
 	drawable_id = param[2].data.d_drawable;
 
 	// Add alpha channel !!!
 	gimp_layer_add_alpha(drawable_id);
 
 	drawable = gimp_drawable_get(drawable_id);
+	if (gimp_drawable_is_rgb(drawable_id) || gimp_drawable_is_gray(drawable_id)) {
+		gimp_progress_init("Patch ...");
 
-	// Support local patch
-	x = y = 0;
-	if (! gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || height * width < 64) {
-		height = drawable->height;
-		width = drawable->width;
-	}
+		status = do_image_patch(drawable);
 
-	send_image = image_fromgimp(drawable, x, y, width, height);
-	gimp_drawable_detach(drawable);
-
-	if (image_valid(send_image)) {
-		gimp_progress_init("Patching ...");
-
-		recv_image = patch_service(send_image);
-
-		if (image_valid(recv_image)) {
-			image_display(recv_image, "patch");
-			image_destroy(recv_image);
-		}
-		else {
-			g_message("Error: Patch remote service is not avaible.");
-		}
-		image_destroy(send_image);
-		gimp_progress_update(1.0);
+		if (run_mode != GIMP_RUN_NONINTERACTIVE)
+			gimp_displays_flush();
 	} else {
-		g_message("Error: Patch image is not valid (NO RGB).");
 		status = GIMP_PDB_EXECUTION_ERROR;
+		g_message("Cannot patch on indexed color images.");
 	}
-
-	// Flush all ?
-	gimp_displays_flush();
+	gimp_drawable_detach(drawable);
 
 	// Output result for pdb
 	values[0].data.d_status = status;

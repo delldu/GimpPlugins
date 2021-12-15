@@ -26,7 +26,7 @@ GimpPlugInInfo PLUG_IN_INFO = {
 
 MAIN()
 
-IMAGE *light_service(IMAGE *send_image, gint32 msgcode)
+static IMAGE *light_service(IMAGE *send_image, gint32 msgcode)
 {
 	if (msgcode == IMAGE_LIGHT_SERVICE_WITH_CLAHE)
 		return normal_service("image_light_with_clahe", send_image, NULL);
@@ -34,22 +34,58 @@ IMAGE *light_service(IMAGE *send_image, gint32 msgcode)
 	return normal_service("image_light", send_image, NULL);
 }
 
+static GimpPDBStatusType do_image_light(GimpDrawable * drawable)
+{
+	int x, y, height, width;
+	IMAGE *send_image, *recv_image;
+	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
+
+	// Support local lighting
+	x = y = 0;
+	if (! gimp_drawable_mask_intersect(drawable->drawable_id, &x, &y, &width, &height) || height * width < 64) {
+		height = drawable->height;
+		width = drawable->width;
+	}
+	if (width < 4 || height < 4) {
+		g_message("Select region is too small.\n");
+		return GIMP_PDB_EXECUTION_ERROR;
+	}
+
+	send_image = image_fromgimp(drawable, x, y, width, height);
+	if (image_valid(send_image)) {
+		recv_image = light_service(send_image, light_options.method);
+
+		if (image_valid(recv_image)) {
+			image_togimp(recv_image, drawable, x, y, width, height);
+			image_destroy(recv_image);
+
+			gimp_progress_update(1.0);
+
+			/*  merge the shadow, update the drawable  */
+			gimp_drawable_flush(drawable);
+			gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
+			gimp_drawable_update(drawable->drawable_id, x, y, width, height);
+		}
+		else {
+			status = GIMP_PDB_EXECUTION_ERROR;
+			g_message("Error: Light service is not avaible.");
+		}
+		image_destroy(send_image);
+	} else {
+		status = GIMP_PDB_EXECUTION_ERROR;
+		g_message("Error: Light source(drawable channel is not 1-4 ?).\n");
+	}
+
+ 	return status;
+}
+
 
 static void query(void)
 {
 	static GimpParamDef args[] = {
-		{
-		 GIMP_PDB_INT32,
-		 "run-mode",
-		 "Run mode"},
-		{
-		 GIMP_PDB_IMAGE,
-		 "image",
-		 "Input image"},
-		{
-		 GIMP_PDB_DRAWABLE,
-		 "drawable",
-		 "Input drawable"}
+		{ GIMP_PDB_INT32, "run-mode", "Run mode" },
+		{ GIMP_PDB_IMAGE, "image", "Input image" },
+		{ GIMP_PDB_DRAWABLE, "drawable", "Input drawable" }
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
@@ -57,7 +93,8 @@ static void query(void)
 						   "This plug-in light image with PAI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
-						   "2020-2021", "_Light", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2021", "_Light", "RGB*, GRAY*", 
+						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
 }
@@ -65,14 +102,11 @@ static void query(void)
 static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
-	int x, y, height, width;
-	IMAGE *send_image, *recv_image;
-
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	GimpRunMode run_mode;
 	GimpDrawable *drawable;
-	gint32 image_id;
+	// gint32 image_id;
 	gint32 drawable_id;
 
 	/* Setting mandatory output values */
@@ -87,9 +121,8 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	values[0].data.d_status = status;
 
 	run_mode = (GimpRunMode)param[0].data.d_int32;
-	image_id = param[1].data.d_drawable;
+	// image_id = param[1].data.d_drawable;
 	drawable_id = param[2].data.d_drawable;
-	drawable = gimp_drawable_get(drawable_id);
 
 	switch (run_mode) {
 	case GIMP_RUN_INTERACTIVE:
@@ -116,43 +149,23 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		break;
 	}
 
-	// Support local lighting
-	x = y = 0;
-	if (! gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || height * width < 64) {
-		height = drawable->height;
-		width = drawable->width;
-	}
+	drawable = gimp_drawable_get(drawable_id);
+	/*  Make sure that the drawable is RGB or GRAY color  */
+	if (gimp_drawable_is_rgb(drawable_id) || gimp_drawable_is_gray(drawable_id)) {
+		gimp_progress_init("Light ...");
 
-	send_image = image_fromgimp(drawable, x, y, width, height);
-	if (image_valid(send_image)) {
-		gimp_progress_init("Lighting ...");
+		status = do_image_light(drawable);
 
-		recv_image = light_service(send_image, light_options.method);
+		if (run_mode != GIMP_RUN_NONINTERACTIVE)
+			gimp_displays_flush();
 
-		if (image_valid(recv_image)) {
-			gimp_image_undo_group_start(image_id);
-			image_togimp(recv_image, drawable, x, y, width, height);
-			gimp_image_undo_group_end(image_id);
-
-			image_destroy(recv_image);
-		}
-		else {
-			g_message("Error: Light remote service is not avaible.");
-		}
-		image_destroy(send_image);
-		gimp_progress_update(1.0);
+		/*  Store data  */
+		if (run_mode == GIMP_RUN_INTERACTIVE)
+			gimp_set_data(PLUG_IN_PROC, &light_options, sizeof(LightOptions));
 	} else {
-		g_message("Error: Light image is not valid (NO RGB).");
 		status = GIMP_PDB_EXECUTION_ERROR;
+		g_message("Cannot light on indexed color images.");
 	}
-
-	// Update modified region
-	gimp_drawable_flush(drawable);
-	// gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
-	gimp_drawable_update(drawable_id, x, y, width, height);
-
-	// Flush all ?
-	gimp_displays_flush();
 	gimp_drawable_detach(drawable);
 
 	// Output result for pdb

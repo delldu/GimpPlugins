@@ -14,7 +14,7 @@
 
 typedef struct {
 	gint32 method;
-	gint strength;				// Noise level
+	gint32 strength;			// Noise level
 } CleanOptions;
 
 /* Set up default values for options */
@@ -70,8 +70,7 @@ gboolean clean_dialog()
 	combo = gimp_int_combo_box_new("Deep Cleaning", IMAGE_CLEAN_SERVICE,
 								   // "CUDA BM3d", IMAGE_CLEAN_SERVICE_WITH_BM3D,
 								   // "Guided Filter", IMAGE_CLEAN_SERVICE_WITH_GUIDED_FILTER,
-								   "Weather Filter", IMAGE_CLEAN_SERVICE_WITH_WEATHER,
-								    NULL);
+								   "Weather Filter", IMAGE_CLEAN_SERVICE_WITH_WEATHER, NULL);
 	gimp_int_combo_box_set_active(GIMP_INT_COMBO_BOX(combo), clean_options.method);
 	g_signal_connect(combo, "changed", G_CALLBACK(gimp_int_combo_box_get_active), &clean_options.method);
 

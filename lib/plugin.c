@@ -8,6 +8,11 @@
 
 #include "plugin.h"
 
+// static GimpPDBStatusType template(GimpDrawable * drawable)
+// {
+//  	return GIMP_PDB_EXECUTION_ERROR; // GIMP_PDB_SUCCESS;
+// }
+
 IMAGE *image_fromgimp(GimpDrawable * drawable, int x, int y, int width, int height)
 {
 	gint i, j;
