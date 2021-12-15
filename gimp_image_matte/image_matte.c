@@ -115,10 +115,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	gimp_layer_add_alpha(drawable_id);
 	drawable = gimp_drawable_get(drawable_id);
-	if (drawable->bpp < 4) {
-		g_message("Image format is not RGBA.");
-		status = GIMP_PDB_CALLING_ERROR;
-	} else if (gimp_drawable_is_rgb(drawable_id) || gimp_drawable_is_gray(drawable_id)) {
+	if (gimp_drawable_is_rgb(drawable_id) || gimp_drawable_is_gray(drawable_id)) {
 		gimp_progress_init("Matte ...");
 
 		status = do_image_matte(drawable);
