@@ -43,8 +43,8 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Nima with Deep Learning",
-						   "This plug-in nima image with deep learning technology",
+						   "Image Nima",
+						   "This plug-in nima image with PAI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
 						   "2020-2021", "_Nima", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
@@ -98,6 +98,8 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		if (recv_text != NULL) {
 			g_message("Quality: %s\n", recv_text);
 			free(recv_text);
+		} else {
+			g_message("Nima remote service is not avaible.\n");
 		}
 
 		image_destroy(send_image);

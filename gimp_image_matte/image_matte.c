@@ -48,11 +48,11 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Matting with Deep Learning",
-						   "This plug-in matting image with deep learning technology",
+						   "Image Matte",
+						   "This plug-in matte image with PAI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
-						   "2020-2021", "_Matting", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2021", "_Matte", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
 }
@@ -67,7 +67,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	// GimpRunMode run_mode;
 	GimpDrawable *drawable;
-	gint32 image_id, drawable_id;
+	gint32 drawable_id;
 
 	/* Setting mandatory output values */
 	*nreturn_vals = 1;
@@ -82,7 +82,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	// run_mode = (GimpRunMode)param[0].data.d_int32;
 
-	image_id = param[1].data.d_int32;
+	// image_id = param[1].data.d_int32;
 	drawable_id = param[2].data.d_drawable;
 
 	gimp_layer_add_alpha(drawable_id);
@@ -108,10 +108,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		recv_image = matte_service(send_image);
 
 		if (image_valid(recv_image)) {
-			gimp_image_undo_group_start(image_id);
-			image_togimp(recv_image, drawable, x, y, width, height);
-			gimp_image_undo_group_end(image_id);
-
+			image_display(recv_image, "matte");
 			image_destroy(recv_image);
 		}
 

@@ -53,8 +53,8 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Light with Deep Learning",
-						   "This plug-in light image with deep learning technology",
+						   "Image Light",
+						   "This plug-in light image with PAI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
 						   "2020-2021", "_Light", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);

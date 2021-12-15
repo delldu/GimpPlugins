@@ -48,8 +48,8 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Patch with Deep Learning",
-						   "This plug-in patch image with deep learning technology",
+						   "Image Patch",
+						   "This plug-in patch image with PAI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
 						   "2020-2021", "_Patch", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);

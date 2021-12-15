@@ -45,11 +45,11 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Zoom with Deep Learning",
-						   "This plug-in zoom image with deep learning technology",
+						   "Image Zoom",
+						   "This plug-in zoom image with PAI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
-						   "2020-2021", "_Zoom4x", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2021", "_Zoom", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
 }
@@ -58,7 +58,7 @@ static void query(void)
 IMAGE *zoom_service(IMAGE *send_image, int msgcode)
 {
 	if (msgcode == IMAGE_ZOOM_SERVICE_WITH_PAN)
-		return normal_service("image_zoom_with_pan", send_image, NULL);
+		return normal_service("IMAGE_ZOOM_SERVICE_WITH_PAN", send_image, NULL);
 
 	return normal_service("image_zoom", send_image, NULL);
 }
@@ -126,12 +126,12 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	gimp_drawable_detach(drawable);
 
 	if (image_valid(send_image)) {
-		gimp_progress_init("Zoomin ...");
+		gimp_progress_init("Zooming ...");
 
 		recv_image = zoom_service(send_image, zoom_options.method);
 
 		if (image_valid(recv_image)) {
-			image_display(recv_image, "zoom4x");
+			image_display(recv_image, "zoom");
 			image_destroy(recv_image);
 		}
 		else {

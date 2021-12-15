@@ -19,7 +19,7 @@ typedef struct {
 
 /* Set up default values for options */
 static ZoomOptions zoom_options = {
-	IMAGE_ZOOM_SERVICE_WITH_PAN,		/* method */
+	IMAGE_ZOOM_SERVICE,		/* method */
 };
 
 #define SCALE_WIDTH        256
