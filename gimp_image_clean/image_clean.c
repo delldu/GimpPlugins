@@ -45,7 +45,6 @@ static GimpPDBStatusType image_clean(GimpDrawable * drawable)
 	}
 
 	send_image = image_fromgimp(drawable, x, y, width, height);
-
 	if (image_valid(send_image)) {
 		recv_image = clean_service(send_image, clean_options.method);
 		if (image_valid(recv_image)) {
@@ -116,7 +115,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	values[0].type = GIMP_PDB_STATUS;
 	values[0].data.d_status = status;
 
-	if (strcmp(name, PLUG_IN_PROC) != 0 || nparams < 5) {
+	if (strcmp(name, PLUG_IN_PROC) != 0 || nparams < 3) {
 		values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
 		return;
 	}
@@ -146,7 +145,6 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	}
 
 	drawable = gimp_drawable_get(drawable_id);
-	/*  Make sure that the drawable is RGB or GRAY color  */
 	if (gimp_drawable_is_rgb(drawable_id) || gimp_drawable_is_gray(drawable_id)) {
 		gimp_progress_init("Clean ...");
 
