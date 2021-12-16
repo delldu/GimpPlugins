@@ -15,41 +15,28 @@ static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
 
-static IMAGE *color_service(IMAGE *send_image)
+static IMAGE *color_rpc_service(IMAGE *send_image)
 {
 	return normal_service("image_color", send_image, NULL);
 }
 
-static GimpPDBStatusType image_color(GimpDrawable * drawable)
+static GimpPDBStatusType start_image_color(gint drawable_id)
 {
-	int x, y, height, width;
+	gint channels;
+	GeglRectangle rect;
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-	// Support local color
-	x = y = 0;
-	if (! gimp_drawable_mask_intersect(drawable->drawable_id, &x, &y, &width, &height)) {
-		height = drawable->height;
-		width = drawable->width;
-	}
-	if (width < 4 || height < 4) {
-		g_message("Select region is too small.\n");
-		return GIMP_PDB_EXECUTION_ERROR;
-	}
+	gimp_progress_init("Color ...");
 
-	send_image = image_fromgimp(drawable, x, y, width, height);
+	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
-		recv_image = color_service(send_image);
+		recv_image = color_rpc_service(send_image);
 
 		if (image_valid(recv_image)) {
-			image_togimp(recv_image, drawable, x, y, width, height);
-			image_destroy(recv_image);
-
 			gimp_progress_update(1.0);
-			/*  merge the shadow, update the drawable  */
-			gimp_drawable_flush(drawable);
-			gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
-			gimp_drawable_update(drawable->drawable_id, x, y, width, height);
+			image_saveto_drawable(recv_image, drawable_id, channels, &rect);
+			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
 			g_message("Error: Color service is not avaible.");
@@ -100,7 +87,6 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	GimpRunMode run_mode;
-	GimpDrawable *drawable;
 	gint32 drawable_id;
 
 	/* Setting mandatory output values */
@@ -117,20 +103,14 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	run_mode = (GimpRunMode)param[0].data.d_int32;
 	drawable_id = param[2].data.d_drawable;
 
-	drawable = gimp_drawable_get(drawable_id);
-	if (gimp_drawable_is_rgb(drawable_id) || gimp_drawable_is_gray(drawable_id)) {
-		gimp_progress_init("Color ...");
+	gegl_init(NULL, NULL);
 
-		status = image_color(drawable);
-
-		if (run_mode != GIMP_RUN_NONINTERACTIVE)
-			gimp_displays_flush();
-	} else {
-		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Cannot color on indexed color images.");
-	}
-	gimp_drawable_detach(drawable);
+	status = start_image_color(drawable_id);
+	if (run_mode != GIMP_RUN_NONINTERACTIVE)
+		gimp_displays_flush();
 
 	// Output result for pdb
 	values[0].data.d_status = status;
+
+	gegl_exit();
 }

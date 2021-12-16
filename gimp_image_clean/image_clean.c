@@ -15,7 +15,7 @@ static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-static IMAGE *clean_service(IMAGE * send_image, int msgcode)
+static IMAGE *clean_rpc_service(IMAGE * send_image, int msgcode)
 {
 	char addon[256];
 
@@ -27,35 +27,23 @@ static IMAGE *clean_service(IMAGE * send_image, int msgcode)
 	return normal_service("image_clean", send_image, addon);
 }
 
-static GimpPDBStatusType image_clean(GimpDrawable * drawable)
+static GimpPDBStatusType start_image_clean(gint drawable_id)
 {
-	int x, y, height, width;
+	gint channels;
+	GeglRectangle rect;
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-	x = y = 0;
-	if (!gimp_drawable_mask_intersect(drawable->drawable_id, &x, &y, &width, &height)) {
-		// Drawable region is too small
-		height = drawable->height;
-		width = drawable->width;
-	}
-	if (width < 4 || height < 4) {
-		g_message("Select region is too small.\n");
-		return GIMP_PDB_EXECUTION_ERROR;
-	}
+	gimp_progress_init("Clean ...");
 
-	send_image = image_fromgimp(drawable, x, y, width, height);
+	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
-		recv_image = clean_service(send_image, clean_options.method);
+		recv_image = clean_rpc_service(send_image, clean_options.method);
 		if (image_valid(recv_image)) {
-			image_togimp(recv_image, drawable, x, y, width, height);
-			image_destroy(recv_image);
-
 			gimp_progress_update(1.0);
-			/*  merge the shadow, update the drawable  */
-			gimp_drawable_flush(drawable);
-			gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
-			gimp_drawable_update(drawable->drawable_id, x, y, width, height);
+
+			image_saveto_drawable(recv_image, drawable_id, channels, &rect);
+			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
 			g_message("Clean service is not avaible.\n");
@@ -106,7 +94,6 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	GimpRunMode run_mode;
-	GimpDrawable *drawable;
 	gint32 drawable_id;
 
 	/* Setting mandatory output values */
@@ -144,25 +131,19 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		break;
 	}
 
-	drawable = gimp_drawable_get(drawable_id);
-	if (gimp_drawable_is_rgb(drawable_id) || gimp_drawable_is_gray(drawable_id)) {
-		gimp_progress_init("Clean ...");
+	gegl_init(NULL, NULL);
 
-		status = image_clean(drawable);
+	status = start_image_clean(drawable_id);
+	if (run_mode != GIMP_RUN_NONINTERACTIVE)
+		gimp_displays_flush();
 
-		if (run_mode != GIMP_RUN_NONINTERACTIVE)
-			gimp_displays_flush();
-
-		/*  Store data  */
-		if (run_mode == GIMP_RUN_INTERACTIVE)
-			gimp_set_data(PLUG_IN_PROC, &clean_options, sizeof(CleanOptions));
-	} else {
-		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Cannot clean on indexed color images.");
-	}
+	/*  Store data  */
+	if (run_mode == GIMP_RUN_INTERACTIVE)
+		gimp_set_data(PLUG_IN_PROC, &clean_options, sizeof(CleanOptions));
 
 	// Output result for pdb
 	values[0].data.d_status = status;
 
-	gimp_drawable_detach(drawable);
+  	// free resources used by gegl
+	gegl_exit();
 }

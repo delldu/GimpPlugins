@@ -46,7 +46,7 @@ static void query(void)
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
 }
 
-static IMAGE *zoom_service(IMAGE *send_image, int msgcode)
+static IMAGE *zoom_rpc_service(IMAGE *send_image, int msgcode)
 {
 	if (msgcode == IMAGE_ZOOM_SERVICE_WITH_PAN)
 		return normal_service("IMAGE_ZOOM_SERVICE_WITH_PAN", send_image, NULL);
@@ -54,27 +54,17 @@ static IMAGE *zoom_service(IMAGE *send_image, int msgcode)
 	return normal_service("image_zoom", send_image, NULL);
 }
 
-static GimpPDBStatusType do_image_zoomx(GimpDrawable * drawable)
+static GimpPDBStatusType start_image_zoomx(gint drawable_id)
 {
-	int x, y, height, width;
+	gint channels;
+	GeglRectangle rect;
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-	// Support local zoom4x
-	x = y = 0;
-	if (! gimp_drawable_mask_intersect(drawable->drawable_id, &x, &y, &width, &height)) {
-		height = drawable->height;
-		width = drawable->width;
-	}
-	if (width < 4 || height < 4) {
-		g_message("Select region is too small.\n");
-		return GIMP_PDB_EXECUTION_ERROR;
-	}
-
-	send_image = image_fromgimp(drawable, x, y, width, height);
+	gimp_progress_init("Zoom ...");
+	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
-		recv_image = zoom_service(send_image, zoom_options.method);
-
+		recv_image = zoom_rpc_service(send_image, zoom_options.method);
 		if (image_valid(recv_image)) {
 			image_display(recv_image, "zoom");
 			image_destroy(recv_image);
@@ -97,7 +87,6 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 {
 	static GimpParam values[1];
 	GimpRunMode run_mode;
-	GimpDrawable *drawable;
 	gint32 drawable_id;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
@@ -134,25 +123,15 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		break;
 	}
 
-	drawable = gimp_drawable_get(drawable_id);
-	if (gimp_drawable_is_rgb(drawable_id) || gimp_drawable_is_gray(drawable_id)) {
-		gimp_progress_init("Zoom ...");
+	gegl_init(NULL, NULL);
 
-		status = do_image_zoomx(drawable);
+	status = start_image_zoomx(drawable_id);
+	if (run_mode != GIMP_RUN_NONINTERACTIVE)
+		gimp_displays_flush();
+	/*  Store data  */
+	if (run_mode == GIMP_RUN_INTERACTIVE)
+		gimp_set_data(PLUG_IN_PROC, &zoom_options, sizeof(ZoomOptions));
 
-		if (run_mode != GIMP_RUN_NONINTERACTIVE)
-			gimp_displays_flush();
-
-		/*  Store data  */
-		if (run_mode == GIMP_RUN_INTERACTIVE)
-			gimp_set_data(PLUG_IN_PROC, &zoom_options, sizeof(ZoomOptions));
-	} else {
-		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Cannot zoom on indexed color images.");
-	}
-	gimp_drawable_detach(drawable);
-
-	// Output result for pdb
-	values[0].data.d_status = status;
+	gegl_exit();
 }
 

@@ -26,25 +26,16 @@ extern "C" {
 	#define PAI_TASKSET "PAI"
 	#define PAI_WORKSPACE "tmp/"
 
-	IMAGE *image_fromgimp(GimpDrawable * drawable, int x, int y, int width, int height);
+
 	int image_togimp(IMAGE * image, GimpDrawable * drawable, int x, int y, int width, int height);
+
+
 	int image_display(IMAGE *image, gchar *name_prefix);
 	IMAGE *normal_service(char *service_name, IMAGE *send_image, char *addon);
 
-	#if 0
-		// Get image
-		TENSOR *tensor_fromgimp(GimpDrawable * drawable, int x, int y, int width, int height);
+	IMAGE *image_from_drawable(gint32 drawable_id, gint *channels, GeglRectangle *rect);
+	int image_saveto_drawable(IMAGE *image, gint32 drawable_id, gint channels, GeglRectangle *rect);
 
-		// Update image
-		int tensor_togimp(TENSOR * tensor, GimpDrawable * drawable, int x, int y, int width, int height);
-
-		// Display new image
-		int tensor_display(TENSOR *tensor, gchar *name_prefix);
-
-		TENSOR *normal_rpc(int socket, TENSOR *send_tensor, int reqcode);
-		TENSOR *resize_rpc(int socket, TENSOR *send_tensor, int reqcode, int multiples);
-		TENSOR *zeropad_rpc(int socket, TENSOR *send_tensor, int reqcode, int multiples);
-	#endif
 
 #if defined(__cplusplus)
 }

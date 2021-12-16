@@ -26,7 +26,7 @@ GimpPlugInInfo PLUG_IN_INFO = {
 
 MAIN()
 
-static IMAGE *light_service(IMAGE *send_image, gint32 msgcode)
+static IMAGE *light_rpc_service(IMAGE *send_image, int msgcode)
 {
 	if (msgcode == IMAGE_LIGHT_SERVICE_WITH_CLAHE)
 		return normal_service("image_light_with_clahe", send_image, NULL);
@@ -34,37 +34,22 @@ static IMAGE *light_service(IMAGE *send_image, gint32 msgcode)
 	return normal_service("image_light", send_image, NULL);
 }
 
-static GimpPDBStatusType do_image_light(GimpDrawable * drawable)
+static GimpPDBStatusType start_image_light(gint drawable_id)
 {
-	int x, y, height, width;
+	gint channels;
+	GeglRectangle rect;
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-	// Support local lighting
-	x = y = 0;
-	if (! gimp_drawable_mask_intersect(drawable->drawable_id, &x, &y, &width, &height) || height * width < 64) {
-		height = drawable->height;
-		width = drawable->width;
-	}
-	if (width < 4 || height < 4) {
-		g_message("Select region is too small.\n");
-		return GIMP_PDB_EXECUTION_ERROR;
-	}
-
-	send_image = image_fromgimp(drawable, x, y, width, height);
+	gimp_progress_init("Light ...");
+	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
-		recv_image = light_service(send_image, light_options.method);
+		recv_image = light_rpc_service(send_image, light_options.method);
 
 		if (image_valid(recv_image)) {
-			image_togimp(recv_image, drawable, x, y, width, height);
-			image_destroy(recv_image);
-
 			gimp_progress_update(1.0);
-
-			/*  merge the shadow, update the drawable  */
-			gimp_drawable_flush(drawable);
-			gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
-			gimp_drawable_update(drawable->drawable_id, x, y, width, height);
+			image_saveto_drawable(recv_image, drawable_id, channels, &rect);
+			image_destroy(recv_image);
 		}
 		else {
 			status = GIMP_PDB_EXECUTION_ERROR;
@@ -105,7 +90,6 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	GimpRunMode run_mode;
-	GimpDrawable *drawable;
 	// gint32 image_id;
 	gint32 drawable_id;
 
@@ -149,25 +133,18 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		break;
 	}
 
-	drawable = gimp_drawable_get(drawable_id);
-	/*  Make sure that the drawable is RGB or GRAY color  */
-	if (gimp_drawable_is_rgb(drawable_id) || gimp_drawable_is_gray(drawable_id)) {
-		gimp_progress_init("Light ...");
+	gegl_init(NULL, NULL);
 
-		status = do_image_light(drawable);
+	status = start_image_light(drawable_id);
+	if (run_mode != GIMP_RUN_NONINTERACTIVE)
+		gimp_displays_flush();
 
-		if (run_mode != GIMP_RUN_NONINTERACTIVE)
-			gimp_displays_flush();
-
-		/*  Store data  */
-		if (run_mode == GIMP_RUN_INTERACTIVE)
-			gimp_set_data(PLUG_IN_PROC, &light_options, sizeof(LightOptions));
-	} else {
-		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Cannot light on indexed color images.");
-	}
-	gimp_drawable_detach(drawable);
+	/*  Store data  */
+	if (run_mode == GIMP_RUN_INTERACTIVE)
+		gimp_set_data(PLUG_IN_PROC, &light_options, sizeof(LightOptions));
 
 	// Output result for pdb
 	values[0].data.d_status = status;
+
+	gegl_exit();
 }

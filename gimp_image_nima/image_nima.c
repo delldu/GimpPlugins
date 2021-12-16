@@ -15,7 +15,7 @@ static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
 
-static char *nima_service(IMAGE *send_image)
+static char *nima_rpc_service(IMAGE *send_image)
 {
 	int size;
 	TASKARG taska;
@@ -63,26 +63,19 @@ failure:
 	return txt;
 }
 
-static GimpPDBStatusType do_image_nima(GimpDrawable * drawable)
+static GimpPDBStatusType start_image_nima(gint drawable_id)
 {
-	int x, y, height, width;
+	gint channels;
+	GeglRectangle rect;
 	IMAGE *send_image;
 	char *recv_text = NULL;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-	x = y = 0;
-	if (! gimp_drawable_mask_intersect(drawable->drawable_id, &x, &y, &width, &height)) {
-		height = drawable->height;
-		width = drawable->width;
-	}
-	if (width < 4 || height < 4) {
-		g_message("Select region is too small.\n");
-		return GIMP_PDB_EXECUTION_ERROR;
-	}
+	gimp_progress_init("Nima ...");
 
-	send_image = image_fromgimp(drawable, x, y, width, height);
+	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
-		recv_text = nima_service(send_image);
+		recv_text = nima_rpc_service(send_image);
 		if (recv_text != NULL) {
 			g_message("Quality: %s\n", recv_text);
 			free(recv_text);
@@ -135,7 +128,6 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	GimpRunMode run_mode;
-	GimpDrawable *drawable;
 	gint32 drawable_id;
 
 	/* Setting mandatory output values */
@@ -151,20 +143,15 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	run_mode = (GimpRunMode)param[0].data.d_int32;
 	drawable_id = param[2].data.d_drawable;
-	drawable = gimp_drawable_get(drawable_id);
-	if (gimp_drawable_is_rgb(drawable_id) || gimp_drawable_is_gray(drawable_id)) {
-		gimp_progress_init("Nima ...");
 
-		status = do_image_nima(drawable);
+	gegl_init(NULL, NULL);
 
-		if (run_mode != GIMP_RUN_NONINTERACTIVE)
-			gimp_displays_flush();
-	} else {
-		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Cannot patch on indexed color images.");
-	}
-	gimp_drawable_detach(drawable);
+	status = start_image_nima(drawable_id);
+	if (run_mode != GIMP_RUN_NONINTERACTIVE)
+		gimp_displays_flush();
 
 	// Output result for pdb
 	values[0].data.d_status = status;
+
+	gegl_exit();
 }

@@ -14,40 +14,27 @@ static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-static IMAGE *matte_service(IMAGE *send_image)
+static IMAGE *matte_rpc_service(IMAGE *send_image)
 {
 	return normal_service("image_matte", send_image, NULL);
 }
 
-static GimpPDBStatusType do_image_matte(GimpDrawable * drawable)
+static GimpPDBStatusType do_image_matte(gint drawable_id)
 {
-	int x, y, height, width;
+	gint channels;
+	GeglRectangle rect;
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-	// Support local matting ...
-	x = y = 0;
-	if (! gimp_drawable_mask_intersect(drawable->drawable_id, &x, &y, &width, &height) || height * width < 64) {
-		height = drawable->height;
-		width = drawable->width;
-	}
-	if (width < 4 || height < 4) {
-		g_message("Select region is too small.\n");
-		return GIMP_PDB_EXECUTION_ERROR;
-	}
+	gimp_progress_init("Matte ...");
 
-	send_image = image_fromgimp(drawable, x, y, width, height);
+	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
-		recv_image = matte_service(send_image);
+		recv_image = matte_rpc_service(send_image);
 		if (image_valid(recv_image)) {
-			image_togimp(recv_image, drawable, x, y, width, height);
-			image_destroy(recv_image);
-
 			gimp_progress_update(1.0);
-			/*  merge the shadow, update the drawable  */
-			gimp_drawable_flush(drawable);
-			gimp_drawable_merge_shadow(drawable->drawable_id, TRUE);
-			gimp_drawable_update(drawable->drawable_id, x, y, width, height);
+			image_saveto_drawable(recv_image, drawable_id, channels, &rect);
+			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
 			g_message("Matte service is not avaible.\n");
@@ -96,7 +83,6 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	GimpRunMode run_mode;
-	GimpDrawable *drawable;
 	gint32 drawable_id;
 
 	/* Setting mandatory output values */
@@ -114,20 +100,15 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	drawable_id = param[2].data.d_drawable;
 
 	gimp_layer_add_alpha(drawable_id);
-	drawable = gimp_drawable_get(drawable_id);
-	if (gimp_drawable_is_rgb(drawable_id) || gimp_drawable_is_gray(drawable_id)) {
-		gimp_progress_init("Matte ...");
 
-		status = do_image_matte(drawable);
+	gegl_init(NULL, NULL);
 
-		if (run_mode != GIMP_RUN_NONINTERACTIVE)
-			gimp_displays_flush();
-	} else {
-		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Cannot matte on indexed color images.");
-	}
-	gimp_drawable_detach(drawable);
+	status = do_image_matte(drawable_id);
+	if (run_mode != GIMP_RUN_NONINTERACTIVE)
+		gimp_displays_flush();
 
 	// Output result for pdb
 	values[0].data.d_status = status;
+
+	gegl_exit();
 }
