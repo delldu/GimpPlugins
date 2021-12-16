@@ -9,8 +9,8 @@
 
 #include "plugin.h"
 
-# define IMAGE_LIGHT_SERVICE 0x01
-# define IMAGE_LIGHT_SERVICE_WITH_CLAHE 0x02
+#define IMAGE_LIGHT_SERVICE 0x01
+#define IMAGE_LIGHT_SERVICE_WITH_CLAHE 0x02
 
 typedef struct {
 	gint32 method;
@@ -65,8 +65,7 @@ gboolean light_dialog()
 
 	// GtkWidget * gimp_int_combo_box_new (const gchar *first_label, gint first_value, ...)
 	combo = gimp_int_combo_box_new("Deep Learning", IMAGE_LIGHT_SERVICE,
-								   "Traditonal Method", IMAGE_LIGHT_SERVICE_WITH_CLAHE,
-								    NULL);
+								   "Traditonal Method", IMAGE_LIGHT_SERVICE_WITH_CLAHE, NULL);
 	gimp_int_combo_box_set_active(GIMP_INT_COMBO_BOX(combo), light_options.method);
 	g_signal_connect(combo, "changed", G_CALLBACK(gimp_int_combo_box_get_active), &light_options.method);
 

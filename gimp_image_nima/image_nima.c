@@ -15,7 +15,7 @@ static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
 
-static char *nima_rpc_service(IMAGE *send_image)
+static char *nima_rpc_service(IMAGE * send_image)
 {
 	int size;
 	TASKARG taska;
@@ -34,8 +34,7 @@ static char *nima_rpc_service(IMAGE *send_image)
 
 	image_save(send_image, input_file);
 
-	snprintf(command, sizeof(command), "image_nima(input_file=%s,output_file=%s)", 
-		input_file, output_file);
+	snprintf(command, sizeof(command), "image_nima(input_file=%s,output_file=%s)", input_file, output_file);
 
 	tasks = taskset_create(PAI_TASKSET);
 	if (set_queue_task(tasks, command, &taska) != RET_OK)
@@ -45,10 +44,10 @@ static char *nima_rpc_service(IMAGE *send_image)
 	wait_time = 30 * 1000;
 	start_time = time_now();
 	while (time_now() - start_time < wait_time) {
-		usleep(300*1000); // 300 ms
+		usleep(300 * 1000);		// 300 ms
 		if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file))
 			break;
-		gimp_progress_update((float)(time_now() - start_time)/wait_time * 0.90);
+		gimp_progress_update((float) (time_now() - start_time) / wait_time * 0.90);
 	}
 	gimp_progress_update(0.9);
 	if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
@@ -57,7 +56,7 @@ static char *nima_rpc_service(IMAGE *send_image)
 	unlink(input_file);
 	unlink(output_file);
 
-failure:
+  failure:
 	taskset_destroy(tasks);
 
 	return txt;
@@ -90,15 +89,15 @@ static GimpPDBStatusType start_image_nima(gint drawable_id)
 		g_message("Error: Nima source(drawable channel is not 1-4 ?).\n");
 	}
 
- 	return status;
+	return status;
 }
 
 
 GimpPlugInInfo PLUG_IN_INFO = {
-    NULL,
-    NULL,
-    query,
-    run
+	NULL,
+	NULL,
+	query,
+	run
 };
 
 MAIN()
@@ -107,9 +106,9 @@ MAIN()
 static void query(void)
 {
 	static GimpParamDef args[] = {
-		{ GIMP_PDB_INT32, "run-mode", "Run mode" },
-		{ GIMP_PDB_IMAGE, "image", "Input image" },
-		{ GIMP_PDB_DRAWABLE, "drawable", "Input drawable" }
+		{GIMP_PDB_INT32, "run-mode", "Run mode"},
+		{GIMP_PDB_IMAGE, "image", "Input image"},
+		{GIMP_PDB_DRAWABLE, "drawable", "Input drawable"}
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
@@ -141,7 +140,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		return;
 	}
 
-	run_mode = (GimpRunMode)param[0].data.d_int32;
+	run_mode = (GimpRunMode) param[0].data.d_int32;
 	drawable_id = param[2].data.d_drawable;
 
 	gegl_init(NULL, NULL);

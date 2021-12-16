@@ -144,6 +144,6 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	// Output result for pdb
 	values[0].data.d_status = status;
 
-  	// free resources used by gegl
+	// free resources used by gegl
 	gegl_exit();
 }

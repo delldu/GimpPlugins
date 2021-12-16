@@ -18,15 +18,15 @@ static void run(const gchar * name,
 
 
 GimpPlugInInfo PLUG_IN_INFO = {
-    NULL,
-    NULL,
-    query,
-    run
+	NULL,
+	NULL,
+	query,
+	run
 };
 
 MAIN()
 
-static IMAGE *light_rpc_service(IMAGE *send_image, int msgcode)
+static IMAGE *light_rpc_service(IMAGE * send_image, int msgcode)
 {
 	if (msgcode == IMAGE_LIGHT_SERVICE_WITH_CLAHE)
 		return normal_service("image_light_with_clahe", send_image, NULL);
@@ -50,8 +50,7 @@ static GimpPDBStatusType start_image_light(gint drawable_id)
 			gimp_progress_update(1.0);
 			image_saveto_drawable(recv_image, drawable_id, channels, &rect);
 			image_destroy(recv_image);
-		}
-		else {
+		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
 			g_message("Error: Light service is not avaible.");
 		}
@@ -61,16 +60,16 @@ static GimpPDBStatusType start_image_light(gint drawable_id)
 		g_message("Error: Light source(drawable channel is not 1-4 ?).\n");
 	}
 
- 	return status;
+	return status;
 }
 
 
 static void query(void)
 {
 	static GimpParamDef args[] = {
-		{ GIMP_PDB_INT32, "run-mode", "Run mode" },
-		{ GIMP_PDB_IMAGE, "image", "Input image" },
-		{ GIMP_PDB_DRAWABLE, "drawable", "Input drawable" }
+		{GIMP_PDB_INT32, "run-mode", "Run mode"},
+		{GIMP_PDB_IMAGE, "image", "Input image"},
+		{GIMP_PDB_DRAWABLE, "drawable", "Input drawable"}
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
@@ -78,8 +77,7 @@ static void query(void)
 						   "This plug-in light image with PAI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
-						   "2020-2021", "_Light", "RGB*, GRAY*", 
-						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2021", "_Light", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
 }
@@ -104,7 +102,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	}
 	values[0].data.d_status = status;
 
-	run_mode = (GimpRunMode)param[0].data.d_int32;
+	run_mode = (GimpRunMode) param[0].data.d_int32;
 	// image_id = param[1].data.d_drawable;
 	drawable_id = param[2].data.d_drawable;
 
@@ -112,7 +110,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	case GIMP_RUN_INTERACTIVE:
 		/* Get options last values if needed */
 		gimp_get_data(PLUG_IN_PROC, &light_options);
-		if (! light_dialog())
+		if (!light_dialog())
 			return;
 		break;
 

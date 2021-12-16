@@ -14,7 +14,7 @@ static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-static IMAGE *patch_rpc_service(IMAGE *send_image)
+static IMAGE *patch_rpc_service(IMAGE * send_image)
 {
 	return normal_service("image_patch", send_image, NULL);
 }
@@ -45,14 +45,14 @@ static GimpPDBStatusType start_image_patch(gint drawable_id)
 		g_message("Error: Patch source(drawable channel is not 1-4 ?).\n");
 	}
 
- 	return status;
+	return status;
 }
 
 GimpPlugInInfo PLUG_IN_INFO = {
-    NULL,
-    NULL,
-    query,
-    run
+	NULL,
+	NULL,
+	query,
+	run
 };
 
 MAIN()
@@ -60,9 +60,9 @@ MAIN()
 static void query(void)
 {
 	static GimpParamDef args[] = {
-		{ GIMP_PDB_INT32, "run-mode", "Run mode" },
-		{ GIMP_PDB_IMAGE, "image", "Input image" },
-		{ GIMP_PDB_DRAWABLE, "drawable", "Input drawable" }
+		{GIMP_PDB_INT32, "run-mode", "Run mode"},
+		{GIMP_PDB_IMAGE, "image", "Input image"},
+		{GIMP_PDB_DRAWABLE, "drawable", "Input drawable"}
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
@@ -94,7 +94,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		return;
 	}
 
-	run_mode = (GimpRunMode)param[0].data.d_int32;
+	run_mode = (GimpRunMode) param[0].data.d_int32;
 	drawable_id = param[2].data.d_drawable;
 
 	// Add alpha channel !!!

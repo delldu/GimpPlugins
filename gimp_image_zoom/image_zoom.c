@@ -19,10 +19,10 @@ static void run(const gchar * name,
 
 
 GimpPlugInInfo PLUG_IN_INFO = {
-    NULL,
-    NULL,
-    query,
-    run
+	NULL,
+	NULL,
+	query,
+	run
 };
 
 MAIN()
@@ -30,10 +30,10 @@ MAIN()
 static void query(void)
 {
 	static GimpParamDef args[] = {
-		{ GIMP_PDB_INT32, "run-mode", "Run mode" },
-		{ GIMP_PDB_IMAGE, "image", "Input image" },
-		{ GIMP_PDB_DRAWABLE, "drawable", "Input drawable" },
-	    { GIMP_PDB_INT32, "method", "Zoom method (1, 2)" },
+		{GIMP_PDB_INT32, "run-mode", "Run mode"},
+		{GIMP_PDB_IMAGE, "image", "Input image"},
+		{GIMP_PDB_DRAWABLE, "drawable", "Input drawable"},
+		{GIMP_PDB_INT32, "method", "Zoom method (1, 2)"},
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
@@ -46,7 +46,7 @@ static void query(void)
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
 }
 
-static IMAGE *zoom_rpc_service(IMAGE *send_image, int msgcode)
+static IMAGE *zoom_rpc_service(IMAGE * send_image, int msgcode)
 {
 	if (msgcode == IMAGE_ZOOM_SERVICE_WITH_PAN)
 		return normal_service("IMAGE_ZOOM_SERVICE_WITH_PAN", send_image, NULL);
@@ -68,8 +68,7 @@ static GimpPDBStatusType start_image_zoomx(gint drawable_id)
 		if (image_valid(recv_image)) {
 			image_display(recv_image, "zoom");
 			image_destroy(recv_image);
-		}
-		else {
+		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
 			g_message("Error: Zoom service is not available.");
 		}
@@ -79,7 +78,7 @@ static GimpPDBStatusType start_image_zoomx(gint drawable_id)
 		g_message("Error: Zoom source(drawable channel is not 1-4 ?).\n");
 	}
 
- 	return status; // GIMP_PDB_SUCCESS;
+	return status;				// GIMP_PDB_SUCCESS;
 }
 
 static void
@@ -101,13 +100,13 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		return;
 	}
 
-	run_mode = (GimpRunMode)param[0].data.d_int32;
+	run_mode = (GimpRunMode) param[0].data.d_int32;
 	drawable_id = param[2].data.d_drawable;
 
 	switch (run_mode) {
 	case GIMP_RUN_INTERACTIVE:
 		gimp_get_data(PLUG_IN_PROC, &zoom_options);
-		if (! zoom_dialog())
+		if (!zoom_dialog())
 			return;
 		break;
 
@@ -134,4 +133,3 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	gegl_exit();
 }
-

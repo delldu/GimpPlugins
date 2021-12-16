@@ -8,170 +8,9 @@
 
 #include "plugin.h"
 
-int image_togimp(IMAGE * image, GimpDrawable * drawable, int x, int y, int width, int height)
-{
-	gint i, j;
-	gint channels;
-	GimpPixelRgn output_rgn;
-	guchar *rgn_data, *d;
+// Reference https://github.com/h4k1m0u/gimp-plugin
 
-	channels = drawable->bpp;
-	gimp_pixel_rgn_init(&output_rgn, drawable, 0, 0, drawable->width, drawable->height, TRUE, FALSE);
-
-	rgn_data = g_new(guchar, height * width * channels);
-	if (!rgn_data) {
-		g_print("Memory allocate (%d bytes) failure.\n", height * width * channels);
-		return RET_ERROR;
-	}
-
-	d = rgn_data;
-	switch (channels) {
-	case 1:
-		for (i = 0; i < height; i++) {
-			for (j = 0; j < width; j++) {
-				*d++ = image->ie[i][j].r;
-			}
-		}
-		break;
-	case 2:
-		// Mono Gray + Alpha
-		for (i = 0; i < height; i++) {
-			for (j = 0; j < width; j++) {
-				*d++ = image->ie[i][j].r;
-				*d++ = image->ie[i][j].a;
-			}
-		}
-		break;
-	case 3:
-		for (i = 0; i < height; i++) {
-			for (j = 0; j < width; j++) {
-				*d++ = image->ie[i][j].r;
-				*d++ = image->ie[i][j].g;
-				*d++ = image->ie[i][j].b;
-			}
-		}
-		break;
-	case 4:
-#if 0
-		for (i = 0; i < height; i++) {
-			for (j = 0; j < width; j++) {
-				*d++ = image->ie[i][j].r;
-				*d++ = image->ie[i][j].g;
-				*d++ = image->ie[i][j].b;
-				*d++ = image->ie[i][j].a;
-			}
-		}
-#else
-		// faster
-		memcpy(d, image->base, height * width * 4 * sizeof(BYTE));
-#endif
-		break;
-	default:
-		// Error ?
-		g_print("Invalid channels: %d\n", channels);
-		break;
-	}
-	gimp_pixel_rgn_set_rect(&output_rgn, rgn_data, x, y, width, height);
-
-	g_free(rgn_data);
-
-	return RET_OK;
-}
-
-int image_display(IMAGE * image, gchar * name_prefix)
-{
-	gchar name[64];
-	gint32 image_ID, layer_ID, channels;
-	const GeglRectangle *rect;
-	GeglBuffer *buffer;
-
-	check_image(image);
-
-	image_ID = gimp_image_new(image->width, image->height, GIMP_RGB);
-	if (image_ID < 0) {
-		g_message("Error: Create gimp image.");
-		return RET_ERROR;
-	}
-
-	g_snprintf(name, sizeof(name), "%s_%d", name_prefix, image_ID);
-
-	layer_ID = gimp_layer_new(image_ID, name, image->width, image->height, GIMP_RGBA_IMAGE, 100.0, GIMP_NORMAL_MODE);
-
-	if (layer_ID > 0) {
-		// gegl buffer & shadow buffer for reading/writing
-		buffer = gimp_drawable_get_buffer(layer_ID);
-		// read all image at once from input buffer
-		rect = gegl_buffer_get_extent(buffer);
-		channels = gimp_drawable_bpp(layer_ID);
-		image_saveto_drawable(image, layer_ID, channels, (GeglRectangle *)rect);
-		g_object_unref(buffer);
-
-		if (!gimp_image_insert_layer(image_ID, layer_ID, 0, 0)) {
-			g_message("Error: Insert layer error.");
-		}
-		gimp_display_new(image_ID);
-		gimp_displays_flush();
-	} else {
-		g_message("Error: Create gimp layer.");
-		return RET_ERROR;
-	}
-
-	return RET_OK;
-}
-
-IMAGE *normal_service(char *service_name, IMAGE * send_image, char *addon)
-{
-	TASKARG taska;
-	TASKSET *tasks;
-	TIME start_time, wait_time;
-	IMAGE *recv_image = NULL;
-	char input_file[256], output_file[256], command[TASK_BUFFER_LEN], home_workspace[256];
-
-	CHECK_IMAGE(send_image);
-
-	snprintf(home_workspace, sizeof(home_workspace), "%s/%s", getenv("HOME"), PAI_WORKSPACE);
-	make_dir(home_workspace);
-	get_temp_fname(home_workspace, ".png", input_file, sizeof(input_file));
-	get_temp_fname(home_workspace, ".png", output_file, sizeof(output_file));
-
-	image_save(send_image, input_file);
-
-	if (addon) {
-		snprintf(command, sizeof(command), "%s(input_file=%s,%s,output_file=%s)",
-				 service_name, input_file, addon, output_file);
-	} else {
-		snprintf(command, sizeof(command), "%s(input_file=%s,output_file=%s)", service_name, input_file, output_file);
-	}
-
-	tasks = taskset_create(PAI_TASKSET);
-	if (set_queue_task(tasks, command, &taska) != RET_OK)
-		goto failure;
-
-	// wait time, e.g, 30 seconds
-	wait_time = 30 * 1000;
-	start_time = time_now();
-	while (time_now() - start_time < wait_time) {
-		usleep(300 * 1000);		// 300 ms
-		if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file))
-			break;
-		gimp_progress_update((float) (time_now() - start_time) / wait_time * 0.90);
-	}
-	gimp_progress_update(0.9);
-	if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
-		recv_image = image_load(output_file);
-	}
-
-	unlink(input_file);
-	unlink(output_file);
-
-  failure:
-	taskset_destroy(tasks);
-
-	return recv_image;
-}
-
-
-IMAGE *image_from_rawdata(gint channels, gint height, gint width, guchar * d)
+static IMAGE *image_from_rawdata(gint channels, gint height, gint width, guchar * d)
 {
 	int i, j;
 	IMAGE *image;
@@ -238,7 +77,7 @@ IMAGE *image_from_rawdata(gint channels, gint height, gint width, guchar * d)
 	return image;
 }
 
-int image_to_rawdata(IMAGE * image, gint channels, gint height, gint width, guchar * d)
+static int image_to_rawdata(IMAGE * image, gint channels, gint height, gint width, guchar * d)
 {
 	int i, j;
 
@@ -296,9 +135,99 @@ int image_to_rawdata(IMAGE * image, gint channels, gint height, gint width, guch
 	return RET_OK;
 }
 
+int image_display(IMAGE * image, gchar * name_prefix)
+{
+	gchar name[64];
+	gint32 image_ID, layer_ID, channels;
+	const GeglRectangle *rect;
+	GeglBuffer *buffer;
 
-// https://github.com/h4k1m0u/gimp-plugin, box_blur.c
-IMAGE *image_from_drawable(gint32 drawable_id, gint *channels, GeglRectangle *rect)
+	check_image(image);
+
+	image_ID = gimp_image_new(image->width, image->height, GIMP_RGB);
+	if (image_ID < 0) {
+		g_message("Error: Create gimp image.");
+		return RET_ERROR;
+	}
+
+	g_snprintf(name, sizeof(name), "%s_%d", name_prefix, image_ID);
+
+	layer_ID = gimp_layer_new(image_ID, name, image->width, image->height, GIMP_RGBA_IMAGE, 100.0, GIMP_NORMAL_MODE);
+
+	if (layer_ID > 0) {
+		// gegl buffer & shadow buffer for reading/writing
+		buffer = gimp_drawable_get_buffer(layer_ID);
+		// read all image at once from input buffer
+		rect = gegl_buffer_get_extent(buffer);
+		channels = gimp_drawable_bpp(layer_ID);
+		image_saveto_drawable(image, layer_ID, channels, (GeglRectangle *) rect);
+		g_object_unref(buffer);
+
+		if (!gimp_image_insert_layer(image_ID, layer_ID, 0, 0)) {
+			g_message("Error: Insert layer error.");
+		}
+		gimp_display_new(image_ID);
+		gimp_displays_flush();
+	} else {
+		g_message("Error: Create gimp layer.");
+		return RET_ERROR;
+	}
+
+	return RET_OK;
+}
+
+IMAGE *normal_service(char *service_name, IMAGE * send_image, char *addon)
+{
+	TASKARG taska;
+	TASKSET *tasks;
+	TIME start_time, wait_time;
+	IMAGE *recv_image = NULL;
+	char input_file[256], output_file[256], command[TASK_BUFFER_LEN], home_workspace[256];
+
+	CHECK_IMAGE(send_image);
+
+	snprintf(home_workspace, sizeof(home_workspace), "%s/%s", getenv("HOME"), PAI_WORKSPACE);
+	make_dir(home_workspace);
+	get_temp_fname(home_workspace, ".png", input_file, sizeof(input_file));
+	get_temp_fname(home_workspace, ".png", output_file, sizeof(output_file));
+
+	image_save(send_image, input_file);
+
+	if (addon) {
+		snprintf(command, sizeof(command), "%s(input_file=%s,%s,output_file=%s)",
+				 service_name, input_file, addon, output_file);
+	} else {
+		snprintf(command, sizeof(command), "%s(input_file=%s,output_file=%s)", service_name, input_file, output_file);
+	}
+
+	tasks = taskset_create(PAI_TASKSET);
+	if (set_queue_task(tasks, command, &taska) != RET_OK)
+		goto failure;
+
+	// wait time, e.g, 30 seconds
+	wait_time = 30 * 1000;
+	start_time = time_now();
+	while (time_now() - start_time < wait_time) {
+		usleep(300 * 1000);		// 300 ms
+		if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file))
+			break;
+		gimp_progress_update((float) (time_now() - start_time) / wait_time * 0.90);
+	}
+	gimp_progress_update(0.9);
+	if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
+		recv_image = image_load(output_file);
+	}
+
+	unlink(input_file);
+	unlink(output_file);
+
+  failure:
+	taskset_destroy(tasks);
+
+	return recv_image;
+}
+
+IMAGE *image_from_drawable(gint32 drawable_id, gint * channels, GeglRectangle * rect)
 {
 	guchar *rawdata;
 	gint tchans, x1, y1, width, height;
@@ -311,7 +240,6 @@ IMAGE *image_from_drawable(gint32 drawable_id, gint *channels, GeglRectangle *re
 		g_message("Error: Select or reggion size is too small.\n");
 		return NULL;
 	}
-
 	// gegl buffer & shadow buffer for reading/writing
 	buffer = gimp_drawable_get_buffer(drawable_id);
 
@@ -338,7 +266,7 @@ IMAGE *image_from_drawable(gint32 drawable_id, gint *channels, GeglRectangle *re
 	return image;
 }
 
-int image_saveto_drawable(IMAGE *image, gint32 drawable_id, gint channels, GeglRectangle *rect)
+int image_saveto_drawable(IMAGE * image, gint32 drawable_id, gint channels, GeglRectangle * rect)
 {
 	guchar *rawdata;
 	const Babl *format;

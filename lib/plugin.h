@@ -16,30 +16,22 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 
-	#include <nimage/image.h>
-	#include <redos/redos.h>
+#include <nimage/image.h>
+#include <redos/redos.h>
 
-	#include <libgimp/gimp.h>
-	#include <libgimp/gimpui.h>
+#include <libgimp/gimp.h>
+#include <libgimp/gimpui.h>
 
-	#define GIMP_PLUGIN_VERSION "1.1.0"
-	#define PAI_TASKSET "PAI"
-	#define PAI_WORKSPACE "tmp/"
+#define GIMP_PLUGIN_VERSION "1.1.0"
+#define PAI_TASKSET "PAI"
+#define PAI_WORKSPACE "tmp/"
 
-
-	int image_togimp(IMAGE * image, GimpDrawable * drawable, int x, int y, int width, int height);
-
-
-	int image_display(IMAGE *image, gchar *name_prefix);
-	IMAGE *normal_service(char *service_name, IMAGE *send_image, char *addon);
-
-	IMAGE *image_from_drawable(gint32 drawable_id, gint *channels, GeglRectangle *rect);
-	int image_saveto_drawable(IMAGE *image, gint32 drawable_id, gint channels, GeglRectangle *rect);
-
+	IMAGE *image_from_drawable(gint32 drawable_id, gint * channels, GeglRectangle * rect);
+	int image_saveto_drawable(IMAGE * image, gint32 drawable_id, gint channels, GeglRectangle * rect);
+	int image_display(IMAGE * image, gchar * name_prefix);
+	IMAGE *normal_service(char *service_name, IMAGE * send_image, char *addon);
 
 #if defined(__cplusplus)
 }
 #endif
-
-#endif	// _PLUGIN_H
-
+#endif							// _PLUGIN_H
