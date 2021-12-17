@@ -1,15 +1,17 @@
 ## GIMP Plug-ins
 
-GImp plug-ins for image clean/color/zoom/patch with deep learning.
+GImp plug-ins for image clean/color/zoom/patch/nima/light with deep learning.
 
 ### 1. Prebuild
 
-```NImage.
+```
+NImage
+Redos
 libnng
 gimp-2.0
 ```
 
-### 2. Build
+### 2. Make
 ```
 make
 make clean
