@@ -33,11 +33,11 @@ static void query(void)
 		{GIMP_PDB_INT32, "run-mode", "Run mode"},
 		{GIMP_PDB_IMAGE, "image", "Input image"},
 		{GIMP_PDB_DRAWABLE, "drawable", "Input drawable"},
-		{GIMP_PDB_INT32, "method", "Zoom method (1, 2)"},
+		{GIMP_PDB_INT32, "method", "Zoom in method (1, 2)"},
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Zoom",
+						   "Image Zoom In",
 						   "This plug-in zoom image with PAI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
@@ -49,7 +49,7 @@ static void query(void)
 static IMAGE *zoom_rpc_service(IMAGE * send_image, int msgcode)
 {
 	if (msgcode == IMAGE_ZOOM_SERVICE_WITH_PAN)
-		return normal_service("IMAGE_ZOOM_SERVICE_WITH_PAN", send_image, NULL);
+		return normal_service("image_zoom_with_pan", send_image, NULL);
 
 	return normal_service("image_zoom", send_image, NULL);
 }
@@ -61,21 +61,22 @@ static GimpPDBStatusType start_image_zoomx(gint drawable_id)
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-	gimp_progress_init("Zoom ...");
+	gimp_progress_init("Zoom in ...");
 	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
 		recv_image = zoom_rpc_service(send_image, zoom_options.method);
+		gimp_progress_update(1.0);
 		if (image_valid(recv_image)) {
 			image_display(recv_image, "zoom");
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Zoom service is not available.");
+			g_message("Error: Zoom in service is not available.");
 		}
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Zoom source(drawable channel is not 1-4 ?).\n");
+		g_message("Error: Zoom in source(drawable channel is not 1-4 ?).\n");
 	}
 
 	return status;				// GIMP_PDB_SUCCESS;

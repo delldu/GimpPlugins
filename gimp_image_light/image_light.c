@@ -45,9 +45,7 @@ static GimpPDBStatusType start_image_light(gint drawable_id)
 	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
 		recv_image = light_rpc_service(send_image, light_options.method);
-
 		if (image_valid(recv_image)) {
-			gimp_progress_update(1.0);
 			image_saveto_drawable(recv_image, drawable_id, channels, &rect);
 			image_destroy(recv_image);
 		} else {
@@ -95,12 +93,12 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	*nreturn_vals = 1;
 	*return_vals = values;
 	values[0].type = GIMP_PDB_STATUS;
+	values[0].data.d_status = status;
 
 	if (strcmp(name, PLUG_IN_PROC) != 0 || nparams < 3) {
 		values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
 		return;
 	}
-	values[0].data.d_status = status;
 
 	run_mode = (GimpRunMode) param[0].data.d_int32;
 	// image_id = param[1].data.d_drawable;

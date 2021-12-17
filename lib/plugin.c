@@ -135,46 +135,6 @@ static int image_to_rawdata(IMAGE * image, gint channels, gint height, gint widt
 	return RET_OK;
 }
 
-int image_display(IMAGE * image, gchar * name_prefix)
-{
-	gchar name[64];
-	gint32 image_ID, layer_ID, channels;
-	const GeglRectangle *rect;
-	GeglBuffer *buffer;
-
-	check_image(image);
-
-	image_ID = gimp_image_new(image->width, image->height, GIMP_RGB);
-	if (image_ID < 0) {
-		g_message("Error: Create gimp image.");
-		return RET_ERROR;
-	}
-
-	g_snprintf(name, sizeof(name), "%s_%d", name_prefix, image_ID);
-
-	layer_ID = gimp_layer_new(image_ID, name, image->width, image->height, GIMP_RGBA_IMAGE, 100.0, GIMP_NORMAL_MODE);
-
-	if (layer_ID > 0) {
-		// gegl buffer & shadow buffer for reading/writing
-		buffer = gimp_drawable_get_buffer(layer_ID);
-		// read all image at once from input buffer
-		rect = gegl_buffer_get_extent(buffer);
-		channels = gimp_drawable_bpp(layer_ID);
-		image_saveto_drawable(image, layer_ID, channels, (GeglRectangle *) rect);
-		g_object_unref(buffer);
-
-		if (!gimp_image_insert_layer(image_ID, layer_ID, 0, 0)) {
-			g_message("Error: Insert layer error.");
-		}
-		gimp_display_new(image_ID);
-		gimp_displays_flush();
-	} else {
-		g_message("Error: Create gimp layer.");
-		return RET_ERROR;
-	}
-
-	return RET_OK;
-}
 
 IMAGE *normal_service(char *service_name, IMAGE * send_image, char *addon)
 {
@@ -230,9 +190,10 @@ IMAGE *normal_service(char *service_name, IMAGE * send_image, char *addon)
 IMAGE *image_from_drawable(gint32 drawable_id, gint * channels, GeglRectangle * rect)
 {
 	guchar *rawdata;
-	gint tchans, x1, y1, width, height;
+	gint x1, y1, width, height;
+	gint tchans;	// temp channels
 	const Babl *format;
-	const GeglRectangle *trect;
+	const GeglRectangle *trect; // temp rect
 	GeglBuffer *buffer;
 	IMAGE *image;
 
@@ -295,6 +256,7 @@ int image_saveto_drawable(IMAGE * image, gint32 drawable_id, gint channels, Gegl
 
 	gegl_buffer_set(shadow_buffer, GEGL_RECTANGLE(rect->x, rect->y, rect->width, rect->height),
 					0, format, rawdata, GEGL_AUTO_ROWSTRIDE);
+	gimp_progress_update(1.0);
 
 	// flush required by shadow buffer & merge shadow buffer with drawable & update drawable
 	gegl_buffer_flush(shadow_buffer);
@@ -304,6 +266,45 @@ int image_saveto_drawable(IMAGE * image, gint32 drawable_id, gint channels, Gegl
 	// free allocated pointers & buffers
 	g_free(rawdata);
 	g_object_unref(shadow_buffer);
+
+	return RET_OK;
+}
+
+int image_display(IMAGE * image, gchar * name_prefix)
+{
+	gchar name[64];
+	gint32 image_ID, layer_ID, channels;
+	const GeglRectangle *rect;
+	GeglBuffer *buffer;
+
+	check_image(image);
+
+	image_ID = gimp_image_new(image->width, image->height, GIMP_RGB);
+	if (image_ID < 0) {
+		g_message("Error: Create gimp image.");
+		return RET_ERROR;
+	}
+
+	g_snprintf(name, sizeof(name), "%s_%d", name_prefix, image_ID);
+
+	layer_ID = gimp_layer_new(image_ID, name, image->width, image->height, GIMP_RGBA_IMAGE, 100.0, GIMP_NORMAL_MODE);
+
+	if (layer_ID > 0) {
+		buffer = gimp_drawable_get_buffer(layer_ID);
+		rect = gegl_buffer_get_extent(buffer);
+		channels = gimp_drawable_bpp(layer_ID);
+		image_saveto_drawable(image, layer_ID, channels, (GeglRectangle *) rect);
+		g_object_unref(buffer);
+
+		if (!gimp_image_insert_layer(image_ID, layer_ID, 0, 0)) {
+			g_message("Error: Insert layer error.");
+		}
+		gimp_display_new(image_ID);
+		gimp_displays_flush();
+	} else {
+		g_message("Error: Create gimp layer.");
+		return RET_ERROR;
+	}
 
 	return RET_OK;
 }

@@ -76,7 +76,7 @@ static GimpPDBStatusType start_image_nima(gint drawable_id)
 	if (image_valid(send_image)) {
 		recv_text = nima_rpc_service(send_image);
 		if (recv_text != NULL) {
-			g_message("Quality: %s\n", recv_text);
+			g_message("Image Quality: %s\n", recv_text);
 			free(recv_text);
 			gimp_progress_update(1.0);
 		} else {
@@ -112,11 +112,11 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Nima",
+						   "Image Quality",
 						   "This plug-in nima image with PAI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
-						   "2020-2021", "_Nima", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2021", "_Quality", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
 }

@@ -24,6 +24,9 @@ static IMAGE *clean_rpc_service(IMAGE * send_image, int msgcode)
 	if (msgcode == IMAGE_CLEAN_SERVICE_WITH_WEATHER)
 		return normal_service("image_clean_with_weather", send_image, addon);
 
+	if (msgcode == IMAGE_CLEAN_SERVICE_WITH_GUIDER )
+		return normal_service("image_clean_with_guider", send_image, addon);
+
 	return normal_service("image_clean", send_image, addon);
 }
 
@@ -40,8 +43,6 @@ static GimpPDBStatusType start_image_clean(gint drawable_id)
 	if (image_valid(send_image)) {
 		recv_image = clean_rpc_service(send_image, clean_options.method);
 		if (image_valid(recv_image)) {
-			gimp_progress_update(1.0);
-
 			image_saveto_drawable(recv_image, drawable_id, channels, &rect);
 			image_destroy(recv_image);
 		} else {

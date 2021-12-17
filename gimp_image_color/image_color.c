@@ -32,9 +32,7 @@ static GimpPDBStatusType start_image_color(gint drawable_id)
 	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
 		recv_image = color_rpc_service(send_image);
-
 		if (image_valid(recv_image)) {
-			gimp_progress_update(1.0);
 			image_saveto_drawable(recv_image, drawable_id, channels, &rect);
 			image_destroy(recv_image);
 		} else {
