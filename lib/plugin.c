@@ -164,8 +164,8 @@ IMAGE *normal_service(char *service_name, IMAGE * send_image, char *addon)
 	if (set_queue_task(tasks, command, &taska) != RET_OK)
 		goto failure;
 
-	// wait time, e.g, 30 seconds
-	wait_time = 30 * 1000;
+	// wait time, e.g, 60 seconds
+	wait_time = 60 * 1000;
 	start_time = time_now();
 	while (time_now() - start_time < wait_time) {
 		usleep(300 * 1000);		// 300 ms
@@ -177,7 +177,6 @@ IMAGE *normal_service(char *service_name, IMAGE * send_image, char *addon)
 	if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
 		recv_image = image_load(output_file);
 	}
-
 	unlink(input_file);
 	unlink(output_file);
 
@@ -290,17 +289,18 @@ int image_display(IMAGE * image, gchar * name_prefix)
 	layer_ID = gimp_layer_new(image_ID, name, image->width, image->height, GIMP_RGBA_IMAGE, 100.0, GIMP_NORMAL_MODE);
 
 	if (layer_ID > 0) {
-		buffer = gimp_drawable_get_buffer(layer_ID);
-		rect = gegl_buffer_get_extent(buffer);
-		channels = gimp_drawable_bpp(layer_ID);
-		image_saveto_drawable(image, layer_ID, channels, (GeglRectangle *) rect);
-		g_object_unref(buffer);
-
 		if (!gimp_image_insert_layer(image_ID, layer_ID, 0, 0)) {
 			g_message("Error: Insert layer error.");
+		} else {
+			gimp_display_new(image_ID);
+			gimp_displays_flush();
+
+			buffer = gimp_drawable_get_buffer(layer_ID);
+			rect = gegl_buffer_get_extent(buffer);
+			channels = gimp_drawable_bpp(layer_ID);
+			image_saveto_drawable(image, layer_ID, channels, (GeglRectangle *) rect);
+			g_object_unref(buffer);
 		}
-		gimp_display_new(image_ID);
-		gimp_displays_flush();
 	} else {
 		g_message("Error: Create gimp layer.");
 		return RET_ERROR;

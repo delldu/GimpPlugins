@@ -14,12 +14,12 @@ typedef struct {
 } ZoomOptions;
 
 #define IMAGE_ZOOM_SERVICE 0x01
-#define IMAGE_ZOOM_SERVICE_WITH_PAN 0x02
+#define IMAGE_ZOOMS_SERVICE 0x02
 
 
 /* Set up default values for options */
 static ZoomOptions zoom_options = {
-	IMAGE_ZOOM_SERVICE,			/* method */
+	IMAGE_ZOOMS_SERVICE,			/* method */
 };
 
 #define SCALE_WIDTH        256
@@ -65,7 +65,7 @@ gboolean zoom_dialog()
 	gtk_widget_show(table);
 
 	// GtkWidget * gimp_int_combo_box_new (const gchar *first_label, gint first_value, ...)
-	combo = gimp_int_combo_box_new("Fast", IMAGE_ZOOM_SERVICE_WITH_PAN, "Normal", IMAGE_ZOOM_SERVICE, NULL);
+	combo = gimp_int_combo_box_new("Fast", IMAGE_ZOOMS_SERVICE, "Normal", IMAGE_ZOOM_SERVICE, NULL);
 	gimp_int_combo_box_set_active(GIMP_INT_COMBO_BOX(combo), zoom_options.method);
 	g_signal_connect(combo, "changed", G_CALLBACK(gimp_int_combo_box_get_active), &zoom_options.method);
 

@@ -32,7 +32,6 @@ static GimpPDBStatusType start_image_matte(gint drawable_id)
 	if (image_valid(send_image)) {
 		recv_image = matte_rpc_service(send_image);
 		if (image_valid(recv_image)) {
-			gimp_progress_update(1.0);
 			image_saveto_drawable(recv_image, drawable_id, channels, &rect);
 			image_destroy(recv_image);
 		} else {
@@ -98,7 +97,8 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	run_mode = (GimpRunMode) param[0].data.d_int32;
 	drawable_id = param[2].data.d_drawable;
 
-	gimp_layer_add_alpha(drawable_id);
+	if (! gimp_drawable_has_alpha(drawable_id))
+		gimp_layer_add_alpha(drawable_id);
 
 	gegl_init(NULL, NULL);
 
