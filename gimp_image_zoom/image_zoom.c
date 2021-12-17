@@ -54,20 +54,24 @@ static IMAGE *zoom_rpc_service(IMAGE * send_image, int msgcode)
 	return normal_service("image_zoom", send_image, NULL);
 }
 
-static GimpPDBStatusType start_image_zoomx(gint drawable_id)
+static GimpPDBStatusType start_image_zoom(gint32 drawable_id)
 {
-	gint channels;
-	GeglRectangle rect;
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
+	gint x, y, width, height;
+
+	if (!gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
+		g_message("Error: Select or reggion size is too small.\n");
+		return GIMP_PDB_EXECUTION_ERROR;
+	}
 
 	gimp_progress_init("Zoom ...");
-	send_image = image_from_drawable(drawable_id, &channels, &rect);
+	send_image = image_from_select(drawable_id, x, y, width, height);
 	if (image_valid(send_image)) {
 		recv_image = zoom_rpc_service(send_image, zoom_options.method);
 		gimp_progress_update(1.0);
 		if (image_valid(recv_image)) {
-			image_display(recv_image, "zoom");
+			create_gimp_image(recv_image, "zoom");
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
@@ -76,7 +80,7 @@ static GimpPDBStatusType start_image_zoomx(gint drawable_id)
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Zoom source(drawable channel is not 1-4 ?).\n");
+		g_message("Error: Zoom source (drawable channel is not 1-4 ?).\n");
 	}
 
 	return status;				// GIMP_PDB_SUCCESS;
@@ -125,7 +129,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	gegl_init(NULL, NULL);
 
-	status = start_image_zoomx(drawable_id);
+	status = start_image_zoom(drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
 	/*  Store data  */

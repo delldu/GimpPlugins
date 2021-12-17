@@ -62,17 +62,21 @@ static char *nima_rpc_service(IMAGE * send_image)
 	return txt;
 }
 
-static GimpPDBStatusType start_image_nima(gint drawable_id)
+static GimpPDBStatusType start_image_nima(gint32 drawable_id)
 {
-	gint channels;
-	GeglRectangle rect;
 	IMAGE *send_image;
 	char *recv_text = NULL;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
+	gint x, y, width, height;
+
+	if (!gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
+		g_message("Error: Select or reggion size is too small.\n");
+		return GIMP_PDB_EXECUTION_ERROR;
+	}
 
 	gimp_progress_init("Nima ...");
 
-	send_image = image_from_drawable(drawable_id, &channels, &rect);
+	send_image = image_from_select(drawable_id, x, y, width, height);
 	if (image_valid(send_image)) {
 		recv_text = nima_rpc_service(send_image);
 		if (recv_text != NULL) {

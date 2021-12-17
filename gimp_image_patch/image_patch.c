@@ -29,11 +29,21 @@ static GimpPDBStatusType start_image_patch(gint drawable_id)
 	gimp_progress_init("Patch ...");
 
 	send_image = image_from_drawable(drawable_id, &channels, &rect);
+
+	// make sure image is not leak masked infomation
+	int i, j;
+	image_foreach(send_image, i, j) {
+		if (send_image->ie[i][j].a < 128) {
+			send_image->ie[i][j].r = send_image->ie[i][j].g = send_image->ie[i][j].b = 0;
+			send_image->ie[i][j].a = 0;
+		} else {
+			send_image->ie[i][j].a = 255;
+		}
+	}
 	if (image_valid(send_image)) {
 		recv_image = patch_rpc_service(send_image);
 		if (image_valid(recv_image)) {
-			image_display(recv_image, "patch");
-			// image_saveto_drawable(recv_image, drawable_id, channels, &rect);
+			image_saveto_drawable(recv_image, drawable_id, channels, &rect);
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
