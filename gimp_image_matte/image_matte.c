@@ -81,6 +81,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	GimpRunMode run_mode;
+	gint32 image_id;
 	gint32 drawable_id;
 
 	/* Setting mandatory output values */
@@ -95,7 +96,11 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	}
 
 	run_mode = (GimpRunMode) param[0].data.d_int32;
+	image_id = param[1].data.d_image;
 	drawable_id = param[2].data.d_drawable;
+
+	if (gimp_image_base_type (image_id) != GIMP_RGB)
+		gimp_image_convert_rgb (image_id);
 
 	if (! gimp_drawable_has_alpha(drawable_id))
 		gimp_layer_add_alpha(drawable_id);
