@@ -36,9 +36,7 @@ extern "C" {
 
 	int image_display(IMAGE * image, gchar * name_prefix);
 
-
 	IMAGE *normal_service(char *service_name, IMAGE * send_image, char *addon);
-
 #if defined(__cplusplus)
 }
 #endif
