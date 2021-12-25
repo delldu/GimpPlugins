@@ -29,7 +29,7 @@ MAIN()
 static IMAGE *light_rpc_service(IMAGE * send_image, int msgcode)
 {
 	if (msgcode == IMAGE_LIGHT_SERVICE_WITH_CLAHE)
-		return normal_service("image_light_with_clahe", send_image, NULL);
+		return normal_service("image_clahe", send_image, NULL);
 	// else
 	return normal_service("image_light", send_image, NULL);
 }

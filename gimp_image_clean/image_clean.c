@@ -25,7 +25,7 @@ static IMAGE *clean_rpc_service(IMAGE * send_image, int msgcode)
 		return normal_service("image_weather", send_image, addon);
 
 	if (msgcode == IMAGE_CLEAN_SERVICE_WITH_GUIDE )
-		return normal_service("image_clean_with_guide", send_image, addon);
+		return normal_service("image_guide", send_image, addon);
 
 	return normal_service("image_clean", send_image, addon);
 }
