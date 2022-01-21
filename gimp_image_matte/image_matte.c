@@ -8,7 +8,7 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "plug-in-gimp_image_matting"
+#define PLUG_IN_PROC "plug-in-gimp_image_matte"
 
 static void query(void);
 static void run(const gchar * name,

@@ -8,7 +8,7 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "plug-in-gimp_image_nima"
+#define PLUG_IN_PROC "plug-in-gimp_image_quality"
 
 static void query(void);
 static void run(const gchar * name,
@@ -116,11 +116,11 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Quality Estimation",
-						   "This plug-in nima image with PAI",
+						   "Image Quality Measure",
+						   "This plug-in measure image quality with PAI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
-						   "2020-2022", "_Quality Estimation", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2022", "_Quality Measure", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
 }
