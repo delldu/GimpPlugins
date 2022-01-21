@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-*** Copyright 2020-2021 Dell(18588220928g@163.com), All Rights Reserved.
+*** Copyright 2020-2022 Dell(18588220928g@163.com), All Rights Reserved.
 ***
 *** File Author: Dell, 2020-11-16 12:16:01
 ***
@@ -37,21 +37,27 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Zoom",
+						   "Image Zoom In",
 						   "This plug-in zoom image with PAI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
-						   "2020-2021", "_Zoom", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2022", "_Zoom In", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
 }
 
 static IMAGE *zoom_rpc_service(IMAGE * send_image, int msgcode)
 {
+	char addon[64];
 	if (msgcode == IMAGE_ZOOMS_SERVICE)
-		return normal_service("image_zooms", send_image, NULL);
+		return normal_service(PAI_TASKSET, "image_zooms", send_image, NULL);
 
-	return normal_service("image_zoom", send_image, NULL);
+	if (msgcode == IMAGE_ZOOMX_SERVICE) {
+		snprintf(addon, sizeof(addon), "times=%d", zoom_options.times);
+		return normal_service(TAI_TASKSET, "image_zoomx", send_image, addon);
+	}
+
+	return normal_service(PAI_TASKSET, "image_zoom", send_image, NULL);
 }
 
 static GimpPDBStatusType start_image_zoom(gint32 drawable_id)
@@ -61,7 +67,7 @@ static GimpPDBStatusType start_image_zoom(gint32 drawable_id)
 	gint x, y, width, height;
 
 	if (!gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
-		g_message("Error: Select or reggion size is too small.\n");
+		g_message("Error: Select or region size is too small.\n");
 		return GIMP_PDB_EXECUTION_ERROR;
 	}
 

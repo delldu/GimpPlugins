@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-***	Copyright 2021 Dell(18588220928g@163.com), All Rights Reserved.
+***	Copyright 2021-2022 Dell(18588220928g@163.com), All Rights Reserved.
 ***
 ***	File Author: Dell, 2021-04-26 11:24:10
 ***
@@ -20,9 +20,6 @@ typedef struct {
 static LightOptions light_options = {
 	IMAGE_LIGHT_SERVICE,		/* method */
 };
-
-#define SCALE_WIDTH        256
-#define SPIN_BUTTON_WIDTH   96
 
 gboolean light_dialog()
 {

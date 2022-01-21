@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-*** Copyright 2020-2021 Dell(18588220928g@163.com), All Rights Reserved.
+*** Copyright 2020-2022 Dell(18588220928g@163.com), All Rights Reserved.
 ***
 *** File Author: Dell, 2020-11-16 12:16:01
 ***
@@ -17,17 +17,17 @@ static void run(const gchar * name,
 
 static IMAGE *clean_rpc_service(IMAGE * send_image, int msgcode)
 {
-	char addon[256];
+	char addon[64];
 
 	snprintf(addon, sizeof(addon), "sigma=%d", clean_options.strength);
 	// TransWeather model
 	if (msgcode == IMAGE_CLEAN_SERVICE_WITH_WEATHER)
-		return normal_service("image_weather", send_image, addon);
+		return normal_service(TAI_TASKSET, "image_weather", send_image, addon);
 
 	if (msgcode == IMAGE_CLEAN_SERVICE_WITH_GUIDE )
-		return normal_service("image_guide", send_image, addon);
+		return normal_service(PAI_TASKSET, "image_guide", send_image, addon);
 
-	return normal_service("image_clean", send_image, addon);
+	return normal_service(PAI_TASKSET, "image_clean", send_image, addon);
 }
 
 static GimpPDBStatusType start_image_clean(gint drawable_id)
@@ -80,11 +80,11 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Clean",
+						   "Clean Image",
 						   "This plug-in clean image with PAI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
-						   "2020-2021", "_Clean", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2022", "_Clean", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
 }

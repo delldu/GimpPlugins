@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-*** Copyright 2020-2021 Dell(18588220928g@163.com), All Rights Reserved.
+*** Copyright 2020-2022 Dell(18588220928g@163.com), All Rights Reserved.
 ***
 *** File Author: Dell, 2020-11-16 12:16:01
 ***
@@ -27,7 +27,7 @@ static char *nima_rpc_service(IMAGE * send_image)
 
 	txt = NULL;
 
-	snprintf(home_workspace, sizeof(home_workspace), "%s/%s", getenv("HOME"), PAI_WORKSPACE);
+	snprintf(home_workspace, sizeof(home_workspace), "%s/%s", getenv("HOME"), AI_WORKSPACE);
 	make_dir(home_workspace);
 	get_temp_fname(home_workspace, ".png", input_file, sizeof(input_file));
 	get_temp_fname(home_workspace, ".txt", output_file, sizeof(output_file));
@@ -70,27 +70,27 @@ static GimpPDBStatusType start_image_nima(gint32 drawable_id)
 	gint x, y, width, height;
 
 	if (!gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
-		g_message("Error: Select or reggion size is too small.\n");
+		g_message("Error: Select or region size is too small.\n");
 		return GIMP_PDB_EXECUTION_ERROR;
 	}
 
-	gimp_progress_init("Nima ...");
+	gimp_progress_init("Measure ...");
 
 	send_image = image_from_select(drawable_id, x, y, width, height);
 	if (image_valid(send_image)) {
 		recv_text = nima_rpc_service(send_image);
 		if (recv_text != NULL) {
-			g_message("Image Quality: %s\n", recv_text);
+			g_message("Image quality is %s\n", recv_text);
 			free(recv_text);
 			gimp_progress_update(1.0);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Nima service is not avaible.\n");
+			g_message("Quality measure service is not avaible.\n");
 		}
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Nima source(drawable channel is not 1-4 ?).\n");
+		g_message("Error: Quality measure source (drawable channel is not in 1-4 ?).\n");
 	}
 
 	return status;
@@ -116,11 +116,11 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Quality",
+						   "Image Quality Estimation",
 						   "This plug-in nima image with PAI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
-						   "2020-2021", "_Quality", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2022", "_Quality Estimation", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
 }

@@ -8,10 +8,10 @@
 #
 INSTALL_DIR := $(shell grep -w INSTALL_DIR ../Makefile | cut -d '=' -f 2)
 
-TARGET := gimp_image_nima
+TARGET := gimp_face_enhance
 
 SOURCE :=  \
-	image_nima.c
+	face_enhance.c
 
 INCS	:= -I../lib $(shell gimptool-2.0 --cflags) $(shell nimagetool --cflags)
 LIBS	:= -L../lib -lplugin $(shell gimptool-2.0 --libs) $(shell nimagetool --libs) $(shell redostool --libs)

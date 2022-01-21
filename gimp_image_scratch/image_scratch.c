@@ -8,45 +8,12 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "plug-in-gimp_image_color"
+#define PLUG_IN_PROC "plug-in-gimp_image_scratch"
+
 
 static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
-
-static IMAGE *color_rpc_service(IMAGE * send_image)
-{
-	return normal_service(PAI_TASKSET, "image_color", send_image, NULL);
-}
-
-static GimpPDBStatusType start_image_color(gint drawable_id)
-{
-	gint channels;
-	GeglRectangle rect;
-	IMAGE *send_image, *recv_image;
-	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
-
-	gimp_progress_init("Color ...");
-
-	send_image = image_from_drawable(drawable_id, &channels, &rect);
-	if (image_valid(send_image)) {
-		recv_image = color_rpc_service(send_image);
-		if (image_valid(recv_image)) {
-			image_saveto_drawable(recv_image, drawable_id, channels, &rect);
-			image_destroy(recv_image);
-		} else {
-			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Color service is not avaible.");
-		}
-		image_destroy(send_image);
-		gimp_progress_update(1.0);
-	} else {
-		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Color source(drawable channel is not 1-4 ?).\n");
-	}
-
-	return status;
-}
 
 
 GimpPlugInInfo PLUG_IN_INFO = {
@@ -58,33 +25,68 @@ GimpPlugInInfo PLUG_IN_INFO = {
 
 MAIN()
 
-
 static void query(void)
 {
 	static GimpParamDef args[] = {
 		{GIMP_PDB_INT32, "run-mode", "Run mode"},
 		{GIMP_PDB_IMAGE, "image", "Input image"},
-		{GIMP_PDB_DRAWABLE, "drawable", "Input drawable"}
+		{GIMP_PDB_DRAWABLE, "drawable", "Input drawable"},
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Color",
-						   "This plug-in color image with PAI",
+						   "Image Scaratch Detect",
+						   "This plug-in scratch image with PAI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
-						   "2020-2022", "_Color", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2022", "_Scaratch Detect", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
+}
+
+static IMAGE *scratch_rpc_service(IMAGE * send_image)
+{
+	return normal_service(TAI_TASKSET, "image_scratch", send_image, NULL);
+}
+
+static GimpPDBStatusType start_image_scratch(gint32 drawable_id)
+{
+	IMAGE *send_image, *recv_image;
+	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
+	gint x, y, width, height;
+
+	if (!gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
+		g_message("Error: Select or region size is too small.\n");
+		return GIMP_PDB_EXECUTION_ERROR;
+	}
+
+	gimp_progress_init("Detect ...");
+	send_image = image_from_select(drawable_id, x, y, width, height);
+	if (image_valid(send_image)) {
+		recv_image = scratch_rpc_service(send_image);
+		gimp_progress_update(1.0);
+		if (image_valid(recv_image)) {
+			create_gimp_image(recv_image, "scratch");
+			image_destroy(recv_image);
+		} else {
+			status = GIMP_PDB_EXECUTION_ERROR;
+			g_message("Error: Scratch detect service is not available.");
+		}
+		image_destroy(send_image);
+	} else {
+		status = GIMP_PDB_EXECUTION_ERROR;
+		g_message("Error: Scratch source (drawable channel is not 1-4 ?).\n");
+	}
+
+	return status;				// GIMP_PDB_SUCCESS;
 }
 
 static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
 	static GimpParam values[1];
-	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	GimpRunMode run_mode;
-	gint32 image_id;
 	gint32 drawable_id;
+	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
 	/* Setting mandatory output values */
 	*nreturn_vals = 1;
@@ -98,23 +100,13 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	}
 
 	run_mode = (GimpRunMode) param[0].data.d_int32;
-	image_id = param[1].data.d_image;
 	drawable_id = param[2].data.d_drawable;
-
-	if (gimp_image_base_type (image_id) != GIMP_RGB)
-		gimp_image_convert_rgb (image_id);
-
-	if (! gimp_drawable_has_alpha(drawable_id))
-		gimp_layer_add_alpha(drawable_id);
 
 	gegl_init(NULL, NULL);
 
-	status = start_image_color(drawable_id);
+	status = start_image_scratch(drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
-
-	// Output result for pdb
-	values[0].data.d_status = status;
 
 	gegl_exit();
 }

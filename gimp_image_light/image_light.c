@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-*** Copyright 2020-2021 Dell(18588220928g@163.com), All Rights Reserved.
+*** Copyright 2020-2022 Dell(18588220928g@163.com), All Rights Reserved.
 ***
 *** File Author: Dell, 2020-11-16 12:16:01
 ***
@@ -29,9 +29,9 @@ MAIN()
 static IMAGE *light_rpc_service(IMAGE * send_image, int msgcode)
 {
 	if (msgcode == IMAGE_LIGHT_SERVICE_WITH_CLAHE)
-		return normal_service("image_clahe", send_image, NULL);
+		return normal_service(PAI_TASKSET, "image_clahe", send_image, NULL);
 	// else
-	return normal_service("image_light", send_image, NULL);
+	return normal_service(PAI_TASKSET, "image_light", send_image, NULL);
 }
 
 static GimpPDBStatusType start_image_light(gint drawable_id)
@@ -71,11 +71,11 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Light",
+						   "Image Light Enhance",
 						   "This plug-in light image with PAI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
-						   "2020-2021", "_Light", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2022", "_Light Enhance", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
 }

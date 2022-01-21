@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-***	Copyright 2021 Dell(18588220928g@163.com), All Rights Reserved.
+***	Copyright 2021-2022 Dell(18588220928g@163.com), All Rights Reserved.
 ***
 ***	File Author: Dell, 2021-01-16 12:40:58
 ***
@@ -24,7 +24,8 @@ extern "C" {
 
 #define GIMP_PLUGIN_VERSION "1.1.0"
 #define PAI_TASKSET "PAI"
-#define PAI_WORKSPACE "tmp/"
+#define TAI_TASKSET "TAI"
+#define AI_WORKSPACE "tmp/"
 
 	IMAGE *image_from_drawable(gint32 drawable_id, gint * channels, GeglRectangle * rect);
 	int image_saveto_drawable(IMAGE * image, gint32 drawable_id, gint channels, GeglRectangle * rect);
@@ -36,7 +37,7 @@ extern "C" {
 
 	int image_display(IMAGE * image, gchar * name_prefix);
 
-	IMAGE *normal_service(char *service_name, IMAGE * send_image, char *addon);
+	IMAGE *normal_service(char *taskset_name, char *service_name, IMAGE * send_image, char *addon);
 #if defined(__cplusplus)
 }
 #endif

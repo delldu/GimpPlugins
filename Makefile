@@ -1,6 +1,6 @@
 #/************************************************************************************
 #***
-#***	Copyright 2020-2021 Dell(18588220928g@163.com), All Rights Reserved.
+#***	Copyright 2020-2022 Dell(18588220928g@163.com), All Rights Reserved.
 #***
 #***	File Author: Dell, 2020-11-16 11:31:56
 #***
@@ -18,7 +18,10 @@ XSUBDIRS :=  \
 	gimp_image_patch \
 	gimp_image_nima \
 	gimp_image_light \
-	gimp_image_matte
+	gimp_image_matte \
+	gimp_image_scratch \
+	gimp_image_segment \
+	gimp_face_enhance
 
 
 BSUBDIRS :=

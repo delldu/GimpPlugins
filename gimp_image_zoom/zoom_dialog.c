@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-***	Copyright 2021 Dell(18588220928g@163.com), All Rights Reserved.
+***	Copyright 2021-2022 Dell(18588220928g@163.com), All Rights Reserved.
 ***
 ***	File Author: Dell, 2021-04-26 11:24:10
 ***
@@ -11,15 +11,17 @@
 
 typedef struct {
 	gint32 method;
+	gint32 times;
 } ZoomOptions;
 
 #define IMAGE_ZOOM_SERVICE 0x01
 #define IMAGE_ZOOMS_SERVICE 0x02
-
+#define IMAGE_ZOOMX_SERVICE 0x03
 
 /* Set up default values for options */
 static ZoomOptions zoom_options = {
 	IMAGE_ZOOMS_SERVICE,			/* method */
+	4,								/* default zoom in times */
 };
 
 #define SCALE_WIDTH        256
@@ -32,6 +34,7 @@ gboolean zoom_dialog()
 	GtkWidget *frame;
 	GtkWidget *table;
 	GtkWidget *combo;
+	GtkObject *adj = NULL;
 	gboolean run;
 
 	gimp_ui_init("clean", FALSE);
@@ -65,7 +68,7 @@ gboolean zoom_dialog()
 	gtk_widget_show(table);
 
 	// GtkWidget * gimp_int_combo_box_new (const gchar *first_label, gint first_value, ...)
-	combo = gimp_int_combo_box_new("Fast", IMAGE_ZOOMS_SERVICE, "Normal", IMAGE_ZOOM_SERVICE, NULL);
+	combo = gimp_int_combo_box_new("Fast", IMAGE_ZOOMS_SERVICE, "Normal", IMAGE_ZOOM_SERVICE, "Zoom X", IMAGE_ZOOMX_SERVICE, NULL);
 	gimp_int_combo_box_set_active(GIMP_INT_COMBO_BOX(combo), zoom_options.method);
 	g_signal_connect(combo, "changed", G_CALLBACK(gimp_int_combo_box_get_active), &zoom_options.method);
 
@@ -74,6 +77,21 @@ gboolean zoom_dialog()
 	//                   GtkWidget *widget, gint colspan, gboolean left_align);
 	gimp_table_attach_aligned(GTK_TABLE(table), 0, 0, "Method: ", 0.0, 0.5, combo, 1, FALSE);
 
+	// GtkObject *gimp_scale_entry_new(GtkTable *table, gint column, gint row,
+	//  const gchar *text, gint scale_width, gint spinbutton_width,
+	//  gdouble value, gdouble lower, gdouble upper,
+	//  gdouble step_increment, gdouble  page_increment,
+	//  guint digits,
+	//  gboolean constrain,
+	//  gdouble unconstrained_lower,
+	//  gdouble unconstrained_upper,
+	//  const gchar *tooltip, const gchar *help_id);
+
+	adj = gimp_scale_entry_new(GTK_TABLE(table), 0, 1,
+							   "Times: ", SCALE_WIDTH, SPIN_BUTTON_WIDTH,
+							   zoom_options.times, 1, 32 /*[lo, up] */ , 1, 10 /*step */ , 0, TRUE, 0, 0,
+							   "Zoom In Times", NULL);
+	g_signal_connect(adj, "value_changed", G_CALLBACK(gimp_int_adjustment_update), &zoom_options.times);
 
 	gtk_widget_show(main_vbox);
 	gtk_widget_show(dialog);

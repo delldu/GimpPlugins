@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-***	Copyright 2021 Dell(18588220928g@163.com), All Rights Reserved.
+***	Copyright 2021-2022 Dell(18588220928g@163.com), All Rights Reserved.
 ***
 ***	File Author: Dell, 2021-04-26 11:24:10
 ***
@@ -71,7 +71,7 @@ gboolean clean_dialog()
 	combo = gimp_int_combo_box_new("Deep Cleaning", IMAGE_CLEAN_SERVICE,
 								   // "CUDA BM3d", IMAGE_CLEAN_SERVICE_WITH_BM3D,
 								   "Guided Filter", IMAGE_CLEAN_SERVICE_WITH_GUIDE,
-								   "Weather Filter", IMAGE_CLEAN_SERVICE_WITH_WEATHER, NULL);
+								   "Clean Weather", IMAGE_CLEAN_SERVICE_WITH_WEATHER, NULL);
 	gimp_int_combo_box_set_active(GIMP_INT_COMBO_BOX(combo), clean_options.method);
 	g_signal_connect(combo, "changed", G_CALLBACK(gimp_int_combo_box_get_active), &clean_options.method);
 

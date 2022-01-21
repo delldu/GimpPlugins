@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-***	Copyright 2021 Dell(18588220928g@163.com), All Rights Reserved.
+***	Copyright 2021-2022 Dell(18588220928g@163.com), All Rights Reserved.
 ***
 ***	File Author: Dell, 2021-01-16 12:41:12
 ***
@@ -136,7 +136,7 @@ static int image_to_rawdata(IMAGE * image, gint channels, gint height, gint widt
 }
 
 
-IMAGE *normal_service(char *service_name, IMAGE * send_image, char *addon)
+IMAGE *normal_service(char *taskset_name, char *service_name, IMAGE * send_image, char *addon)
 {
 	TASKARG taska;
 	TASKSET *tasks;
@@ -146,7 +146,7 @@ IMAGE *normal_service(char *service_name, IMAGE * send_image, char *addon)
 
 	CHECK_IMAGE(send_image);
 
-	snprintf(home_workspace, sizeof(home_workspace), "%s/%s", getenv("HOME"), PAI_WORKSPACE);
+	snprintf(home_workspace, sizeof(home_workspace), "%s/%s", getenv("HOME"), AI_WORKSPACE);
 	make_dir(home_workspace);
 	get_temp_fname(home_workspace, ".png", input_file, sizeof(input_file));
 	get_temp_fname(home_workspace, ".png", output_file, sizeof(output_file));
@@ -160,7 +160,7 @@ IMAGE *normal_service(char *service_name, IMAGE * send_image, char *addon)
 		snprintf(command, sizeof(command), "%s(input_file=%s,output_file=%s)", service_name, input_file, output_file);
 	}
 
-	tasks = taskset_create(PAI_TASKSET);
+	tasks = taskset_create(taskset_name);
 	if (set_queue_task(tasks, command, &taska) != RET_OK)
 		goto failure;
 

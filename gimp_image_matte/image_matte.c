@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-*** Copyright 2020-2021 Dell(18588220928g@163.com), All Rights Reserved.
+*** Copyright 2020-2022 Dell(18588220928g@163.com), All Rights Reserved.
 ***
 *** File Author: Dell, 2020-11-16 12:16:01
 ***
@@ -16,7 +16,7 @@ static void run(const gchar * name,
 
 static IMAGE *matte_rpc_service(IMAGE * send_image)
 {
-	return normal_service("image_matte", send_image, NULL);
+	return normal_service(PAI_TASKSET, "image_matte", send_image, NULL);
 }
 
 static GimpPDBStatusType start_image_matte(gint drawable_id)
@@ -70,7 +70,7 @@ static void query(void)
 						   "This plug-in matte image with PAI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
-						   "2020-2021", "_Matte", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2022", "_Matte", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
 }
