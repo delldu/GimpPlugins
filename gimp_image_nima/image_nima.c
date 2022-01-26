@@ -80,12 +80,12 @@ static GimpPDBStatusType start_image_nima(gint32 drawable_id)
 	if (image_valid(send_image)) {
 		recv_text = nima_rpc_service(send_image);
 		if (recv_text != NULL) {
-			g_message("Image quality is %s\n", recv_text);
+			g_message("Select Image Quality: %s\n", recv_text);
 			free(recv_text);
 			gimp_progress_update(1.0);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Quality measure service is not avaible.\n");
+			g_message("Quality service is not avaible.\n");
 		}
 		image_destroy(send_image);
 	} else {
@@ -116,13 +116,13 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Quality Measure",
-						   "This plug-in measure image quality with PAI",
+						   "Image Quality",
+						   "This plug-in measure image quality with AI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
-						   "2020-2022", "_Quality Measure", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2022", "_5.Quality", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI");
 }
 
 static void

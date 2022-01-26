@@ -26,7 +26,7 @@ static GimpPDBStatusType start_image_patch(gint drawable_id)
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-	gimp_progress_init("Patch ...");
+	gimp_progress_init("Repair ...");
 
 	send_image = image_from_drawable(drawable_id, &channels, &rect);
 
@@ -76,13 +76,13 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Patch",
-						   "This plug-in patch image with PAI",
+						   "Image Scratch Repair",
+						   "This plug-in patch image with AI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
-						   "2020-2022", "_Patch", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2022", "_Repair", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI/3.Scratch");
 }
 
 static void

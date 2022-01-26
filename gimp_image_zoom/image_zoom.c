@@ -38,12 +38,12 @@ static void query(void)
 
 	gimp_install_procedure(PLUG_IN_PROC,
 						   "Image Zoom In",
-						   "This plug-in zoom image with PAI",
+						   "This plug-in zoom image with AI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
 						   "2020-2022", "_Zoom In", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI/1.Basic");
 }
 
 static IMAGE *zoom_rpc_service(IMAGE * send_image, int msgcode)

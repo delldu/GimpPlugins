@@ -8,7 +8,7 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "plug-in-gimp_face_enhance"
+#define PLUG_IN_PROC "plug-in-gimp_face_zoom"
 
 
 static void query(void);
@@ -34,21 +34,21 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Face Enhance",
-						   "This plug-in segment image with PAI",
+						   "Face Zoom In",
+						   "This plug-in segment image with AI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
-						   "2020-2022", "_Face Enhance", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2022", "_Zoom In", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/PAI");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI/2.Face");
 }
 
-static IMAGE *face_enhance_rpc_service(IMAGE * send_image)
+static IMAGE *face_zoom_rpc_service(IMAGE * send_image)
 {
-	return normal_service(TAI_TASKSET, "face_enhance", send_image, NULL);
+	return normal_service(TAI_TASKSET, "face_zoom", send_image, NULL);
 }
 
-static GimpPDBStatusType start_face_enhance(gint32 drawable_id)
+static GimpPDBStatusType start_face_zoom(gint32 drawable_id)
 {
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
@@ -59,22 +59,22 @@ static GimpPDBStatusType start_face_enhance(gint32 drawable_id)
 		return GIMP_PDB_EXECUTION_ERROR;
 	}
 
-	gimp_progress_init("Enhance ...");
+	gimp_progress_init("Zoom in ...");
 	send_image = image_from_select(drawable_id, x, y, width, height);
 	if (image_valid(send_image)) {
-		recv_image = face_enhance_rpc_service(send_image);
+		recv_image = face_zoom_rpc_service(send_image);
 		gimp_progress_update(1.0);
 		if (image_valid(recv_image)) {
 			create_gimp_image(recv_image, "face");
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Face enhance service is not available.");
+			g_message("Error: Face zoom in service is not available.");
 		}
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Face enhance source (drawable channel is not 1-4 ?).\n");
+		g_message("Error: Face zoom in source (drawable channel is not 1-4 ?).\n");
 	}
 
 	return status;				// GIMP_PDB_SUCCESS;
@@ -104,7 +104,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	gegl_init(NULL, NULL);
 
-	status = start_face_enhance(drawable_id);
+	status = start_face_zoom(drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
 

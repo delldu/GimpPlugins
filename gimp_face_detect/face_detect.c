@@ -8,7 +8,7 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "plug-in-gimp_image_segment"
+#define PLUG_IN_PROC "plug-in-gimp_face_detect"
 
 
 static void query(void);
@@ -34,21 +34,21 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Segment",
+						   "Face Detect",
 						   "This plug-in segment image with AI",
 						   "Dell Du <18588220928@163.com>",
 						   "Copyright Dell Du <18588220928@163.com>",
-						   "2020-2022", "_Segment", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2022", "_Detect", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI/4.Instance");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI/2.Face");
 }
 
-static IMAGE *segment_rpc_service(IMAGE * send_image)
+static IMAGE *face_detect_rpc_service(IMAGE * send_image)
 {
-	return normal_service(TAI_TASKSET, "image_segment", send_image, NULL);
+	return normal_service(TAI_TASKSET, "face_detect", send_image, NULL);
 }
 
-static GimpPDBStatusType start_image_segment(gint32 drawable_id)
+static GimpPDBStatusType start_face_detect(gint32 drawable_id)
 {
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
@@ -59,22 +59,22 @@ static GimpPDBStatusType start_image_segment(gint32 drawable_id)
 		return GIMP_PDB_EXECUTION_ERROR;
 	}
 
-	gimp_progress_init("Segment ...");
+	gimp_progress_init("Detect ...");
 	send_image = image_from_select(drawable_id, x, y, width, height);
 	if (image_valid(send_image)) {
-		recv_image = segment_rpc_service(send_image);
+		recv_image = face_detect_rpc_service(send_image);
 		gimp_progress_update(1.0);
 		if (image_valid(recv_image)) {
-			create_gimp_image(recv_image, "segment");
+			create_gimp_image(recv_image, "face");
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Segment service is not available.");
+			g_message("Error: Face detect service is not available.");
 		}
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Segment source (drawable channel is not 1-4 ?).\n");
+		g_message("Error: Face detect source (drawable channel is not 1-4 ?).\n");
 	}
 
 	return status;				// GIMP_PDB_SUCCESS;
@@ -104,7 +104,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	gegl_init(NULL, NULL);
 
-	status = start_image_segment(drawable_id);
+	status = start_face_detect(drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
 

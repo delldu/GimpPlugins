@@ -15,13 +15,14 @@ XSUBDIRS :=  \
 	gimp_image_clean \
 	gimp_image_zoom \
 	gimp_image_color \
-	gimp_image_patch \
 	gimp_image_nima \
 	gimp_image_light \
-	gimp_image_matte \
 	gimp_image_scratch \
+	gimp_image_patch \
+	gimp_image_matte \
 	gimp_image_segment \
-	gimp_face_enhance
+	gimp_face_detect \
+	gimp_face_zoom
 
 
 BSUBDIRS :=
