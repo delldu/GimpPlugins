@@ -41,7 +41,7 @@ install:
 			$(MAKE) -C $$d install || exit 1; \
 		fi \
 	done
-	./gimpinstall.sh debug_layers.py	
+	#./gimpinstall.sh debug_layers.py	
 
 
 uninstall:

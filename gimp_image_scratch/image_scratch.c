@@ -40,7 +40,7 @@ static void query(void)
 						   "Copyright Dell Du <18588220928@163.com>",
 						   "2020-2022", "_Detect", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI/3.Scratch");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI/3. Scratch");
 }
 
 static IMAGE *scratch_rpc_service(IMAGE * send_image)
