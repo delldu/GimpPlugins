@@ -28,6 +28,8 @@ static char *nima_rpc_service(IMAGE * send_image)
 	txt = NULL;
 
 	snprintf(home_workspace, sizeof(home_workspace), "%s/%s", getenv("HOME"), AI_WORKSPACE);
+	// getenv("HOME") = /home/dell/snap/gimp/380
+
 	make_dir(home_workspace);
 	get_temp_fname(home_workspace, ".png", input_file, sizeof(input_file));
 	get_temp_fname(home_workspace, ".txt", output_file, sizeof(output_file));

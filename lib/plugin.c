@@ -147,6 +147,8 @@ IMAGE *normal_service(char *taskset_name, char *service_name, IMAGE * send_image
 	CHECK_IMAGE(send_image);
 
 	snprintf(home_workspace, sizeof(home_workspace), "%s/%s", getenv("HOME"), AI_WORKSPACE);
+	// ==> getenv("HOME") = /home/dell/snap/gimp/380/
+
 	make_dir(home_workspace);
 	get_temp_fname(home_workspace, ".png", input_file, sizeof(input_file));
 	get_temp_fname(home_workspace, ".png", output_file, sizeof(output_file));
