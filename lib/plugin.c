@@ -191,9 +191,9 @@ IMAGE *normal_service(char *taskset_name, char *service_name, IMAGE * send_image
 IMAGE *image_from_drawable(gint32 drawable_id, gint * channels, GeglRectangle * rect)
 {
 	guchar *rawdata;
-	gint tchans;	// temp channels
+	gint temp_channels;
 	const Babl *format;
-	const GeglRectangle *trect; // temp rect
+	const GeglRectangle *temp_rect;
 	GeglBuffer *buffer;
 	IMAGE *image;
 
@@ -201,19 +201,19 @@ IMAGE *image_from_drawable(gint32 drawable_id, gint * channels, GeglRectangle * 
 	buffer = gimp_drawable_get_buffer(drawable_id);
 
 	// read all image at once from input buffer
-	trect = gegl_buffer_get_extent(buffer);
+	temp_rect = gegl_buffer_get_extent(buffer);
 	format = gimp_drawable_get_format(drawable_id);
-	tchans = gimp_drawable_bpp(drawable_id);
-	rawdata = g_new(guchar, trect->width * trect->height * tchans);
-	gegl_buffer_get(buffer, GEGL_RECTANGLE(trect->x, trect->y, trect->width, trect->height),
+	temp_channels = gimp_drawable_bpp(drawable_id);
+	rawdata = g_new(guchar, temp_rect->width * temp_rect->height * temp_channels);
+	gegl_buffer_get(buffer, GEGL_RECTANGLE(temp_rect->x, temp_rect->y, temp_rect->width, temp_rect->height),
 					1.0, format, rawdata, GEGL_AUTO_ROWSTRIDE, GEGL_ABYSS_NONE);
 
 	// transform rawdata
-	image = image_from_rawdata(tchans, trect->height, trect->width, rawdata);
+	image = image_from_rawdata(temp_channels, temp_rect->height, temp_rect->width, rawdata);
 
 	// save channels and rect
-	*channels = tchans;
-	memcpy(rect, trect, sizeof(GeglRectangle));
+	*channels = temp_channels;
+	memcpy(rect, temp_rect, sizeof(GeglRectangle));
 
 	// free allocated pointers & buffers
 	g_free(rawdata);
