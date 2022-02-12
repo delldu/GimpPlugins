@@ -22,7 +22,7 @@ static IMAGE *clean_rpc_service(IMAGE * send_image, int msgcode)
 	snprintf(addon, sizeof(addon), "sigma=%d", clean_options.strength);
 	// TransWeather model
 	if (msgcode == IMAGE_CLEAN_SERVICE_WITH_WEATHER)
-		return normal_service(TAI_TASKSET, "image_weather", send_image, addon);
+		return normal_service(TAI_TASKSET, "image_clean_weather", send_image, addon);
 
 	if (msgcode == IMAGE_CLEAN_SERVICE_WITH_GUIDE )
 		return normal_service(PAI_TASKSET, "image_guide", send_image, addon);

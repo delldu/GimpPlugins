@@ -45,7 +45,7 @@ static void query(void)
 
 static IMAGE *scratch_rpc_service(IMAGE * send_image)
 {
-	return normal_service(TAI_TASKSET, "image_scratch", send_image, NULL);
+	return normal_service(TAI_TASKSET, "image_scratch_detect", send_image, NULL);
 }
 
 static GimpPDBStatusType start_image_scratch(gint32 drawable_id)

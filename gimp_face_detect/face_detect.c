@@ -45,7 +45,7 @@ static void query(void)
 
 static IMAGE *face_detect_rpc_service(IMAGE * send_image)
 {
-	return normal_service(TAI_TASKSET, "face_detect", send_image, NULL);
+	return normal_service(TAI_TASKSET, "image_face_detect", send_image, NULL);
 }
 
 static GimpPDBStatusType start_face_detect(gint32 drawable_id)
@@ -65,7 +65,7 @@ static GimpPDBStatusType start_face_detect(gint32 drawable_id)
 		recv_image = face_detect_rpc_service(send_image);
 		gimp_progress_update(1.0);
 		if (image_valid(recv_image)) {
-			create_gimp_image(recv_image, "face");
+			create_gimp_image(recv_image, "face_detect");
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
