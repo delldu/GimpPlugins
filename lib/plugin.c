@@ -179,8 +179,10 @@ IMAGE *normal_service(char *taskset_name, char *service_name, IMAGE * send_image
 	if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
 		recv_image = image_load(output_file);
 	}
-	unlink(input_file);
-	unlink(output_file);
+	if (getenv("DEBUG") != NULL) {
+		unlink(input_file);
+		unlink(output_file);
+	} 
 
   failure:
 	taskset_destroy(tasks);

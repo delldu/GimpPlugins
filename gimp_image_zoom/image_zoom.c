@@ -53,7 +53,7 @@ static IMAGE *zoom_rpc_service(IMAGE * send_image, int msgcode)
 		return normal_service(PAI_TASKSET, "image_zooms", send_image, NULL);
 
 	if (msgcode == IMAGE_ZOOMX_SERVICE) {
-		snprintf(addon, sizeof(addon), "times=%d", zoom_options.times);
+		snprintf(addon, sizeof(addon), "zoom_times=%d", zoom_options.times);
 		return normal_service(TAI_TASKSET, "image_zoomx", send_image, addon);
 	}
 

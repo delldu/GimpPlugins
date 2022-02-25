@@ -34,7 +34,7 @@ gboolean clean_dialog()
 	GtkWidget *frame;
 	GtkWidget *table;
 	GtkWidget *combo;
-	GtkObject *adj;
+	GtkObject *adjustment;
 	gboolean run;
 
 	gimp_ui_init("clean", FALSE);
@@ -90,11 +90,11 @@ gboolean clean_dialog()
 	//  gdouble unconstrained_upper,
 	//  const gchar *tooltip, const gchar *help_id);
 
-	adj = gimp_scale_entry_new(GTK_TABLE(table), 0, 1,
+	adjustment = gimp_scale_entry_new(GTK_TABLE(table), 0, 1,
 							   "Strength: ", SCALE_WIDTH, SPIN_BUTTON_WIDTH,
 							   clean_options.strength, 0, 100 /*[lo, up] */ , 1, 10 /*step */ , 0, TRUE, 0, 0,
 							   "Clean Strength", NULL);
-	g_signal_connect(adj, "value_changed", G_CALLBACK(gimp_int_adjustment_update), &clean_options.strength);
+	g_signal_connect(adjustment, "value_changed", G_CALLBACK(gimp_int_adjustment_update), &clean_options.strength);
 
 	gtk_widget_show(main_vbox);
 	gtk_widget_show(dialog);

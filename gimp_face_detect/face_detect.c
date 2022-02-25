@@ -59,7 +59,7 @@ static GimpPDBStatusType start_face_detect(gint32 drawable_id)
 		return GIMP_PDB_EXECUTION_ERROR;
 	}
 
-	gimp_progress_init("Detect ...");
+	gimp_progress_init("Face detect ...");
 	send_image = image_from_select(drawable_id, x, y, width, height);
 	if (image_valid(send_image)) {
 		recv_image = face_detect_rpc_service(send_image);

@@ -27,6 +27,21 @@ static ZoomOptions zoom_options = {
 #define SCALE_WIDTH        256
 #define SPIN_BUTTON_WIDTH   96
 
+static void method_callback(GtkWidget *widget, gpointer data)
+{
+	GtkAdjustment *adjustment = (GtkAdjustment *)data;
+
+	gimp_int_combo_box_get_active (GIMP_INT_COMBO_BOX(widget), &zoom_options.method);
+
+	if (zoom_options.method != IMAGE_ZOOMX_SERVICE) {
+		gtk_adjustment_set_lower(adjustment, 4);
+		gtk_adjustment_set_upper(adjustment, 4);
+	} else {
+		gtk_adjustment_set_lower(adjustment, 1);
+		gtk_adjustment_set_upper(adjustment, 32);
+	}
+}
+
 gboolean zoom_dialog()
 {
 	GtkWidget *dialog;
@@ -34,7 +49,7 @@ gboolean zoom_dialog()
 	GtkWidget *frame;
 	GtkWidget *table;
 	GtkWidget *combo;
-	GtkObject *adj = NULL;
+	GtkObject *adjustment = NULL;
 	gboolean run;
 
 	gimp_ui_init("clean", FALSE);
@@ -70,7 +85,7 @@ gboolean zoom_dialog()
 	// GtkWidget * gimp_int_combo_box_new (const gchar *first_label, gint first_value, ...)
 	combo = gimp_int_combo_box_new("Fast", IMAGE_ZOOMS_SERVICE, "Normal", IMAGE_ZOOM_SERVICE, "Zoom X", IMAGE_ZOOMX_SERVICE, NULL);
 	gimp_int_combo_box_set_active(GIMP_INT_COMBO_BOX(combo), zoom_options.method);
-	g_signal_connect(combo, "changed", G_CALLBACK(gimp_int_combo_box_get_active), &zoom_options.method);
+	// g_signal_connect(combo, "changed", G_CALLBACK(gimp_int_combo_box_get_active), &zoom_options.method);
 
 	// GtkWidget *gimp_table_attach_aligned(GtkTable *table, gint column, gint row,
 	//                   const gchar *label_text, gfloat xalign, gfloat yalign,
@@ -87,11 +102,14 @@ gboolean zoom_dialog()
 	//  gdouble unconstrained_upper,
 	//  const gchar *tooltip, const gchar *help_id);
 
-	adj = gimp_scale_entry_new(GTK_TABLE(table), 0, 1,
+	adjustment = gimp_scale_entry_new(GTK_TABLE(table), 0, 1,
 							   "Times: ", SCALE_WIDTH, SPIN_BUTTON_WIDTH,
 							   zoom_options.times, 1, 32 /*[lo, up] */ , 1, 10 /*step */ , 0, TRUE, 0, 0,
-							   "Zoom In Times", NULL);
-	g_signal_connect(adj, "value_changed", G_CALLBACK(gimp_int_adjustment_update), &zoom_options.times);
+							   "Zoom In Times (it is always 4 in fast and normal model)", NULL);
+	g_signal_connect(adjustment, "value_changed", G_CALLBACK(gimp_int_adjustment_update), &zoom_options.times);
+
+	g_signal_connect(combo, "changed", G_CALLBACK(method_callback), adjustment);
+
 
 	gtk_widget_show(main_vbox);
 	gtk_widget_show(dialog);

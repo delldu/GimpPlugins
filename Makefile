@@ -6,8 +6,8 @@
 #***
 #************************************************************************************/
 #
-INSTALL_DIR=/home/dell/snap/gimp/380/.config/GIMP/2.10/plug-ins/
-# ~/snap/gimp/current/.config/GIMP/2.10/plug-ins
+INSTALL_DIR=/home/dell/.config/GIMP/2.10/plug-ins/
+# /home/dell/snap/gimp/current/.config/GIMP/2.10/plug-ins/
 
 
 XSUBDIRS :=  \

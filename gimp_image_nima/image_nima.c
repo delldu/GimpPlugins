@@ -82,7 +82,7 @@ static GimpPDBStatusType start_image_nima(gint32 drawable_id)
 	if (image_valid(send_image)) {
 		recv_text = nima_rpc_service(send_image);
 		if (recv_text != NULL) {
-			g_message("Select Image Quality: %s\n", recv_text);
+			g_message("Image Quality: %s\n", recv_text);
 			free(recv_text);
 			gimp_progress_update(1.0);
 		} else {

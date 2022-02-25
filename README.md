@@ -4,6 +4,8 @@ GImp plug-ins for image clean/color/zoom/patch/nima/light with deep learning.
 
 ### 1. Prebuild
 
+sudo apt install libgimp2.0-dev
+
 ```
 NImage
 Redos
