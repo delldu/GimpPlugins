@@ -50,14 +50,14 @@ static IMAGE *zoom_rpc_service(IMAGE * send_image, int msgcode)
 {
 	char addon[64];
 	if (msgcode == IMAGE_ZOOMS_SERVICE)
-		return normal_service(PAI_TASKSET, "image_zooms", send_image, NULL);
+		return normal_service(AI_TASKSET, "image_zooms", send_image, NULL);
 
 	if (msgcode == IMAGE_ZOOMX_SERVICE) {
 		snprintf(addon, sizeof(addon), "zoom_times=%d", zoom_options.times);
-		return normal_service(TAI_TASKSET, "image_zoomx", send_image, addon);
+		return normal_service(AI_TASKSET, "image_zoomx", send_image, addon);
 	}
 
-	return normal_service(PAI_TASKSET, "image_zoom", send_image, NULL);
+	return normal_service(AI_TASKSET, "image_zoom", send_image, NULL);
 }
 
 static GimpPDBStatusType start_image_zoom(gint32 drawable_id)

@@ -23,8 +23,7 @@ extern "C" {
 #include <libgimp/gimpui.h>
 
 #define GIMP_PLUGIN_VERSION "1.1.0"
-#define PAI_TASKSET "PAI"
-#define TAI_TASKSET "TAI"
+#define AI_TASKSET "TAI"
 #define AI_WORKSPACE "tmp/"
 
 	IMAGE *image_from_drawable(gint32 drawable_id, gint * channels, GeglRectangle * rect);

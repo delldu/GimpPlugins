@@ -45,7 +45,7 @@ static void query(void)
 
 static IMAGE *segment_rpc_service(IMAGE * send_image)
 {
-	return normal_service(TAI_TASKSET, "image_segment", send_image, NULL);
+	return normal_service(AI_TASKSET, "image_segment", send_image, NULL);
 }
 
 static GimpPDBStatusType start_image_segment(gint32 drawable_id)

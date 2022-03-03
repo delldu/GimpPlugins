@@ -45,7 +45,7 @@ static void query(void)
 
 static IMAGE *face_zoom_rpc_service(IMAGE * send_image)
 {
-	return normal_service(TAI_TASKSET, "image_face_zoom", send_image, NULL);
+	return normal_service(AI_TASKSET, "image_face_zoom", send_image, NULL);
 }
 
 static GimpPDBStatusType start_face_zoom(gint32 drawable_id)

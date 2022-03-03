@@ -38,7 +38,7 @@ static char *nima_rpc_service(IMAGE * send_image)
 
 	snprintf(command, sizeof(command), "image_nima(input_file=%s,output_file=%s)", input_file, output_file);
 
-	tasks = taskset_create(PAI_TASKSET);
+	tasks = taskset_create(AI_TASKSET);
 	if (set_queue_task(tasks, command, &taska) != RET_OK)
 		goto failure;
 

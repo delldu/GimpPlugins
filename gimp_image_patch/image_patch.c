@@ -16,7 +16,7 @@ static void run(const gchar * name,
 
 static IMAGE *patch_rpc_service(IMAGE * send_image)
 {
-	return normal_service(PAI_TASKSET, "image_patch", send_image, NULL);
+	return normal_service(AI_TASKSET, "image_patch", send_image, NULL);
 }
 
 static GimpPDBStatusType start_image_patch(gint drawable_id)
