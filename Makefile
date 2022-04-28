@@ -6,9 +6,8 @@
 #***
 #************************************************************************************/
 #
-INSTALL_DIR=/home/dell/.config/GIMP/2.10/plug-ins/
-# /home/dell/snap/gimp/current/.config/GIMP/2.10/plug-ins/
-
+# /home/dell/snap/gimp/380/.config/GIMP/2.10/plug-ins
+INSTALL_DIR=/home/dell/snap/gimp/current/.config/GIMP/2.10/plug-ins
 
 XSUBDIRS :=  \
 	lib \
@@ -43,13 +42,12 @@ install:
 	done
 	#./gimpinstall.sh debug_layers.py	
 
-
 uninstall:
 	@for d in $(XSUBDIRS)  ; do \
 		if [ -d $$d ] ; then \
 			$(MAKE) -C $$d uninstall || exit 1; \
 		fi \
-	done	
+	done
 
 clean:
 	@for d in $(XSUBDIRS) ; do \

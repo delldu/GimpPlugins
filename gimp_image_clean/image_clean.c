@@ -80,13 +80,16 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Clean Image",
-						   "This plug-in clean image with AI",
+						   "Blind Remove Noise",
+						   "Blind remove image noise with AI",
 						   "Dell Du <18588220928@163.com>",
-						   "Copyright Dell Du <18588220928@163.com>",
-						   "2020-2022", "_Clean", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "Dell Du",
+						   "2020-2022", 
+						   "_Blind Denoise", 
+						   "RGB*, GRAY*", 
+						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI/1. Basic");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI/Clean");
 }
 
 static void

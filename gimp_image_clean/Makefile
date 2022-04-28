@@ -57,7 +57,7 @@ install: ${TARGET}
 depend:
 
 clean:
-	rm -f ${OBJECT} ${TARGET}
+	rm -rf ${OBJECT} ${TARGET}
 
 uninstall:
-	rm -f ${INSTALL_DIR}/${TARGET}
+	rm -rf ${INSTALL_DIR}/${TARGET}
