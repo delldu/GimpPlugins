@@ -3,7 +3,7 @@
 from gimpfu import *
 
 
-def ImageColor():
+def ImageBlend():
     br, bg, bb, ba = gimp.get_background()
     fr, fg, fb, fa = gimp.get_foreground()
 
@@ -15,11 +15,11 @@ def ImageColor():
 # see -> http://www.gimp.org/docs/python/
 register(
     # name
-    "image_fast_patch",
+    "image_blend_style",
     # blurb
-    "Fast Repair Image with Deep Learning",
+    "Blend Foreground Style to Background Image",
     # help
-    "Fast Repair Image with Deep Learning",
+    "",
     # author
     "Dell Du",
     # copyright
@@ -27,7 +27,7 @@ register(
     # date
     "2022",
     # menupath
-    "1. Fast",
+    "1. Blend Style",
     # imagetypes (use * for all, leave blank for none)
     "",
     # params
@@ -35,18 +35,18 @@ register(
     # results
     [],
     # function (to call)
-    ImageColor,
+    ImageBlend,
     # this can be included this way or the menu value can be directly prepended to the menupath
-    menu="<Toolbox>/AI/Patch/",
+    menu="<Toolbox>/AI/Blend/",
 )
 
 register(
     # name
-    "image_deep_patch",
+    "image_blend_content",
     # blurb
-    "Deep Repair Image with Deep Learning",
+    "Blend Foreground Content to Background Image",
     # help
-    "Deep Repair Image with Deep Learning",
+    "",
     # author
     "Dell Du",
     # copyright
@@ -54,7 +54,7 @@ register(
     # date
     "2022",
     # menupath
-    "2. Deep",
+    "2. Blend Content",
     # imagetypes (use * for all, leave blank for none)
     "",
     # params
@@ -62,9 +62,10 @@ register(
     # results
     [],
     # function (to call)
-    ImageColor,
+    ImageBlend,
     # this can be included this way or the menu value can be directly prepended to the menupath
-    menu="<Toolbox>/AI/Patch/",
+    menu="<Toolbox>/AI/Blend/",
 )
+
 
 main()

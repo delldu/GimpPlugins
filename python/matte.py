@@ -3,7 +3,7 @@
 from gimpfu import *
 
 
-def ImageColor():
+def ImageMatte():
     br, bg, bb, ba = gimp.get_background()
     fr, fg, fb, fa = gimp.get_foreground()
 
@@ -17,9 +17,9 @@ register(
     # name
     "image_matte",
     # blurb
-    "Salient Matte with Deep Learning",
+    "Salience Matte",
     # help
-    "Salient Matte with Deep Learning",
+    "Salience Matte",
     # author
     "Dell Du",
     # copyright
@@ -27,7 +27,7 @@ register(
     # date
     "2022",
     # menupath
-    "1. Salient",
+    "1. Salience Matting",
     # imagetypes (use * for all, leave blank for none)
     "",
     # params
@@ -35,7 +35,7 @@ register(
     # results
     [],
     # function (to call)
-    ImageColor,
+    ImageMatte,
     # this can be included this way or the menu value can be directly prepended to the menupath
     menu="<Toolbox>/AI/Matte/",
 )
@@ -44,9 +44,9 @@ register(
     # name
     "image_segment",
     # blurb
-    "Semantic Matte with Deep Learning",
+    "Semantics Matte",
     # help
-    "Semantic Matte with Deep Learning",
+    "Semantics Matte",
     # author
     "Dell Du",
     # copyright
@@ -54,7 +54,7 @@ register(
     # date
     "2022",
     # menupath
-    "2. Semantic",
+    "2. Semantic Matting",
     # imagetypes (use * for all, leave blank for none)
     "",
     # params
@@ -62,7 +62,7 @@ register(
     # results
     [],
     # function (to call)
-    ImageColor,
+    ImageMatte,
     # this can be included this way or the menu value can be directly prepended to the menupath
     menu="<Toolbox>/AI/Matte/",
 )

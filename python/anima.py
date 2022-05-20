@@ -3,7 +3,7 @@
 from gimpfu import *
 
 
-def ImageColor():
+def ImageANIMA():
     br, bg, bb, ba = gimp.get_background()
     fr, fg, fb, fa = gimp.get_foreground()
 
@@ -15,11 +15,11 @@ def ImageColor():
 # see -> http://www.gimp.org/docs/python/
 register(
     # name
-    "image_style",
+    "image_anima",
     # blurb
-    "Transform Style with Deep Learning",
+    "Advanced Neural Image Assessment",
     # help
-    "Transform Style with Deep Learning",
+    "",
     # author
     "Dell Du",
     # copyright
@@ -27,7 +27,7 @@ register(
     # date
     "2022",
     # menupath
-    "Style",
+    "Anima",
     # imagetypes (use * for all, leave blank for none)
     "",
     # params
@@ -35,10 +35,9 @@ register(
     # results
     [],
     # function (to call)
-    ImageColor,
+    ImageANIMA,
     # this can be included this way or the menu value can be directly prepended to the menupath
     menu="<Toolbox>/AI/",
 )
-
 
 main()

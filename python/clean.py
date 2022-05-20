@@ -36,9 +36,9 @@ register(
     # name
     "image_autops",
     # blurb
-    "Automatic Remove Noise with Deep Learning",
+    "Automatic Remove Noise",
     # help
-    "Automatic Remove Noise with Deep Learning",
+    "Automatic Remove Noise",
     # author
     "Dell Du",
     # copyright
@@ -64,9 +64,9 @@ register(
     # name
     "image_denoise",
     # blurb
-    "Remove Noise with Deep Learning",
+    "Remove Noise",
     # help
-    "Remove Noise with Deep Learning",
+    "Remove Noise",
     # author
     "Dell Du",
     # copyright
@@ -91,9 +91,9 @@ register(
 #     # name
 #     "image_cbdnet",
 #     # blurb
-#     "Blind Remove Noise with Deep Learning",
+#     "Blind Remove Noise",
 #     # help
-#     "Blind Remove Noise with Deep Learning",
+#     "Blind Remove Noise",
 #     # author
 #     "Dell Du",
 #     # copyright
@@ -119,9 +119,9 @@ register(
     # name
     "image_deblur",
     # blurb
-    "Remove Blur with Deep Learning",
+    "Remove Blur",
     # help
-    "Remove Blur with Deep Learning",
+    "Remove Blur",
     # author
     "Dell Du",
     # copyright
@@ -143,11 +143,15 @@ register(
 )
 
 register(
+    # name
     "image_defocus",
-    "Remove Focus Blur with Deep Learning.",
-    "Remove Focus Blur with Deep Learning.",
+    # blurb
+    "Remove Focus Blur",
+    # help
+    "",
     "Dell Du",
     "Dell Du <18588220928@163.com>",
+    # date
     "2022",
     "4. Defocus",
     "",  # image types: "" means plugin will not push the current image as a variable
@@ -158,11 +162,15 @@ register(
 )
 
 register(
+    # name
     "image_descratch",
-    "Remove Scratch with Deep Learning.",
-    "Remove Scratch with Deep Learning.",
+    # blurb
+    "Remove Scratch",
+    # help
+    "",
     "Dell Du",
     "Dell Du <18588220928@163.com>",
+    # date
     "2022",
     "5. Remove Scratch ...",
     "",  # image types: "" means plugin will not push the current image as a variable
@@ -174,11 +182,15 @@ register(
 
 
 register(
+    # name
     "image_dereflect",
-    "Remove Reflection with Deep Learning.",
-    "Remove Reflection with Deep Learning.",
+    # blurb
+    "Remove Reflection",
+    # help
+    "",
     "Dell Du",
     "Dell Du <18588220928@163.com>",
+    # date
     "2022",
     "6. Remove Reflection",
     "",  # image types: "" means plugin will not push the current image as a variable
@@ -190,8 +202,8 @@ register(
 
 register(
     "image_deshadow",
-    "Remove Shadow with Deep Learning.",
-    "Remove Shadow with Deep Learning.",
+    "Detect or Remove Shadow",
+    "Detect or Remove Shadow",
     "Dell Du",
     "Dell Du <18588220928@163.com>",
     "2022",
@@ -204,11 +216,15 @@ register(
 )
 
 register(
+    # name
     "image_dehaze",
-    "Remove Haze with Deep Learning.",
-    "Remove Haze with Deep Learning.",
+    # blurb
+    "Remove Haze",
+    # help
+    "",
     "Dell Du",
     "Dell Du <18588220928@163.com>",
+    # date
     "2022",
     "1. Dehaze",
     "",  # image types: "" means plugin will not push the current image as a variable
@@ -220,11 +236,15 @@ register(
 
 
 register(
+    # name
     "image_derain",
-    "Remove Rain with Deep Learning.",
-    "Remove Rain with Deep Learning.",
+    # blurb
+    "Remove Rain",
+    # help
+    "",
     "Dell Du",
     "Dell Du <18588220928@163.com>",
+    # date
     "2022",
     "2. Derain",
     "",  # image types: "" means plugin will not push the current image as a variable

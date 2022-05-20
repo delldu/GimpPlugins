@@ -17,9 +17,9 @@ register(
     # name
     "image_guide_color",
     # blurb
-    "Guide Color with Deep Learning",
+    "Colorize Image via Guide",
     # help
-    "Guide Color with Deep Learning",
+    "Colorize Image via Guide",
     # author
     "Dell Du",
     # copyright
@@ -27,7 +27,7 @@ register(
     # date
     "2022",
     # menupath
-    "1. Guide",
+    "1. Guide Color",
     # imagetypes (use * for all, leave blank for none)
     "",
     # params
@@ -44,9 +44,9 @@ register(
     # name
     "image_example_color",
     # blurb
-    "Color Image via Example with Deep Learning",
+    "Colorize Image via Examplar",
     # help
-    "Color Image via Example with Deep Learning",
+    "Colorize Image via Examplar",
     # author
     "Dell Du",
     # copyright
@@ -54,7 +54,7 @@ register(
     # date
     "2022",
     # menupath
-    "2. Example",
+    "2. Examplar Color",
     # imagetypes (use * for all, leave blank for none)
     "",
     # params
@@ -71,9 +71,9 @@ register(
     # name
     "image_semantic_color",
     # blurb
-    "Semantic Color with Deep Learning",
+    "Colorize Image via Semantics",
     # help
-    "Semantic Color with Deep Learning",
+    "Colorize Image via Semantics",
     # author
     "Dell Du",
     # copyright
@@ -81,7 +81,7 @@ register(
     # date
     "2022",
     # menupath
-    "3. Semantic",
+    "3. Semantic Color",
     # imagetypes (use * for all, leave blank for none)
     "",
     # params

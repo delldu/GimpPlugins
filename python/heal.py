@@ -3,7 +3,7 @@
 from gimpfu import *
 
 
-def ImageZoom():
+def ImageHeal():
     br, bg, bb, ba = gimp.get_background()
     fr, fg, fb, fa = gimp.get_foreground()
 
@@ -15,11 +15,11 @@ def ImageZoom():
 # see -> http://www.gimp.org/docs/python/
 register(
     # name
-    "image_zoom4x",
+    "image_fast_patch",
     # blurb
-    "Zoom in 4X",
+    "Fast Repair Image",
     # help
-    "Zoom in 4X",
+    "Fast Repair Image",
     # author
     "Dell Du",
     # copyright
@@ -27,7 +27,7 @@ register(
     # date
     "2022",
     # menupath
-    "4X Size",
+    "1. Fast Repair",
     # imagetypes (use * for all, leave blank for none)
     "",
     # params
@@ -35,18 +35,18 @@ register(
     # results
     [],
     # function (to call)
-    ImageZoom,
+    ImageHeal,
     # this can be included this way or the menu value can be directly prepended to the menupath
-    menu="<Toolbox>/AI/Scale/",
+    menu="<Toolbox>/AI/Heal/",
 )
 
 register(
     # name
-    "image_zomm8x",
+    "image_deep_patch",
     # blurb
-    "Zoom in 8X Size",
+    "Deep Repair Image",
     # help
-    "Zoom in 8X Size",
+    "Deep Repair Image",
     # author
     "Dell Du",
     # copyright
@@ -54,7 +54,7 @@ register(
     # date
     "2022",
     # menupath
-    "8X Size",
+    "2. Deep Repair",
     # imagetypes (use * for all, leave blank for none)
     "",
     # params
@@ -62,9 +62,10 @@ register(
     # results
     [],
     # function (to call)
-    ImageZoom,
+    ImageHeal,
     # this can be included this way or the menu value can be directly prepended to the menupath
-    menu="<Toolbox>/AI/Scale/",
+    menu="<Toolbox>/AI/Heal/",
 )
+
 
 main()

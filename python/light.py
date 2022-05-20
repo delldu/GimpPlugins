@@ -17,9 +17,9 @@ register(
     # name
     "image_low_light",
     # blurb
-    "Automatic Enhance with Deep Learning",
+    "Automatic Enhance Low Light Image",
     # help
-    "Automatic Enhance with Deep Learning",
+    "Automatic Enhance Low Light Image",
     # author
     "Dell Du",
     # copyright
@@ -27,7 +27,7 @@ register(
     # date
     "2022",
     # menupath
-    "1. Auto",
+    "1. Auto Enhance",
     # imagetypes (use * for all, leave blank for none)
     "",
     # params
@@ -44,9 +44,9 @@ register(
     # name
     "image_global_light",
     # blurb
-    "Global Enhance with Deep Learning",
+    "Global Light Enhance",
     # help
-    "Global Enhance with Deep Learning",
+    "Global Light Enhance",
     # author
     "Dell Du",
     # copyright
@@ -54,7 +54,7 @@ register(
     # date
     "2022",
     # menupath
-    "2. Global",
+    "2. Global Enhance",
     # imagetypes (use * for all, leave blank for none)
     "",
     # params
@@ -71,9 +71,9 @@ register(
     # name
     "image_local_light",
     # blurb
-    "Local Enhance with Deep Learning",
+    "Local Light Enhance",
     # help
-    "Local Enhance with Deep Learning",
+    "Local Light Enhance",
     # author
     "Dell Du",
     # copyright
@@ -81,7 +81,7 @@ register(
     # date
     "2022",
     # menupath
-    "3. Local",
+    "3. Local Enhance",
     # imagetypes (use * for all, leave blank for none)
     "",
     # params
