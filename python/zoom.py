@@ -37,7 +37,7 @@ register(
     # function (to call)
     ImageZoom,
     # this can be included this way or the menu value can be directly prepended to the menupath
-    menu="<Toolbox>/AI/Scale/",
+    menu="<Toolbox>/AI/Zoom In/",
 )
 
 register(
@@ -64,7 +64,7 @@ register(
     # function (to call)
     ImageZoom,
     # this can be included this way or the menu value can be directly prepended to the menupath
-    menu="<Toolbox>/AI/Scale/",
+    menu="<Toolbox>/AI/Zoom In/",
 )
 
 main()

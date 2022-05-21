@@ -81,7 +81,7 @@ register(
     # date
     "2022",
     # menupath
-    "3. Semantic Color",
+    "3. Semantics Color",
     # imagetypes (use * for all, leave blank for none)
     "",
     # params

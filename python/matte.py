@@ -37,7 +37,7 @@ register(
     # function (to call)
     ImageMatte,
     # this can be included this way or the menu value can be directly prepended to the menupath
-    menu="<Toolbox>/AI/Matte/",
+    menu="<Toolbox>/AI/Matting/",
 )
 
 register(
@@ -54,7 +54,7 @@ register(
     # date
     "2022",
     # menupath
-    "2. Semantic Matting",
+    "2. Semantics Matting",
     # imagetypes (use * for all, leave blank for none)
     "",
     # params
@@ -64,7 +64,7 @@ register(
     # function (to call)
     ImageMatte,
     # this can be included this way or the menu value can be directly prepended to the menupath
-    menu="<Toolbox>/AI/Matte/",
+    menu="<Toolbox>/AI/Matting/",
 )
 
 main()

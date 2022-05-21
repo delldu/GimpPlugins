@@ -37,7 +37,7 @@ register(
     # function (to call)
     ImageHeal,
     # this can be included this way or the menu value can be directly prepended to the menupath
-    menu="<Toolbox>/AI/Heal/",
+    menu="<Toolbox>/AI/Repair/",
 )
 
 register(
@@ -64,7 +64,7 @@ register(
     # function (to call)
     ImageHeal,
     # this can be included this way or the menu value can be directly prepended to the menupath
-    menu="<Toolbox>/AI/Heal/",
+    menu="<Toolbox>/AI/Repair/",
 )
 
 
