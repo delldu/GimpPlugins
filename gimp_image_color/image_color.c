@@ -8,7 +8,7 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "plug-in-gimp_image_color"
+#define PLUG_IN_PROC "gimp_image_color"
 
 static void query(void);
 static void run(const gchar * name,
@@ -36,13 +36,13 @@ static GimpPDBStatusType start_image_color(gint drawable_id)
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Color service is not avaible.");
+			g_message("Error: Color service not avaible.\n");
 		}
 		image_destroy(send_image);
 		gimp_progress_update(1.0);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Color source(drawable channel is not 1-4 ?).\n");
+		g_message("Error: Color source.\n");
 	}
 
 	return status;
@@ -68,15 +68,15 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Interactive Image Color",
+						   "Examplar Color",
 						   "Interactive color image with AI",
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022", 
-						   "Interactive", "RGB*, GRAY*", 
+						   "_Color", "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI/Color");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Color/");
 }
 
 static void

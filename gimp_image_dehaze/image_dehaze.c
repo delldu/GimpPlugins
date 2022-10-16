@@ -8,7 +8,7 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "plug-in-gimp_face_zoom"
+#define PLUG_IN_PROC "gimp_image_dehaze"
 
 
 static void query(void);
@@ -34,50 +34,46 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Face Zoom In",
-						   "Zoom in face with AI",
+						   "Remove haze",
+						   "Image Dehaze with AI",
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022", 
-						   "_Zoom In", 
+						   "De_haze",
 						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI/Face");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Clean/");
 }
 
-static IMAGE *face_zoom_rpc_service(IMAGE * send_image)
+static IMAGE *dehaze_rpc_service(IMAGE * send_image)
 {
-	return normal_service(AI_TASKSET, "image_face_zoom", send_image, NULL);
+	return normal_service(AI_TASKSET, "image_dehaze", send_image, NULL);
 }
 
-static GimpPDBStatusType start_face_zoom(gint32 drawable_id)
+static GimpPDBStatusType start_image_dehaze(gint32 drawable_id)
 {
+	gint channels;
+	GeglRectangle rect;
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
-	gint x, y, width, height;
 
-	if (!gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
-		g_message("Error: Select or region size is too small.\n");
-		return GIMP_PDB_EXECUTION_ERROR;
-	}
-
-	gimp_progress_init("Zoom in ...");
-	send_image = image_from_select(drawable_id, x, y, width, height);
+	gimp_progress_init("Dehaze ...");
+	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
-		recv_image = face_zoom_rpc_service(send_image);
+		recv_image = dehaze_rpc_service(send_image);
 		gimp_progress_update(1.0);
 		if (image_valid(recv_image)) {
-			create_gimp_image(recv_image, "face_zoom");
+			image_saveto_drawable(recv_image, drawable_id, channels, &rect);
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Face zoom in service is not available.");
+			g_message("Error: Dehaze service not available.\n");
 		}
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Face zoom in source (drawable channel is not 1-4 ?).\n");
+		g_message("Error: Dehaze source.\n");
 	}
 
 	return status;				// GIMP_PDB_SUCCESS;
@@ -107,7 +103,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	gegl_init(NULL, NULL);
 
-	status = start_face_zoom(drawable_id);
+	status = start_image_dehaze(drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
 

@@ -8,7 +8,7 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "plug-in-gimp_image_patch"
+#define PLUG_IN_PROC "gimp_image_patch"
 
 static void query(void);
 static void run(const gchar * name,
@@ -76,8 +76,8 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Repair",
-						   "Repair image with AI",
+						   "Image Patch",
+						   "Patch Image with AI",
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022",
@@ -85,7 +85,7 @@ static void query(void)
 						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/");
 }
 
 static void

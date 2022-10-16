@@ -8,7 +8,7 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "plug-in-gimp_image_scratch"
+#define PLUG_IN_PROC "gimp_image_scratch"
 
 
 static void query(void);
@@ -34,8 +34,8 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Remove Scratch",
-						   "Remove image scratch with AI",
+						   "Detect Scratch",
+						   "Detect Image Scratch with AI",
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022",
@@ -43,41 +43,36 @@ static void query(void)
 						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI/Clean");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/");
 }
 
 static IMAGE *scratch_rpc_service(IMAGE * send_image)
 {
-	return normal_service(AI_TASKSET, "image_scratch_detect", send_image, NULL);
+	return normal_service(AI_TASKSET, "image_scratch", send_image, NULL);
 }
 
 static GimpPDBStatusType start_image_scratch(gint32 drawable_id)
 {
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
-	gint x, y, width, height;
-
-	if (!gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
-		g_message("Error: Select or region size is too small.\n");
-		return GIMP_PDB_EXECUTION_ERROR;
-	}
 
 	gimp_progress_init("Detect ...");
-	send_image = image_from_select(drawable_id, x, y, width, height);
+	// send_image = image_from_select(drawable_id, x, y, width, height);
+	send_image = image_from_drawable(drawable_id, NULL, NULL);
 	if (image_valid(send_image)) {
 		recv_image = scratch_rpc_service(send_image);
 		gimp_progress_update(1.0);
 		if (image_valid(recv_image)) {
-			create_gimp_image(recv_image, "scratch");
+			image_saveto_gimp(recv_image, "scratch");
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Scratch detect service is not available.");
+			g_message("Error: Scratch detect service not available.\n");
 		}
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Scratch source (drawable channel is not 1-4 ?).\n");
+		g_message("Error: Scratch source.\n");
 	}
 
 	return status;				// GIMP_PDB_SUCCESS;

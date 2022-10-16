@@ -8,10 +8,11 @@
 #
 INSTALL_DIR := $(shell grep -w INSTALL_DIR ../Makefile | cut -d '=' -f 2)
 
-TARGET := gimp_face_detect
+TARGET := gimp_image_derain
+
 
 SOURCE :=  \
-	face_detect.c
+	image_derain.c
 
 INCS	:= -I../lib $(shell gimptool-2.0 --cflags) $(shell nimagetool --cflags)
 LIBS	:= -L../lib -lplugin $(shell gimptool-2.0 --libs) $(shell nimagetool --libs) $(shell redostool --libs)
@@ -36,6 +37,7 @@ all: ${TARGET}
 
 ${TARGET}: ${OBJECT}
 	${CC} ${LDFLAGS} -o ${TARGET} ${OBJECT} ${LIBS}
+
 
 install: ${TARGET}
 	install -m 755 ${TARGET} ${INSTALL_DIR}

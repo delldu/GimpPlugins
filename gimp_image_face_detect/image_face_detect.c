@@ -8,9 +8,7 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "gimp_image_zoom"
-
-#include "zoom_dialog.c"
+#define PLUG_IN_PROC "gimp_image_face_detect"
 
 
 static void query(void);
@@ -33,37 +31,27 @@ static void query(void)
 		{GIMP_PDB_INT32, "run-mode", "Run mode"},
 		{GIMP_PDB_IMAGE, "image", "Input image"},
 		{GIMP_PDB_DRAWABLE, "drawable", "Input drawable"},
-		{GIMP_PDB_INT32, "method", "Zoom in method (1, 2)"},
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Zoom In",
-						   "Zoom In Image with AI",
+						   "Face Detect",
+						   "Detect Face with AI",
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
-						   "2020-2022", 
-						   "_Zoom In", 
+						   "2020-2022",
+						   "_Detect",
 						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Face/");
 }
 
-static IMAGE *zoom_rpc_service(IMAGE * send_image, int msgcode)
+static IMAGE *image_face_detect_rpc_service(IMAGE * send_image)
 {
-	char addon[64];
-	if (msgcode == IMAGE_ZOOMS_SERVICE)
-		return normal_service(AI_TASKSET, "image_zooms", send_image, NULL);
-
-	if (msgcode == IMAGE_ZOOMX_SERVICE) {
-		snprintf(addon, sizeof(addon), "zoom_times=%d", zoom_options.times);
-		return normal_service(AI_TASKSET, "image_zoomx", send_image, addon);
-	}
-
-	return normal_service(AI_TASKSET, "image_zoom", send_image, NULL);
+	return normal_service(AI_TASKSET, "image_face_detect", send_image, NULL);
 }
 
-static GimpPDBStatusType start_image_zoom(gint32 drawable_id)
+static GimpPDBStatusType start_image_face_detect(gint32 drawable_id)
 {
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
@@ -74,24 +62,23 @@ static GimpPDBStatusType start_image_zoom(gint32 drawable_id)
 	// 	return GIMP_PDB_EXECUTION_ERROR;
 	// }
 
-	gimp_progress_init("Zoom ...");
+	gimp_progress_init("Face detect ...");
 	// send_image = image_from_select(drawable_id, x, y, width, height);
 	send_image = image_from_drawable(drawable_id, NULL, NULL);
-
 	if (image_valid(send_image)) {
-		recv_image = zoom_rpc_service(send_image, zoom_options.method);
+		recv_image = image_face_detect_rpc_service(send_image);
 		gimp_progress_update(1.0);
 		if (image_valid(recv_image)) {
-			image_saveto_gimp(recv_image, "zoom");
+			image_saveto_gimp(recv_image, "image_face_detect");
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Zoom service is not available.");
+			g_message("Error: Face detect service not available.\n");
 		}
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Zoom source (drawable channel is not 1-4 ?).\n");
+		g_message("Error: Face detect source.\n");
 	}
 
 	return status;				// GIMP_PDB_SUCCESS;
@@ -119,33 +106,11 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	run_mode = (GimpRunMode) param[0].data.d_int32;
 	drawable_id = param[2].data.d_drawable;
 
-	switch (run_mode) {
-	case GIMP_RUN_INTERACTIVE:
-		gimp_get_data(PLUG_IN_PROC, &zoom_options);
-		if (!zoom_dialog())
-			return;
-		break;
-
-	case GIMP_RUN_NONINTERACTIVE:
-		zoom_options.method = param[3].data.d_int32;
-		break;
-
-	case GIMP_RUN_WITH_LAST_VALS:
-		gimp_get_data(PLUG_IN_PROC, &zoom_options);
-		break;
-
-	default:
-		break;
-	}
-
 	gegl_init(NULL, NULL);
 
-	status = start_image_zoom(drawable_id);
+	status = start_image_face_detect(drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
-	/*  Store data  */
-	if (run_mode == GIMP_RUN_INTERACTIVE)
-		gimp_set_data(PLUG_IN_PROC, &zoom_options, sizeof(ZoomOptions));
 
 	gegl_exit();
 }

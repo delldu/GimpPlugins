@@ -8,13 +8,45 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "gimp_image_light"
-
-#include "light_dialog.c"
+#define PLUG_IN_PROC "gimp_image_colour"
 
 static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
+
+static IMAGE *colour_rpc_service(IMAGE * send_image)
+{
+	return normal_service(AI_TASKSET, "image_colour", send_image, NULL);
+}
+
+static GimpPDBStatusType start_image_colour(gint drawable_id)
+{
+	gint channels;
+	GeglRectangle rect;
+	IMAGE *send_image, *recv_image;
+	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
+
+	gimp_progress_init("Color ...");
+
+	send_image = image_from_drawable(drawable_id, &channels, &rect);
+	if (image_valid(send_image)) {
+		recv_image = colour_rpc_service(send_image);
+		if (image_valid(recv_image)) {
+			image_saveto_drawable(recv_image, drawable_id, channels, &rect);
+			image_destroy(recv_image);
+		} else {
+			status = GIMP_PDB_EXECUTION_ERROR;
+			g_message("Error: Color service is avaible.\n");
+		}
+		image_destroy(send_image);
+		gimp_progress_update(1.0);
+	} else {
+		status = GIMP_PDB_EXECUTION_ERROR;
+		g_message("Error: Color source.\n");
+	}
+
+	return status;
+}
 
 
 GimpPlugInInfo PLUG_IN_INFO = {
@@ -26,41 +58,6 @@ GimpPlugInInfo PLUG_IN_INFO = {
 
 MAIN()
 
-static IMAGE *light_rpc_service(IMAGE * send_image, int msgcode)
-{
-	if (msgcode == IMAGE_LIGHT_SERVICE_WITH_CLAHE)
-		return normal_service(AI_TASKSET, "image_clahe", send_image, NULL);
-	// else
-	return normal_service(AI_TASKSET, "image_light", send_image, NULL);
-}
-
-static GimpPDBStatusType start_image_light(gint drawable_id)
-{
-	gint channels;
-	GeglRectangle rect;
-	IMAGE *send_image, *recv_image;
-	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
-
-	gimp_progress_init("Light ...");
-	send_image = image_from_drawable(drawable_id, &channels, &rect);
-	if (image_valid(send_image)) {
-		recv_image = light_rpc_service(send_image, light_options.method);
-		if (image_valid(recv_image)) {
-			image_saveto_drawable(recv_image, drawable_id, channels, &rect);
-			image_destroy(recv_image);
-		} else {
-			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Light service is not avaible.");
-		}
-		image_destroy(send_image);
-	} else {
-		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Light source(drawable channel is not 1-4 ?).\n");
-	}
-
-	return status;
-}
-
 
 static void query(void)
 {
@@ -71,16 +68,15 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Low Light Enhance",
-						   "Enhace low light image with AI",
+						   "User Guide Color",
+						   "Colour Image with AI",
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
-						   "2020-2022",
-						   "_Light",
-						   "RGB*, GRAY*", 
+						   "2020-2022", 
+						   "Colo_ur", "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Color/");
 }
 
 static void
@@ -89,7 +85,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	GimpRunMode run_mode;
-	// gint32 image_id;
+	gint32 image_id;
 	gint32 drawable_id;
 
 	/* Setting mandatory output values */
@@ -104,43 +100,20 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	}
 
 	run_mode = (GimpRunMode) param[0].data.d_int32;
-	// image_id = param[1].data.d_drawable;
+	image_id = param[1].data.d_image;
 	drawable_id = param[2].data.d_drawable;
 
-	switch (run_mode) {
-	case GIMP_RUN_INTERACTIVE:
-		/* Get options last values if needed */
-		gimp_get_data(PLUG_IN_PROC, &light_options);
-		if (!light_dialog())
-			return;
-		break;
+	if (gimp_image_base_type (image_id) != GIMP_RGB)
+		gimp_image_convert_rgb (image_id);
 
-	case GIMP_RUN_NONINTERACTIVE:
-		if (nparams != 4)
-			status = GIMP_PDB_CALLING_ERROR;
-		if (status == GIMP_PDB_SUCCESS) {
-			light_options.method = param[2].data.d_int32;
-		}
-		break;
-
-	case GIMP_RUN_WITH_LAST_VALS:
-		/*  Get options last values if needed  */
-		gimp_get_data(PLUG_IN_PROC, &light_options);
-		break;
-
-	default:
-		break;
-	}
+	if (! gimp_drawable_has_alpha(drawable_id))
+		gimp_layer_add_alpha(drawable_id);
 
 	gegl_init(NULL, NULL);
 
-	status = start_image_light(drawable_id);
+	status = start_image_colour(drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
-
-	/*  Store data  */
-	if (run_mode == GIMP_RUN_INTERACTIVE)
-		gimp_set_data(PLUG_IN_PROC, &light_options, sizeof(LightOptions));
 
 	// Output result for pdb
 	values[0].data.d_status = status;

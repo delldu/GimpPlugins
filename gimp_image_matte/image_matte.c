@@ -8,7 +8,7 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "plug-in-gimp_image_matte"
+#define PLUG_IN_PROC "gimp_image_matte"
 
 static void query(void);
 static void run(const gchar * name,
@@ -75,7 +75,7 @@ static void query(void)
 						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/");
 }
 
 static void

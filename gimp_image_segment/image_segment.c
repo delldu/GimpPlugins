@@ -8,7 +8,7 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "plug-in-gimp_image_segment"
+#define PLUG_IN_PROC "gimp_image_segment"
 
 
 static void query(void);
@@ -34,16 +34,16 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Sementic Segment",
-						   "Segment image with AI",
+						   "Sementic Segment",
+						   "Segment Image with AI",
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022", 
-						   "_Sementic",
+						   "_Segment",
 						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI/Segment");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/");
 }
 
 static IMAGE *segment_rpc_service(IMAGE * send_image)
@@ -55,20 +55,21 @@ static GimpPDBStatusType start_image_segment(gint32 drawable_id)
 {
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
-	gint x, y, width, height;
+	// gint x, y, width, height;
 
-	if (!gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
-		g_message("Error: Select or region size is too small.\n");
-		return GIMP_PDB_EXECUTION_ERROR;
-	}
+	// if (!gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
+	// 	g_message("Error: Select or region size is too small.\n");
+	// 	return GIMP_PDB_EXECUTION_ERROR;
+	// }
 
 	gimp_progress_init("Segment ...");
-	send_image = image_from_select(drawable_id, x, y, width, height);
+	// send_image = image_from_select(drawable_id, x, y, width, height);
+	send_image = image_from_drawable(drawable_id, NULL, NULL);
 	if (image_valid(send_image)) {
 		recv_image = segment_rpc_service(send_image);
 		gimp_progress_update(1.0);
 		if (image_valid(recv_image)) {
-			create_gimp_image(recv_image, "segment");
+			image_saveto_gimp(recv_image, "segment");
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;

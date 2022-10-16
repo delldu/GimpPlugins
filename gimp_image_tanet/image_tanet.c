@@ -8,14 +8,14 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "plug-in-gimp_image_quality"
+#define PLUG_IN_PROC "gimp_image_tanet"
 
 static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
 
-static char *nima_rpc_service(IMAGE * send_image)
+static char *tanet_rpc_service(IMAGE * send_image)
 {
 	int size;
 	TASKARG taska;
@@ -36,7 +36,7 @@ static char *nima_rpc_service(IMAGE * send_image)
 
 	image_save(send_image, input_file);
 
-	snprintf(command, sizeof(command), "image_nima(input_file=%s,output_file=%s)", input_file, output_file);
+	snprintf(command, sizeof(command), "image_tanet(input_file=%s,output_file=%s)", input_file, output_file);
 
 	tasks = taskset_create(AI_TASKSET);
 	if (set_queue_task(tasks, command, &taska) != RET_OK)
@@ -64,35 +64,31 @@ static char *nima_rpc_service(IMAGE * send_image)
 	return txt;
 }
 
-static GimpPDBStatusType start_image_nima(gint32 drawable_id)
+static GimpPDBStatusType start_image_tanet(gint32 drawable_id)
 {
 	IMAGE *send_image;
 	char *recv_text = NULL;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
-	gint x, y, width, height;
 
-	if (!gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
-		g_message("Error: Select or region size is too small.\n");
-		return GIMP_PDB_EXECUTION_ERROR;
-	}
+	gimp_progress_init("Assessment ...");
 
-	gimp_progress_init("Measure ...");
+	// send_image = image_from_select(drawable_id, x, y, width, height);
+	send_image = image_from_drawable(drawable_id, NULL, NULL);
 
-	send_image = image_from_select(drawable_id, x, y, width, height);
 	if (image_valid(send_image)) {
-		recv_text = nima_rpc_service(send_image);
+		recv_text = tanet_rpc_service(send_image);
 		if (recv_text != NULL) {
-			g_message("Image Quality: %s\n", recv_text);
+			g_message("Aesthetics Score: %s\n", recv_text);
 			free(recv_text);
 			gimp_progress_update(1.0);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Quality service is not avaible.\n");
+			g_message("Aesthetics assessment service not avaible.\n");
 		}
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Quality measure source (drawable channel is not in 1-4 ?).\n");
+		g_message("Error: Aesthetics source.\n");
 	}
 
 	return status;
@@ -118,15 +114,15 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Quality",
-						   "Measure image quality with AI",
+						   "Aesthetics Assessment",
+						   "Image Aesthetics Assessment with AI",
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022", 
-						   "Quality", "RGB*, GRAY*", 
+						   "Aesthetics", "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/");
 }
 
 static void
@@ -153,7 +149,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	gegl_init(NULL, NULL);
 
-	status = start_image_nima(drawable_id);
+	status = start_image_tanet(drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
 
