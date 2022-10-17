@@ -64,8 +64,7 @@ static GimpPDBStatusType start_image_artist_style(gint32 drawable_id)
 		recv_image = artist_style_rpc_service(send_image);
 		gimp_progress_update(1.0);
 		if (image_valid(recv_image)) {
-			// image_saveto_gimp(recv_image, "artist_style");
-			image_saveto_drawable(recv_image, drawable_id, channels, &rect);
+			image_saveto_gimp(recv_image, "artist_style");
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;

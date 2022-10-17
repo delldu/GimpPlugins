@@ -32,7 +32,8 @@ static GimpPDBStatusType start_image_color(gint drawable_id)
 	if (image_valid(send_image)) {
 		recv_image = color_rpc_service(send_image);
 		if (image_valid(recv_image)) {
-			image_saveto_drawable(recv_image, drawable_id, channels, &rect);
+			// image_saveto_drawable(recv_image, drawable_id, channels, &rect);
+			image_saveto_gimp(recv_image, "color");
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;

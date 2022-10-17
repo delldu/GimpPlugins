@@ -32,16 +32,16 @@ static GimpPDBStatusType start_image_matte(gint drawable_id)
 	if (image_valid(send_image)) {
 		recv_image = matte_rpc_service(send_image);
 		if (image_valid(recv_image)) {
-			image_saveto_drawable(recv_image, drawable_id, channels, &rect);
+			image_saveto_gimp(recv_image, "matte");
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Matte service is not avaible.\n");
+			g_message("Matte service not avaible.\n");
 		}
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Matte source(drawable channel is not 1-4 ?).\n");
+		g_message("Error: Matte source.\n");
 	}
 
 	return status;

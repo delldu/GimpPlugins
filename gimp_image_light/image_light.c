@@ -10,8 +10,6 @@
 
 #define PLUG_IN_PROC "gimp_image_light"
 
-#include "light_dialog.c"
-
 static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
@@ -26,11 +24,8 @@ GimpPlugInInfo PLUG_IN_INFO = {
 
 MAIN()
 
-static IMAGE *light_rpc_service(IMAGE * send_image, int msgcode)
+static IMAGE *light_rpc_service(IMAGE * send_image)
 {
-	if (msgcode == IMAGE_LIGHT_SERVICE_WITH_CLAHE)
-		return normal_service(AI_TASKSET, "image_clahe", send_image, NULL);
-	// else
 	return normal_service(AI_TASKSET, "image_light", send_image, NULL);
 }
 
@@ -44,18 +39,18 @@ static GimpPDBStatusType start_image_light(gint drawable_id)
 	gimp_progress_init("Light ...");
 	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
-		recv_image = light_rpc_service(send_image, light_options.method);
+		recv_image = light_rpc_service(send_image);
 		if (image_valid(recv_image)) {
 			image_saveto_drawable(recv_image, drawable_id, channels, &rect);
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Light service is not avaible.");
+			g_message("Error: Light service not avaible.\n");
 		}
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Light source(drawable channel is not 1-4 ?).\n");
+		g_message("Error: Light source.\n");
 	}
 
 	return status;
@@ -72,7 +67,7 @@ static void query(void)
 
 	gimp_install_procedure(PLUG_IN_PROC,
 						   "Low Light Enhance",
-						   "Enhace low light image with AI",
+						   "Low Light Image with AI",
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022",
@@ -107,40 +102,11 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	// image_id = param[1].data.d_drawable;
 	drawable_id = param[2].data.d_drawable;
 
-	switch (run_mode) {
-	case GIMP_RUN_INTERACTIVE:
-		/* Get options last values if needed */
-		gimp_get_data(PLUG_IN_PROC, &light_options);
-		if (!light_dialog())
-			return;
-		break;
-
-	case GIMP_RUN_NONINTERACTIVE:
-		if (nparams != 4)
-			status = GIMP_PDB_CALLING_ERROR;
-		if (status == GIMP_PDB_SUCCESS) {
-			light_options.method = param[2].data.d_int32;
-		}
-		break;
-
-	case GIMP_RUN_WITH_LAST_VALS:
-		/*  Get options last values if needed  */
-		gimp_get_data(PLUG_IN_PROC, &light_options);
-		break;
-
-	default:
-		break;
-	}
-
 	gegl_init(NULL, NULL);
 
 	status = start_image_light(drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
-
-	/*  Store data  */
-	if (run_mode == GIMP_RUN_INTERACTIVE)
-		gimp_set_data(PLUG_IN_PROC, &light_options, sizeof(LightOptions));
 
 	// Output result for pdb
 	values[0].data.d_status = status;

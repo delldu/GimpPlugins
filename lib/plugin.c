@@ -259,42 +259,8 @@ int image_saveto_drawable(IMAGE * image, gint32 drawable_id, gint channels, Gegl
 	return RET_OK;
 }
 
-#if 0
-IMAGE *image_from_select(gint32 drawable_id, int x, int y, int width, int height)
-{
-	gint channels;
-	GimpPixelRgn input_rgn;
-	guchar *rgn_data;
-	GimpDrawable *drawable;
-	IMAGE *image = NULL;
 
-	channels = gimp_drawable_bpp(drawable_id);
-	if (channels < 1 || channels > 4) {
-		syslog_error("channels %d is not in [1-4]", channels);
-		return NULL;
-	}
-
-	image = image_create(height, width);
-	CHECK_IMAGE(image);
-
-	rgn_data = g_new(guchar, height * width * channels);
-	if (!rgn_data) {
-		syslog_error("memory allocate (%d bytes).", height * width * channels);
-		image_destroy(image);
-		return NULL;
-	}
-
-	drawable = gimp_drawable_get(drawable_id);
-	gimp_pixel_rgn_init(&input_rgn, drawable, 0, 0, drawable->width, drawable->height, FALSE, FALSE);
-	gimp_pixel_rgn_get_rect(&input_rgn, rgn_data, x, y, width, height);
-	image = image_from_rawdata(channels, height, width, rgn_data);
-	g_free(rgn_data);
-	gimp_drawable_detach(drawable);
-
-	return image;
-}
-
-int image_saveto_select(IMAGE * image, gint32 drawable_id, int x, int y, int width, int height)
+static int image_saveto_region(IMAGE * image, gint32 drawable_id, GeglRectangle *rect)
 {
 	int ret;
 	gint channels;
@@ -305,17 +271,17 @@ int image_saveto_select(IMAGE * image, gint32 drawable_id, int x, int y, int wid
 	check_image(image);
 
 	channels = gimp_drawable_bpp(drawable_id);
-	rgn_data = g_new(guchar, height * width * channels);
+	rgn_data = g_new(guchar, rect->height * rect->width * channels);
 	if (!rgn_data) {
-		syslog_error("memory allocate (%d bytes).", height * width * channels);
+		syslog_error("memory allocate (%d bytes).", rect->height * rect->width * channels);
 		return RET_ERROR;
 	}
 
-	ret = image_to_rawdata(image, channels, height, width, rgn_data);
+	ret = image_to_rawdata(image, channels, rect->height, rect->width, rgn_data);
 	if (ret == RET_OK) {
 		drawable = gimp_drawable_get(drawable_id);
 		gimp_pixel_rgn_init(&output_rgn, drawable, 0, 0, drawable->width, drawable->height, TRUE, FALSE);
-		gimp_pixel_rgn_set_rect(&output_rgn, rgn_data, x, y, width, height);
+		gimp_pixel_rgn_set_rect(&output_rgn, rgn_data, rect->x, rect->y, rect->width, rect->height);
 		gimp_drawable_detach(drawable);
 	}
 
@@ -323,7 +289,6 @@ int image_saveto_select(IMAGE * image, gint32 drawable_id, int x, int y, int wid
 
 	return ret;
 }
-#endif
 
 
 int image_saveto_gimp(IMAGE * image, char *name_prefix)
@@ -346,13 +311,10 @@ int image_saveto_gimp(IMAGE * image, char *name_prefix)
 	layer_ID = gimp_layer_new(image_ID, name, image->width, image->height, GIMP_RGBA_IMAGE, 100.0, GIMP_NORMAL_MODE);
 
 	if (layer_ID > 0) {
-		rect.x = 0;
-		rect.y = 0;
+		rect.x = rect.y = 0;
 		rect.height = image->height;
 		rect.width = image->width;
-
-		// ret = image_saveto_select(image, (gint32) layer_ID, 0, 0, image->width, image->height);
-		ret = image_saveto_drawable(image, layer_ID, 4, &rect);
+		ret = image_saveto_region(image, layer_ID, &rect);
 		if (!gimp_image_insert_layer(image_ID, layer_ID, 0, 0)) {
 			syslog_error("insert layer to image.");
 			ret = RET_ERROR;
