@@ -26,7 +26,7 @@ static GimpPDBStatusType start_image_colour(gint drawable_id)
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-	gimp_progress_init("Color ...");
+	gimp_progress_init("Colour ...");
 
 	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
@@ -36,13 +36,13 @@ static GimpPDBStatusType start_image_colour(gint drawable_id)
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Color service is avaible.\n");
+			g_message("Error: Colour service is avaible.\n");
 		}
 		image_destroy(send_image);
 		gimp_progress_update(1.0);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Color source.\n");
+		g_message("Error: Colour source.\n");
 	}
 
 	return status;

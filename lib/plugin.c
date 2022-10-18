@@ -329,3 +329,83 @@ int image_saveto_gimp(IMAGE * image, char *name_prefix)
 
 	return ret;
 }
+
+
+gint32 get_reference_drawable(gint32 image_id, gint32 drawable_id)
+{
+	gint *layer_ids = NULL;
+	gint i, num_layers, ret = -1;
+
+	layer_ids = gimp_image_get_layers(image_id, &num_layers);
+	for (i = 0; i < num_layers; i++) {
+		if (layer_ids[i] != drawable_id) {
+			ret = layer_ids[i];
+			break;
+		}
+	}
+
+	if (layer_ids)
+		g_free(layer_ids);
+
+	return ret;
+}
+
+
+IMAGE *style_service(char *taskset_name, char *service_name, IMAGE *send_image, IMAGE *style_image, char *addon)
+{
+	TASKARG taska;
+	TASKSET *tasks;
+	TIME start_time, wait_time;
+	IMAGE *recv_image = NULL;
+	char input_file[256], style_file[256], output_file[256], command[TASK_BUFFER_LEN], home_workspace[256];
+
+	CHECK_IMAGE(send_image);
+
+	snprintf(home_workspace, sizeof(home_workspace), "%s/%s", getenv("HOME"), AI_WORKSPACE);
+	// ==> getenv("HOME") = /home/dell/snap/gimp/380/
+
+	make_dir(home_workspace);
+	get_temp_fname(home_workspace, ".png", input_file, sizeof(input_file));
+	get_temp_fname(home_workspace, ".png", style_file, sizeof(style_file));
+	get_temp_fname(home_workspace, ".png", output_file, sizeof(output_file));
+
+	image_save(send_image, input_file);
+	image_save(style_image, style_file);
+
+	if (addon) {
+		snprintf(command, sizeof(command), "%s(input_file=%s,style_file=%s,%s,output_file=%s)",
+			service_name, input_file, style_file, addon, output_file);
+	} else {
+		snprintf(command, sizeof(command), "%s(input_file=%s,style_file=%s,output_file=%s)",
+			service_name, input_file, style_file, output_file);
+	}
+
+	tasks = taskset_create(taskset_name);
+	if (set_queue_task(tasks, command, &taska) != RET_OK)
+		goto failure;
+
+	// Wait time, e.g, 60 seconds
+	wait_time = 60 * 1000;
+	start_time = time_now();
+	while (time_now() - start_time < wait_time) {
+		usleep(300 * 1000);		// 300 ms
+		if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file))
+			break;
+		gimp_progress_update((float) (time_now() - start_time) / wait_time * 0.90);
+	}
+	gimp_progress_update(0.9);
+	if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
+		recv_image = image_load(output_file);
+	}
+
+	if (getenv("DEBUG") == NULL) {
+		unlink(input_file);
+		unlink(style_file);
+		unlink(output_file);
+	}
+
+  failure:
+	taskset_destroy(tasks);
+
+	return recv_image;
+}

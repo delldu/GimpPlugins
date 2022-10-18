@@ -31,6 +31,9 @@ static char *tanet_rpc_service(IMAGE * send_image)
 	// getenv("HOME") = /home/dell/snap/gimp/380
 
 	make_dir(home_workspace);
+
+	// get_temp_fname comes from redos.h, prototype is:
+	// int get_temp_fname(char *prefix, char *postfix, char *filename, int size)
 	get_temp_fname(home_workspace, ".png", input_file, sizeof(input_file));
 	get_temp_fname(home_workspace, ".txt", output_file, sizeof(output_file));
 
@@ -55,8 +58,11 @@ static char *tanet_rpc_service(IMAGE * send_image)
 	if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
 		txt = file_load(output_file, &size);
 	}
-	unlink(input_file);
-	unlink(output_file);
+
+	if (getenv("DEBUG") == NULL) {
+		unlink(input_file);
+		unlink(output_file);
+	}	
 
   failure:
 	taskset_destroy(tasks);

@@ -46,22 +46,23 @@ static void query(void)
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Style/");
 }
 
-static IMAGE *photo_style_rpc_service(IMAGE * send_image)
+static IMAGE *photo_style_rpc_service(IMAGE *send_image, IMAGE *style_image)
 {
-	return normal_service(AI_TASKSET, "image_photo_style", send_image, NULL);
+	return style_service(AI_TASKSET, "image_photo_style", send_image, style_image, NULL);
 }
 
-static GimpPDBStatusType start_image_photo_style(gint32 drawable_id)
+static GimpPDBStatusType start_image_photo_style(gint32 drawable_id, gint32 style_drawable_id)
 {
 	gint channels;
 	GeglRectangle rect;
-	IMAGE *send_image, *recv_image;
+	IMAGE *send_image, *style_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
 	gimp_progress_init("Photo style ...");
 	send_image = image_from_drawable(drawable_id, &channels, &rect);
-	if (image_valid(send_image)) {
-		recv_image = photo_style_rpc_service(send_image);
+	style_image = image_from_drawable(style_drawable_id, &channels, &rect);
+	if (image_valid(send_image) && image_valid(style_image)) {
+		recv_image = photo_style_rpc_service(send_image, style_image);
 		gimp_progress_update(1.0);
 		if (image_valid(recv_image)) {
 			image_saveto_gimp(recv_image, "photo_style");
@@ -70,11 +71,15 @@ static GimpPDBStatusType start_image_photo_style(gint32 drawable_id)
 			status = GIMP_PDB_EXECUTION_ERROR;
 			g_message("Error: Photo style service not available.\n");
 		}
-		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
 		g_message("Error: Photo style source.\n");
 	}
+
+	if (image_valid(send_image))
+		image_destroy(send_image);
+	if (image_valid(style_image))
+		image_destroy(style_image);
 
 	return status;				// GIMP_PDB_SUCCESS;
 }
@@ -84,7 +89,8 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 {
 	static GimpParam values[1];
 	GimpRunMode run_mode;
-	gint32 drawable_id;
+	gint32 image_id;
+	gint32 drawable_id, style_drawable_id;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
 	/* Setting mandatory output values */
@@ -99,11 +105,18 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	}
 
 	run_mode = (GimpRunMode) param[0].data.d_int32;
+	image_id = param[1].data.d_image;
 	drawable_id = param[2].data.d_drawable;
+
+	style_drawable_id = get_reference_drawable(image_id, drawable_id);
+	if (style_drawable_id < 0) {
+		g_message("Please use menu 'File->Open as layers...' to add style image.\n");
+		return;
+	}
 
 	gegl_init(NULL, NULL);
 
-	status = start_image_photo_style(drawable_id);
+	status = start_image_photo_style(drawable_id, style_drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
 

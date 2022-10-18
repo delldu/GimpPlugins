@@ -27,10 +27,12 @@ extern "C" {
 #define AI_WORKSPACE "tmp/"
 
 	IMAGE *image_from_drawable(gint32 drawable_id, gint *channels, GeglRectangle * rect);
-	int image_saveto_drawable(IMAGE * image, gint32 drawable_id, gint channels, GeglRectangle * rect);
+	int image_saveto_drawable(IMAGE *image, gint32 drawable_id, gint channels, GeglRectangle * rect);
 	int image_saveto_gimp(IMAGE * image, char *name_prefix);
+	gint32 get_reference_drawable(gint32 image_id, gint32 drawable_id);
 
 	IMAGE *normal_service(char *taskset_name, char *service_name, IMAGE * send_image, char *addon);
+	IMAGE *style_service(char *taskset_name, char *service_name, IMAGE *send_image, IMAGE *style_image, char *addon);
 #if defined(__cplusplus)
 }
 #endif

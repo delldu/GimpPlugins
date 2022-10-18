@@ -14,23 +14,77 @@ static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-static IMAGE *color_rpc_service(IMAGE * send_image)
+static IMAGE *color_rpc_service(IMAGE * send_image, IMAGE *color_image)
 {
-	return normal_service(AI_TASKSET, "image_color", send_image, NULL);
+	TASKARG taska;
+	TASKSET *tasks;
+	IMAGE *recv_image = NULL;
+	TIME start_time, wait_time;
+	char input_file[256], color_file[256], output_file[256], command[TASK_BUFFER_LEN], home_workspace[256];
+
+	CHECK_IMAGE(send_image);
+
+	snprintf(home_workspace, sizeof(home_workspace), "%s/%s", getenv("HOME"), AI_WORKSPACE);
+	// getenv("HOME") = /home/dell/snap/gimp/380
+
+	make_dir(home_workspace);
+	
+	// get_temp_fname comes from redos.h, prototype is:
+	// int get_temp_fname(char *prefix, char *postfix, char *filename, int size)
+	get_temp_fname(home_workspace, ".png", input_file, sizeof(input_file));
+	get_temp_fname(home_workspace, ".png", color_file, sizeof(color_file));
+	get_temp_fname(home_workspace, ".png", output_file, sizeof(output_file));
+
+	image_save(send_image, input_file);
+	image_save(color_image, color_file);
+
+	snprintf(command, sizeof(command), "image_color(input_file=%s,color_file=%s,output_file=%s)",
+		input_file, color_file, output_file);
+
+	tasks = taskset_create(AI_TASKSET);
+	if (set_queue_task(tasks, command, &taska) != RET_OK)
+		goto failure;
+
+	// wait time, e.g, 30 seconds
+	wait_time = 30 * 1000;
+	start_time = time_now();
+	while (time_now() - start_time < wait_time) {
+		usleep(300 * 1000);		// 300 ms
+		if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file))
+			break;
+		gimp_progress_update((float) (time_now() - start_time) / wait_time * 0.90);
+	}
+	gimp_progress_update(0.9);
+	if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
+		recv_image = image_load(output_file);
+	}
+
+	if (getenv("DEBUG") == NULL) {
+		unlink(input_file);
+		unlink(color_file);
+		unlink(output_file);
+	}	
+
+failure:
+	taskset_destroy(tasks);
+
+	return recv_image;
 }
 
-static GimpPDBStatusType start_image_color(gint drawable_id)
+static GimpPDBStatusType start_image_color(gint drawable_id, gint color_drawable_id)
 {
 	gint channels;
 	GeglRectangle rect;
-	IMAGE *send_image, *recv_image;
+	IMAGE *send_image, *color_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
 	gimp_progress_init("Color ...");
 
 	send_image = image_from_drawable(drawable_id, &channels, &rect);
-	if (image_valid(send_image)) {
-		recv_image = color_rpc_service(send_image);
+	color_image = image_from_drawable(color_drawable_id, &channels, &rect);
+
+	if (image_valid(send_image) && image_valid(color_image)) {
+		recv_image = color_rpc_service(send_image, color_image);
 		if (image_valid(recv_image)) {
 			// image_saveto_drawable(recv_image, drawable_id, channels, &rect);
 			image_saveto_gimp(recv_image, "color");
@@ -39,12 +93,16 @@ static GimpPDBStatusType start_image_color(gint drawable_id)
 			status = GIMP_PDB_EXECUTION_ERROR;
 			g_message("Error: Color service not avaible.\n");
 		}
-		image_destroy(send_image);
 		gimp_progress_update(1.0);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
 		g_message("Error: Color source.\n");
 	}
+
+	if (image_valid(send_image))
+		image_destroy(send_image);
+	if (image_valid(color_image))
+		image_destroy(color_image);
 
 	return status;
 }
@@ -70,7 +128,7 @@ static void query(void)
 
 	gimp_install_procedure(PLUG_IN_PROC,
 						   "Examplar Color",
-						   "Interactive color image with AI",
+						   "Color Gray Image Base-on Color Reference with AI",
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022", 
@@ -87,7 +145,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	GimpRunMode run_mode;
 	gint32 image_id;
-	gint32 drawable_id;
+	gint32 drawable_id, color_drawable_id;
 
 	/* Setting mandatory output values */
 	*nreturn_vals = 1;
@@ -110,14 +168,21 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	if (! gimp_drawable_has_alpha(drawable_id))
 		gimp_layer_add_alpha(drawable_id);
 
+	color_drawable_id = get_reference_drawable(image_id, drawable_id);
+	if (color_drawable_id < 0) {
+		g_message("Please use menu 'File->Open as layers...' to add color image.\n");
+		return;
+	}
+
 	gegl_init(NULL, NULL);
 
-	status = start_image_color(drawable_id);
+	status = start_image_color(drawable_id, color_drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
 
 	// Output result for pdb
 	values[0].data.d_status = status;
+
 
 	gegl_exit();
 }
