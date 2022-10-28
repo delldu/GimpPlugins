@@ -75,3 +75,10 @@ test:
 			$(MAKE) -C $$d test || exit 1; \
 		fi \
 	done	
+
+i18n:
+	# /usr/share/locale/zh_CN/LC_MESSAGES/tai.mo
+	find . -name "*.c" > /tmp/file_list.txt
+	xgettext -k_ -o /tmp/tai.pot --language=c --files-from /tmp/file_list.txt
+	msginit --no-translator -l zh_CN.gb2312 -i /tmp/tai.pot -o tai.po
+	# sudo msgfmt tai.po -o /usr/share/locale/zh_CN/LC_MESSAGES/tai.mo

@@ -34,16 +34,16 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Artist Style Transform",
+						   _("Artist Style Transform"),
 						   "Image Artist Style with AI",
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022", 
-						   "_Artist",
+						   _("Artist"),
 						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Style/");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Style Transform/");
 }
 
 static IMAGE *artist_style_rpc_service(IMAGE * send_image, IMAGE *style_image)
@@ -91,6 +91,8 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	gint32 image_id;
 	gint32 drawable_id, style_drawable_id;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
+
+	INIT_I18N();
 
 	/* Setting mandatory output values */
 	*nreturn_vals = 1;

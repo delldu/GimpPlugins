@@ -84,7 +84,7 @@ static GimpPDBStatusType start_image_tanet(gint32 drawable_id)
 	if (image_valid(send_image)) {
 		recv_text = tanet_rpc_service(send_image);
 		if (recv_text != NULL) {
-			g_message("Aesthetics Score: %s\n", recv_text);
+			g_message("Aesthetic Score: %s\n", recv_text);
 			free(recv_text);
 			gimp_progress_update(1.0);
 		} else {
@@ -125,7 +125,8 @@ static void query(void)
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022", 
-						   "Aesthetics", "RGB*, GRAY*", 
+						   _("AA"),
+						   "RGB*, GRAY*",
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/");
@@ -138,6 +139,8 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	GimpRunMode run_mode;
 	gint32 drawable_id;
+
+	// INIT_I18N();
 
 	/* Setting mandatory output values */
 	*nreturn_vals = 1;

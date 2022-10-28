@@ -39,11 +39,11 @@ static void query(void)
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022",
-						   "_Detect",
+						   _("Face Detect"),
 						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Face/");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Detect");
 }
 
 static IMAGE *image_face_detect_rpc_service(IMAGE * send_image)
@@ -55,15 +55,8 @@ static GimpPDBStatusType start_image_face_detect(gint32 drawable_id)
 {
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
-	// gint x, y, width, height;
-
-	// if (!gimp_drawable_mask_intersect(drawable_id, &x, &y, &width, &height) || width < 8 || height < 8) {
-	// 	g_message("Error: Select or region size is too small.\n");
-	// 	return GIMP_PDB_EXECUTION_ERROR;
-	// }
 
 	gimp_progress_init("Face detect ...");
-	// send_image = image_from_select(drawable_id, x, y, width, height);
 	send_image = image_from_drawable(drawable_id, NULL, NULL);
 	if (image_valid(send_image)) {
 		recv_image = image_face_detect_rpc_service(send_image);
@@ -91,6 +84,8 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	GimpRunMode run_mode;
 	gint32 drawable_id;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
+
+	// INIT_I18N();
 
 	/* Setting mandatory output values */
 	*nreturn_vals = 1;

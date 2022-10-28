@@ -1,0 +1,117 @@
+# Chinese translations for PACKAGE package.
+# Copyright (C) 2022 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Automatically generated, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-10-19 18:30+0800\n"
+"PO-Revision-Date: 2022-10-19 18:30+0800\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ASCII\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: gimp_image_face_beauty/image_face_beauty.c:42
+msgid "Zoom In 2x and Beautify Photo"
+msgstr ""
+
+#: gimp_image_desnow/image_desnow.c:42
+msgid "Remove Snow"
+msgstr ""
+
+#: gimp_image_patch/image_patch.c:85
+msgid "Patch"
+msgstr ""
+
+#: gimp_image_color/image_color.c:135
+msgid "Examplar Color"
+msgstr ""
+
+#: gimp_image_shadow/image_shadow.c:42
+msgid "Shadow detect"
+msgstr ""
+
+#: gimp_image_colour/image_colour.c:76
+msgid "Free Color"
+msgstr ""
+
+#: gimp_image_tanet/image_tanet.c:128
+msgid "AA"
+msgstr ""
+
+#: gimp_image_artist_style/image_artist_style.c:42
+msgid "Artist"
+msgstr ""
+
+#: gimp_image_photo_style/image_photo_style.c:42
+msgid "Photo Realistic"
+msgstr ""
+
+#: gimp_image_face_detect/image_face_detect.c:42
+msgid "Face Detect"
+msgstr ""
+
+#: gimp_image_shape_style/image_shape_style.c:42
+msgid "Shape"
+msgstr ""
+
+#: gimp_image_segment/image_segment.c:42
+msgid "Segment"
+msgstr ""
+
+#: gimp_image_denoise/image_denoise.c:42
+msgid "Denoise"
+msgstr ""
+
+#: gimp_image_defocus/image_defocus.c:42
+msgid "Defocus"
+msgstr ""
+
+#: gimp_image_autops/image_autops.c:37 gimp_image_autops/image_autops.c:42
+msgid "Image"
+msgstr ""
+
+#: gimp_image_autops/image_autops.c:46
+msgid "<Image>/AI/Image/"
+msgstr ""
+
+#: gimp_image_scratch/image_scratch.c:42
+msgid "Scratch Detect"
+msgstr ""
+
+#: gimp_image_light/image_light.c:74
+msgid "Enhance Low Light Image"
+msgstr ""
+
+#: gimp_image_deblur/image_deblur.c:42
+msgid "Deblur"
+msgstr ""
+
+#: gimp_image_derain/image_derain.c:42
+msgid "Derain"
+msgstr ""
+
+#: gimp_image_dehaze/image_dehaze.c:42
+msgid "Dehaze"
+msgstr ""
+
+#: gimp_image_zoom/image_zoom.c:42
+msgid "Zoom In 4x Image"
+msgstr ""
+
+#: gimp_image_curve/image_curve.c:42
+msgid "Deep Adjust Color Curves"
+msgstr ""
+
+#: gimp_image_dereflection/image_dereflection.c:42
+msgid "Remove Reflection"
+msgstr ""
+
+#: gimp_image_matte/image_matte.c:74
+msgid "Matte"
+msgstr ""

@@ -161,6 +161,9 @@ IMAGE *normal_service(char *taskset_name, char *service_name, IMAGE * send_image
 	if (getenv("DEBUG") == NULL) {
 		unlink(input_file);
 		unlink(output_file);
+	} else {
+		syslog_debug("input_file: %s", input_file);
+		syslog_debug("output_file: %s", output_file);
 	}
 
   failure:
@@ -295,31 +298,31 @@ int image_saveto_gimp(IMAGE * image, char *name_prefix)
 {
 	int ret;
 	gchar name[64];
-	gint32 image_ID, layer_ID;
+	gint32 image_id, layer_ID;
 	GeglRectangle rect;
 
 	check_image(image);
-	image_ID = gimp_image_new(image->width, image->height, GIMP_RGB);
-	if (image_ID < 0) {
+	image_id = gimp_image_new(image->width, image->height, GIMP_RGB);
+	if (image_id < 0) {
 		syslog_error("create gimp image.");
 		return RET_ERROR;
 	}
 
-	g_snprintf(name, sizeof(name), "%s_%d", name_prefix, image_ID);
+	g_snprintf(name, sizeof(name), "%s_%d", name_prefix, image_id);
 
 	layer_ID = -1;
-	layer_ID = gimp_layer_new(image_ID, name, image->width, image->height, GIMP_RGBA_IMAGE, 100.0, GIMP_NORMAL_MODE);
+	layer_ID = gimp_layer_new(image_id, name, image->width, image->height, GIMP_RGBA_IMAGE, 100.0, GIMP_NORMAL_MODE);
 
 	if (layer_ID > 0) {
 		rect.x = rect.y = 0;
 		rect.height = image->height;
 		rect.width = image->width;
 		ret = image_saveto_region(image, layer_ID, &rect);
-		if (!gimp_image_insert_layer(image_ID, layer_ID, 0, 0)) {
+		if (!gimp_image_insert_layer(image_id, layer_ID, 0, 0)) {
 			syslog_error("insert layer to image.");
 			ret = RET_ERROR;
 		}
-		gimp_display_new(image_ID);
+		gimp_display_new(image_id);
 
 		gimp_displays_flush();
 	} else {
@@ -329,7 +332,6 @@ int image_saveto_gimp(IMAGE * image, char *name_prefix)
 
 	return ret;
 }
-
 
 gint32 get_reference_drawable(gint32 image_id, gint32 drawable_id)
 {
@@ -348,6 +350,52 @@ gint32 get_reference_drawable(gint32 image_id, gint32 drawable_id)
 		g_free(layer_ids);
 
 	return ret;
+}
+
+IMAGE *get_selection_mask(gint32 image_id)
+{
+	guchar *rawdata;
+	gint temp_channels;
+	const Babl *format;
+	const GeglRectangle *rect;
+	gint32 select_id;
+	GeglBuffer *select_buffer;
+	IMAGE *image;
+
+	/* Get selection channel */
+	if (gimp_selection_is_empty(image_id)) {
+		return NULL;
+	}
+	select_id = gimp_image_get_selection(image_id);
+	if (select_id < 0) {
+		return NULL;
+	}
+
+	select_buffer = gimp_drawable_get_buffer(select_id);
+	format = gimp_drawable_get_format(select_id);
+	temp_channels = gimp_drawable_bpp(select_id);
+
+	// Read all image at once from input buffer
+	rect = gegl_buffer_get_extent(select_buffer);
+
+	rawdata = g_new(guchar, rect->width * rect->height * temp_channels);
+	if (rawdata == NULL) {
+		syslog_error("allocate memory for rawdata.");
+		return NULL;
+	}
+	gegl_buffer_get(select_buffer, GEGL_RECTANGLE(rect->x, rect->y, rect->width, rect->height),
+					1.0, format, rawdata, GEGL_AUTO_ROWSTRIDE, GEGL_ABYSS_NONE);
+
+	// Transform rawdata
+	image = image_from_rawdata(temp_channels, rect->height, rect->width, rawdata);
+	CHECK_IMAGE(image);
+
+	// Free allocated pointers & buffers
+	g_free(rawdata);
+
+	g_object_unref (select_buffer);
+
+	return image;
 }
 
 

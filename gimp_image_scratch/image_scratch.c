@@ -39,11 +39,11 @@ static void query(void)
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022",
-						   "_Scratch",
+						   _("Scratch Detect"),
 						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Detect/");
 }
 
 static IMAGE *scratch_rpc_service(IMAGE * send_image)
@@ -85,6 +85,8 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	GimpRunMode run_mode;
 	gint32 drawable_id;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
+
+	// INIT_I18N();
 
 	/* Setting mandatory output values */
 	*nreturn_vals = 1;

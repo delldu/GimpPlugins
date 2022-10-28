@@ -14,25 +14,48 @@ static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
+static int is_full_selection(IMAGE *mask)
+{
+	int i, j;
+	image_foreach(mask, i, j) {
+		if (mask->ie[i][j].r != 255)
+			return 0;
+	}
+	return 1;
+}
+
 static IMAGE *colour_rpc_service(IMAGE * send_image)
 {
 	return normal_service(AI_TASKSET, "image_colour", send_image, NULL);
 }
 
-static GimpPDBStatusType start_image_colour(gint drawable_id)
+static GimpPDBStatusType start_image_colour(gint image_id, gint drawable_id)
 {
+	int i, j;
 	gint channels;
 	GeglRectangle rect;
-	IMAGE *send_image, *recv_image;
+	IMAGE *send_image, *recv_image, *mask;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
 	gimp_progress_init("Colour ...");
 
+	mask = get_selection_mask(image_id);
 	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
+		// more color weight if pixel is selected (mask marked) ...
+		if (mask && mask->height == send_image->height && mask->width == send_image->width 
+				&& ! is_full_selection(mask)) {
+			image_foreach(mask, i, j)
+				send_image->ie[i][j].a = (mask->ie[i][j].r > 5)? 128 : 0; // 5 -- delta
+		} else { //  full selection == None selection !!!
+			image_foreach(send_image, i, j)
+				send_image->ie[i][j].a = 0;
+		}
+
 		recv_image = colour_rpc_service(send_image);
 		if (image_valid(recv_image)) {
-			image_saveto_drawable(recv_image, drawable_id, channels, &rect);
+			// image_saveto_drawable(recv_image, drawable_id, channels, &rect);
+			image_saveto_gimp(recv_image, "Colour");
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
@@ -44,6 +67,9 @@ static GimpPDBStatusType start_image_colour(gint drawable_id)
 		status = GIMP_PDB_EXECUTION_ERROR;
 		g_message("Error: Colour source.\n");
 	}
+
+	if (mask)
+		image_destroy(mask);
 
 	return status;
 }
@@ -68,12 +94,12 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "User Guide Color",
+						   "Paintbrush with LCH Mode and Auto Color",
 						   "Colour Image with AI",
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022", 
-						   "Colo_ur", "RGB*, GRAY*", 
+						   _("User Color"), "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Color/");
@@ -87,6 +113,8 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	GimpRunMode run_mode;
 	gint32 image_id;
 	gint32 drawable_id;
+
+	// INIT_I18N();
 
 	/* Setting mandatory output values */
 	*nreturn_vals = 1;
@@ -103,6 +131,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	image_id = param[1].data.d_image;
 	drawable_id = param[2].data.d_drawable;
 
+
 	if (gimp_image_base_type (image_id) != GIMP_RGB)
 		gimp_image_convert_rgb (image_id);
 
@@ -111,7 +140,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	gegl_init(NULL, NULL);
 
-	status = start_image_colour(drawable_id);
+	status = start_image_colour(image_id, drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
 

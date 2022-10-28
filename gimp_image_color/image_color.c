@@ -127,15 +127,15 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Examplar Color",
-						   "Color Gray Image Base-on Color Reference with AI",
+						   "Color Image Base-on Example (Color Image)",
+						   "Color Image Base-on Color Example with AI",
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022", 
-						   "_Color", "RGB*, GRAY*", 
+						   _("Examplar Color"), "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Color/");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Color");
 }
 
 static void
@@ -146,6 +146,8 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	GimpRunMode run_mode;
 	gint32 image_id;
 	gint32 drawable_id, color_drawable_id;
+
+	// INIT_I18N();
 
 	/* Setting mandatory output values */
 	*nreturn_vals = 1;
