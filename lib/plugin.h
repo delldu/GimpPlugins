@@ -35,6 +35,7 @@ extern "C" {
 #define GIMP_PLUGIN_VERSION "1.1.0"
 #define AI_TASKSET "TAI"
 #define AI_WORKSPACE "tmp/"
+	int image_saveas_layer(IMAGE * image, char *name_prefix, gint32 image_id);
 	IMAGE *image_from_drawable(gint32 drawable_id, gint *channels, GeglRectangle * rect);
 	int image_saveto_drawable(IMAGE *image, gint32 drawable_id, gint channels, GeglRectangle * rect);
 	int image_saveto_gimp(IMAGE * image, char *name_prefix);

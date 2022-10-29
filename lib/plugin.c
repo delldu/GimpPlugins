@@ -16,7 +16,7 @@ static IMAGE *image_from_rawdata(gint channels, gint height, gint width, guchar 
 	IMAGE *image;
 
 	if (channels < 1 || channels > 4) {
-		syslog_error("channels %d is not in [1-4]", channels);
+		syslog_error("Channels %d is not in [1-4]", channels);
 		return NULL;
 	}
 
@@ -72,7 +72,7 @@ static int image_to_rawdata(IMAGE * image, gint channels, gint height, gint widt
 
 	check_image(image);
 	if (channels < 1 || channels > 4) {
-		syslog_error("channels %d is not in [1-4]", channels);
+		syslog_error("Channels %d is not in [1-4]", channels);
 		return RET_ERROR;
 	}
 
@@ -195,7 +195,7 @@ IMAGE *image_from_drawable(gint32 drawable_id, gint * channels, GeglRectangle * 
 
 	rawdata = g_new(guchar, temp_rect->width * temp_rect->height * temp_channels);
 	if (rawdata == NULL) {
-		syslog_error("allocate memory for rawdata.");
+		syslog_error("Allocate memory for rawdata.");
 		return NULL;
 	}
 	gegl_buffer_get(buffer, GEGL_RECTANGLE(temp_rect->x, temp_rect->y, temp_rect->width, temp_rect->height),
@@ -227,18 +227,18 @@ int image_saveto_drawable(IMAGE * image, gint32 drawable_id, gint channels, Gegl
 	check_image(image);
 
 	if (image->height != rect->height || image->width != rect->width) {
-		syslog_error("image size doesn't match rect.");
+		syslog_error("Image size doesn't match rect.");
 		return RET_ERROR;
 	}
 
 	rawdata = g_new(guchar, rect->width * rect->height * channels);
 	if (rawdata == NULL) {
-		syslog_error("allocate memory for rawdata.");
+		syslog_error("Allocate memory for rawdata.");
 		return RET_ERROR;
 	}
 
 	if (image_to_rawdata(image, channels, rect->height, rect->width, rawdata) != RET_OK) {
-		syslog_error("image_to_rawdata");
+		syslog_error("Call image_to_rawdata()");
 		return RET_ERROR;
 	}
 
@@ -275,8 +275,8 @@ static int image_saveto_region(IMAGE * image, gint32 drawable_id, GeglRectangle 
 
 	channels = gimp_drawable_bpp(drawable_id);
 	rgn_data = g_new(guchar, rect->height * rect->width * channels);
-	if (!rgn_data) {
-		syslog_error("memory allocate (%d bytes).", rect->height * rect->width * channels);
+	if (! rgn_data) {
+		syslog_error("Memory allocate (%d bytes).", rect->height * rect->width * channels);
 		return RET_ERROR;
 	}
 
@@ -296,42 +296,55 @@ static int image_saveto_region(IMAGE * image, gint32 drawable_id, GeglRectangle 
 
 int image_saveto_gimp(IMAGE * image, char *name_prefix)
 {
-	int ret;
-	gchar name[64];
-	gint32 image_id, layer_ID;
-	GeglRectangle rect;
+	gint32 image_id;
+	int ret = RET_OK;
 
 	check_image(image);
 	image_id = gimp_image_new(image->width, image->height, GIMP_RGB);
 	if (image_id < 0) {
-		syslog_error("create gimp image.");
+		syslog_error("Call gimp_image_new().");
 		return RET_ERROR;
 	}
+	ret = image_saveas_layer(image, name_prefix, image_id);
+	if (ret == RET_OK) {
+		gimp_display_new(image_id);
+		gimp_displays_flush();
+	} else {
+		syslog_error("Call image_saveas_layer().");
+	}
 
+	return ret;
+}
+
+int image_saveas_layer(IMAGE * image, char *name_prefix, gint32 image_id)
+{
+	gchar name[64];
+	gint32 layer_id;
+	GeglRectangle rect;
+	int ret = RET_OK;
+
+	check_image(image);
 	g_snprintf(name, sizeof(name), "%s_%d", name_prefix, image_id);
 
-	layer_ID = -1;
-	layer_ID = gimp_layer_new(image_id, name, image->width, image->height, GIMP_RGBA_IMAGE, 100.0, GIMP_NORMAL_MODE);
-
-	if (layer_ID > 0) {
+	layer_id = gimp_layer_new(image_id, name, image->width, image->height, GIMP_RGBA_IMAGE, 100.0, GIMP_NORMAL_MODE);
+	if (layer_id > 0) {
 		rect.x = rect.y = 0;
 		rect.height = image->height;
 		rect.width = image->width;
-		ret = image_saveto_region(image, layer_ID, &rect);
-		if (!gimp_image_insert_layer(image_id, layer_ID, 0, 0)) {
-			syslog_error("insert layer to image.");
+		ret = image_saveto_region(image, layer_id, &rect);
+		if (! gimp_image_insert_layer(image_id, layer_id, 0, 0)) {
+			syslog_error("Call gimp_image_insert_layer().");
 			ret = RET_ERROR;
 		}
-		gimp_display_new(image_id);
-
-		gimp_displays_flush();
 	} else {
-		syslog_error("create gimp layer.");
+		syslog_error("Call gimp_layer_new().");
 		return RET_ERROR;
 	}
 
 	return ret;
 }
+
+
 
 gint32 get_reference_drawable(gint32 image_id, gint32 drawable_id)
 {
@@ -380,7 +393,7 @@ IMAGE *get_selection_mask(gint32 image_id)
 
 	rawdata = g_new(guchar, rect->width * rect->height * temp_channels);
 	if (rawdata == NULL) {
-		syslog_error("allocate memory for rawdata.");
+		syslog_error("Allocate memory for rawdata.");
 		return NULL;
 	}
 	gegl_buffer_get(select_buffer, GEGL_RECTANGLE(rect->x, rect->y, rect->width, rect->height),

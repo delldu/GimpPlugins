@@ -34,12 +34,12 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   _("Zoom In 4x and Beautify Image"),
-						   "Zoom In Image with AI",
+						   _("4X Beautify Image"),
+						   _("4X Beautify Image"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022", 
-						   _("Zoom In 4x and Beautify Image"), 
+						   _("4X Beautify Image"),
 						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 

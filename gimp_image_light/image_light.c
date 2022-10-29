@@ -66,12 +66,12 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Enhance Low Light Image",
-						   "Low Light Image with AI",
+						   _("Enhance Low Light"),
+						   _("Enhance Low Light"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022",
-						   _("Enhance Low Light Image"),
+						   _("Enhance Low Light"),
 						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 

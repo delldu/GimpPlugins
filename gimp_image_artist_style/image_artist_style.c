@@ -34,16 +34,16 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   _("Artist Style Transform"),
-						   "Image Artist Style with AI",
+						   _("Artist Style"),
+						   _("Artist Style"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022", 
-						   _("Artist"),
+						   _("Artist Style"),
 						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Style Transform/");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Transform/");
 }
 
 static IMAGE *artist_style_rpc_service(IMAGE * send_image, IMAGE *style_image)
@@ -59,8 +59,8 @@ static GimpPDBStatusType start_image_artist_style(gint32 drawable_id, gint32 sty
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
 	gimp_progress_init("Artist style ...");
-	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	style_image = image_from_drawable(style_drawable_id, &channels, &rect);
+	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image) && image_valid(style_image)) {
 		recv_image = artist_style_rpc_service(send_image, style_image);
 		gimp_progress_update(1.0);
@@ -111,7 +111,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	style_drawable_id = get_reference_drawable(image_id, drawable_id);
 	if (style_drawable_id < 0) {
-		g_message("Please use menu 'File->Open as layers...' to add style image.\n");
+		g_message("Style Image NOT Found ! Please use menu 'File->Open as layers...' to add one.\n");
 		return;
 	}
 

@@ -127,12 +127,13 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Color Image Base-on Example (Color Image)",
-						   "Color Image Base-on Color Example with AI",
+						   _("Reference Color"),
+						   _("Reference Color"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022", 
-						   _("Examplar Color"), "RGB*, GRAY*", 
+						   _("Reference Color"),
+						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Color");
@@ -172,7 +173,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	color_drawable_id = get_reference_drawable(image_id, drawable_id);
 	if (color_drawable_id < 0) {
-		g_message("Please use menu 'File->Open as layers...' to add color image.\n");
+		g_message("Reference Color Image NOT Found ! Please use menu 'File->Open as layers...' to one.\n");
 		return;
 	}
 

@@ -34,16 +34,16 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Photo Real Style Transform",
-						   "Image Photo Style with AI",
+						   _("Photo Style"),
+						   _("Photo Style"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022", 
-						   _("Photo Realistic"),
+						   _("Photo Style"),
 						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Style Transform/");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Transform/");
 }
 
 static IMAGE *photo_style_rpc_service(IMAGE *send_image, IMAGE *style_image)
@@ -112,7 +112,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	style_drawable_id = get_reference_drawable(image_id, drawable_id);
 	if (style_drawable_id < 0) {
-		g_message("Please use menu 'File->Open as layers...' to add style image.\n");
+		g_message("Style Image NOT Found ! Please use menu 'File->Open as layers...' to add one.\n");
 		return;
 	}
 

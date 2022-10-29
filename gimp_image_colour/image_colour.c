@@ -94,12 +94,13 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Paintbrush with LCH Mode and Auto Color",
-						   "Colour Image with AI",
+						   _("Guide Color"),
+						   _("Guide Color"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022", 
-						   _("User Color"), "RGB*, GRAY*", 
+						   _("Guide Color"),
+						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Color/");

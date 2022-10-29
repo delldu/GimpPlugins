@@ -77,8 +77,8 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Patch",
-						   "Patch Image with AI",
+						   _("Patch"),
+						   _("Patch"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022",

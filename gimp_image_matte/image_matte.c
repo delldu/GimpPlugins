@@ -66,12 +66,12 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Image Matte",
-						   "Matte image with AI",
+						   _("Photo Matte"),
+						   _("Photo Matte"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022",
-						   _("Matte"),
+						   _("Photo Matte"),
 						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 

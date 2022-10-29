@@ -15,6 +15,40 @@ static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
+static int save_segment_result(IMAGE * send_image, IMAGE * recv_image)
+{
+	gint32 image_id;
+	int ret = RET_OK;
+
+	check_image(send_image);
+	check_image(recv_image);
+
+	if (send_image->height != recv_image->height || send_image->width != recv_image->width) {
+		syslog_error("Recv image size does not match send image.");
+		return RET_ERROR;
+	}
+
+	image_id = gimp_image_new(send_image->width, send_image->height, GIMP_RGB);
+	if (image_id < 0) {
+		syslog_error("Call gimp_image_new().");
+		return RET_ERROR;
+	}
+
+	ret = image_saveas_layer(send_image, "sources", image_id);
+	if (ret == RET_OK) {
+		ret = image_saveas_layer(recv_image, "segment", image_id);
+	}
+
+	if (ret == RET_OK) {
+		gimp_display_new(image_id);
+		gimp_displays_flush();
+	} else {
+		syslog_error("Call image_saveas_layer().");
+	}
+
+	return ret;
+}
+
 
 GimpPlugInInfo PLUG_IN_INFO = {
 	NULL,
@@ -34,12 +68,12 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   "Sementic Segment",
-						   "Segment Image with AI",
+						   _("Image Segment"),
+						   _("Image Segment"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022", 
-						   _("Segment"),
+						   _("Image Segment"),
 						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
@@ -69,7 +103,7 @@ static GimpPDBStatusType start_image_segment(gint32 drawable_id)
 		recv_image = segment_rpc_service(send_image);
 		gimp_progress_update(1.0);
 		if (image_valid(recv_image)) {
-			image_saveto_gimp(recv_image, "segment");
+			save_segment_result(send_image, recv_image);
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
