@@ -43,7 +43,7 @@ static void query(void)
 						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Autops/");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Beautify/");
 }
 
 static IMAGE *curve_rpc_service(IMAGE * send_image)

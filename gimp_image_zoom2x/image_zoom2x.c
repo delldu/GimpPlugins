@@ -8,7 +8,7 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "gimp_image_light"
+#define PLUG_IN_PROC "gimp_image_zoom2x"
 
 static void query(void);
 static void run(const gchar * name,
@@ -24,68 +24,67 @@ GimpPlugInInfo PLUG_IN_INFO = {
 
 MAIN()
 
-static IMAGE *light_rpc_service(IMAGE * send_image)
-{
-	return normal_service(AI_TASKSET, "image_light", send_image, NULL);
-}
-
-static GimpPDBStatusType start_image_light(gint drawable_id)
-{
-	gint channels;
-	GeglRectangle rect;
-	IMAGE *send_image, *recv_image;
-	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
-
-	gimp_progress_init("Light ...");
-	send_image = image_from_drawable(drawable_id, &channels, &rect);
-	if (image_valid(send_image)) {
-		recv_image = light_rpc_service(send_image);
-		if (image_valid(recv_image)) {
-			image_saveto_drawable(recv_image, drawable_id, channels, &rect);
-			image_destroy(recv_image);
-		} else {
-			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Light service not avaible.\n");
-		}
-		image_destroy(send_image);
-	} else {
-		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Light source.\n");
-	}
-
-	return status;
-}
-
-
 static void query(void)
 {
 	static GimpParamDef args[] = {
 		{GIMP_PDB_INT32, "run-mode", "Run mode"},
 		{GIMP_PDB_IMAGE, "image", "Input image"},
-		{GIMP_PDB_DRAWABLE, "drawable", "Input drawable"}
+		{GIMP_PDB_DRAWABLE, "drawable", "Input drawable"},
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   _("Enhance Low Light"),
-						   _("Enhance Low Light"),
+						   _("Zoom 2X"),
+						   _("Zoom 2X"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
-						   "2020-2022",
-						   _("Enhance Low Light"),
+						   "2020-2022", 
+						   _("Zoom 2X"),
 						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Beautify/");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Zoom In/");
+}
+
+static IMAGE *zoom2x_rpc_service(IMAGE * send_image)
+{
+	return normal_service(AI_TASKSET, "image_zoom2x", send_image, NULL);
+}
+
+static GimpPDBStatusType start_image_zoom2x(gint32 drawable_id)
+{
+	IMAGE *send_image, *recv_image;
+	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
+
+	gimp_progress_init("Zoom 2X...");
+	// send_image = image_from_select(drawable_id, x, y, width, height);
+	send_image = image_from_drawable(drawable_id, NULL, NULL);
+
+	if (image_valid(send_image)) {
+		recv_image = zoom2x_rpc_service(send_image);
+		gimp_progress_update(1.0);
+		if (image_valid(recv_image)) {
+			image_saveto_gimp(recv_image, "zoom2x");
+			image_destroy(recv_image);
+		} else {
+			status = GIMP_PDB_EXECUTION_ERROR;
+			g_message("Error: Zoom2x service not available.\n");
+		}
+		image_destroy(send_image);
+	} else {
+		status = GIMP_PDB_EXECUTION_ERROR;
+		g_message("Error: Zoom2x source.\n");
+	}
+
+	return status;				// GIMP_PDB_SUCCESS;
 }
 
 static void
 run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
 {
 	static GimpParam values[1];
-	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	GimpRunMode run_mode;
-	// gint32 image_id;
 	gint32 drawable_id;
+	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
 	// INIT_I18N();
 
@@ -101,17 +100,13 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	}
 
 	run_mode = (GimpRunMode) param[0].data.d_int32;
-	// image_id = param[1].data.d_drawable;
 	drawable_id = param[2].data.d_drawable;
 
 	gegl_init(NULL, NULL);
 
-	status = start_image_light(drawable_id);
+	status = start_image_zoom2x(drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
-
-	// Output result for pdb
-	values[0].data.d_status = status;
 
 	gegl_exit();
 }

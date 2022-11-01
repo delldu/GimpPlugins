@@ -8,10 +8,10 @@
 #
 INSTALL_DIR := $(shell grep -w INSTALL_DIR ../Makefile | cut -d '=' -f 2)
 
-TARGET := gimp_image_zoom
+TARGET := gimp_image_zoom2x
 
 SOURCE :=  \
-	image_zoom.c
+	image_zoom2x.c
 
 INCS	:= -I../lib $(shell gimptool-2.0 --cflags) $(shell nimagetool --cflags)
 LIBS	:= -L../lib -lplugin $(shell gimptool-2.0 --libs) $(shell nimagetool --libs) $(shell redostool --libs)

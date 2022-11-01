@@ -24,7 +24,8 @@ XSUBDIRS :=  \
 	gimp_image_color \
 	gimp_image_light \
 	gimp_image_curve \
-	gimp_image_zoom \
+	gimp_image_zoom2x \
+	gimp_image_zoom4x \
 	gimp_image_matte \
 	gimp_image_segment \
 	gimp_image_shadow \

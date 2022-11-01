@@ -8,7 +8,7 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "gimp_image_zoom"
+#define PLUG_IN_PROC "gimp_image_zoom4x"
 
 static void query(void);
 static void run(const gchar * name,
@@ -30,33 +30,32 @@ static void query(void)
 		{GIMP_PDB_INT32, "run-mode", "Run mode"},
 		{GIMP_PDB_IMAGE, "image", "Input image"},
 		{GIMP_PDB_DRAWABLE, "drawable", "Input drawable"},
-		{GIMP_PDB_INT32, "method", "Zoom in method (1, 2)"},
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   _("4X Beautify Image"),
-						   _("4X Beautify Image"),
+						   _("Zoom 4X"),
+						   _("Zoom 4X"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022", 
-						   _("4X Beautify Image"),
+						   _("Zoom 4X"),
 						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Autops");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Zoom In/");
 }
 
 static IMAGE *zoom_rpc_service(IMAGE * send_image)
 {
-	return normal_service(AI_TASKSET, "image_zoom", send_image, NULL);
+	return normal_service(AI_TASKSET, "image_zoom4x", send_image, NULL);
 }
 
-static GimpPDBStatusType start_image_zoom(gint32 drawable_id)
+static GimpPDBStatusType start_image_zoom4x(gint32 drawable_id)
 {
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-	gimp_progress_init("Zoom ...");
+	gimp_progress_init("Zoom 4X...");
 	// send_image = image_from_select(drawable_id, x, y, width, height);
 	send_image = image_from_drawable(drawable_id, NULL, NULL);
 
@@ -64,16 +63,16 @@ static GimpPDBStatusType start_image_zoom(gint32 drawable_id)
 		recv_image = zoom_rpc_service(send_image);
 		gimp_progress_update(1.0);
 		if (image_valid(recv_image)) {
-			image_saveto_gimp(recv_image, "zoom");
+			image_saveto_gimp(recv_image, "zoom4x");
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Zoom service not available.\n");
+			g_message("Error: Zoom4x service not available.\n");
 		}
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Zoom source.\n");
+		g_message("Error: Zoom4x source.\n");
 	}
 
 	return status;				// GIMP_PDB_SUCCESS;
@@ -105,7 +104,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	gegl_init(NULL, NULL);
 
-	status = start_image_zoom(drawable_id);
+	status = start_image_zoom4x(drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
 
