@@ -49,11 +49,6 @@ static char *tanet_rpc_service(int id, IMAGE * send_image)
 		txt = file_load(output_file, &size);
 	}
 
-	if (getenv("DEBUG") == NULL) {
-		unlink(input_file);
-		unlink(output_file);
-	}	
-
   failure:
 	taskset_destroy(tasks);
 

@@ -52,12 +52,6 @@ static IMAGE *color_rpc_service(int send_id, IMAGE * send_image, int color_id, I
 		recv_image = image_load(output_file);
 	}
 
-	if (getenv("DEBUG") == NULL) {
-		unlink(input_file);
-		unlink(color_file);
-		unlink(output_file);
-	}	
-
 failure:
 	taskset_destroy(tasks);
 

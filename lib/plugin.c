@@ -197,15 +197,7 @@ IMAGE *normal_service(char *taskset_name, char *service_name, int id, IMAGE * se
 		recv_image = image_load(output_file);
 	}
 
-	if (getenv("DEBUG") == NULL) {
-		unlink(input_file);
-		unlink(output_file);
-	} else {
-		syslog_debug("input_file: %s", input_file);
-		syslog_debug("output_file: %s", output_file);
-	}
-
-  failure:
+failure:
 	taskset_destroy(tasks);
 
 	return recv_image;
@@ -499,13 +491,7 @@ IMAGE *style_service(char *taskset_name, char *service_name, int send_id, IMAGE 
 		recv_image = image_load(output_file);
 	}
 
-	if (getenv("DEBUG") == NULL) {
-		unlink(input_file);
-		unlink(style_file);
-		unlink(output_file);
-	}
-
-  failure:
+failure:
 	taskset_destroy(tasks);
 
 	return recv_image;

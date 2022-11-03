@@ -31,10 +31,15 @@ static GimpPDBStatusType start_image_matte(gint drawable_id)
 	recv_image = NULL;
 
 	get_cache_filename("output", drawable_id, ".png", sizeof(output_file), output_file);
+	CheckPoint("drawable_id: %d, output file: %s", drawable_id, output_file);
+
 	// Get result if cache file exists !!!
 	if (file_exist(output_file)) {
+		CheckPoint("%s exist !!!", output_file);
 		recv_image = image_load(output_file);
 	} else {
+		CheckPoint("%s not exist !!!", output_file);
+
 		gimp_progress_init("Matte ...");
 
 		send_image = image_from_drawable(drawable_id, &channels, &rect);
