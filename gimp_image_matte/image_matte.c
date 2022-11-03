@@ -14,9 +14,9 @@ static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-static IMAGE *matte_rpc_service(IMAGE * send_image)
+static IMAGE *matte_rpc_service(int id, IMAGE * send_image)
 {
-	return normal_service(AI_TASKSET, "image_matte", send_image, NULL);
+	return normal_service(AI_TASKSET, "image_matte", id, send_image, NULL);
 }
 
 static GimpPDBStatusType start_image_matte(gint drawable_id)
@@ -25,23 +25,34 @@ static GimpPDBStatusType start_image_matte(gint drawable_id)
 	GeglRectangle rect;
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
+	char output_file[512];
 
-	gimp_progress_init("Matte ...");
+	send_image = NULL;
+	recv_image = NULL;
 
-	send_image = image_from_drawable(drawable_id, &channels, &rect);
-	if (image_valid(send_image)) {
-		recv_image = matte_rpc_service(send_image);
-		if (image_valid(recv_image)) {
-			image_saveto_gimp(recv_image, "matte");
-			image_destroy(recv_image);
+	get_cache_filename("output", drawable_id, ".png", sizeof(output_file), output_file);
+	// Get result if cache file exists !!!
+	if (file_exist(output_file)) {
+		recv_image = image_load(output_file);
+	} else {
+		gimp_progress_init("Matte ...");
+
+		send_image = image_from_drawable(drawable_id, &channels, &rect);
+		if (image_valid(send_image)) {
+			recv_image = matte_rpc_service(drawable_id, send_image);
+			image_destroy(send_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Matte service not avaible.\n");
+			g_message("Error: Matte source.\n");
 		}
-		image_destroy(send_image);
+	}
+
+	if (image_valid(recv_image)) {
+		image_saveto_gimp(recv_image, "matte");
+		image_destroy(recv_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Matte source.\n");
+		g_message("Matte service not avaible.\n");
 	}
 
 	return status;

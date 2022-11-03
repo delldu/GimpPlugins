@@ -8,12 +8,46 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "gimp_image_dehaze"
+#define PLUG_IN_PROC "gimp_image_selection"
 
 
 static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
+
+static int save_selection_result(IMAGE * send_image, IMAGE * recv_image)
+{
+	gint32 image_id;
+	int ret = RET_OK;
+
+	check_image(send_image);
+	check_image(recv_image);
+
+	if (send_image->height != recv_image->height || send_image->width != recv_image->width) {
+		syslog_error("Recv image size does not match send image.");
+		return RET_ERROR;
+	}
+
+	image_id = gimp_image_new(send_image->width, send_image->height, GIMP_RGB);
+	if (image_id < 0) {
+		syslog_error("Call gimp_image_new().");
+		return RET_ERROR;
+	}
+
+	ret = image_saveas_layer(send_image, "sources", image_id);
+	if (ret == RET_OK) {
+		ret = image_saveas_layer(recv_image, "selection", image_id);
+	}
+
+	if (ret == RET_OK) {
+		gimp_display_new(image_id);
+		gimp_displays_flush();
+	} else {
+		syslog_error("Call image_saveas_layer().");
+	}
+
+	return ret;
+}
 
 
 GimpPlugInInfo PLUG_IN_INFO = {
@@ -34,27 +68,25 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   _("Dehaze"),
-						   _("Dehaze"),
+						   _("Select By Object"),
+						   _("Select By Object"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022", 
-						   _("Dehaze"),
+						   _("By Object"),
 						   "RGB*, GRAY*", 
 						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Clean");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Select");
 }
 
-static IMAGE *dehaze_rpc_service(int id, IMAGE * send_image)
+static IMAGE *selection_rpc_service(int id, IMAGE * send_image)
 {
-	return normal_service(AI_TASKSET, "image_dehaze", id, send_image, NULL);
+	return normal_service(AI_TASKSET, "image_selection", id, send_image, NULL);
 }
 
-static GimpPDBStatusType start_image_dehaze(gint32 drawable_id)
+static GimpPDBStatusType start_image_selection(gint32 drawable_id)
 {
-	gint channels;
-	GeglRectangle rect;
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	char output_file[512];
@@ -67,23 +99,24 @@ static GimpPDBStatusType start_image_dehaze(gint32 drawable_id)
 	if (file_exist(output_file)) {
 		recv_image = image_load(output_file);
 	} else {
-		gimp_progress_init("Dehaze ...");
-		send_image = image_from_drawable(drawable_id, &channels, &rect);
+		gimp_progress_init("Select ...");
+		send_image = image_from_drawable(drawable_id, NULL, NULL);
 		if (image_valid(send_image)) {
-			recv_image = dehaze_rpc_service(drawable_id, send_image);
+			recv_image = selection_rpc_service(drawable_id, send_image);
 			gimp_progress_update(1.0);
 			image_destroy(send_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Dehaze source.\n");
+			g_message("Error: Segment source (drawable channel is not 1-4 ?).\n");
 		}
 	}
+
 	if (image_valid(recv_image)) {
-		image_saveto_drawable(recv_image, drawable_id, channels, &rect);
+		save_selection_result(send_image, recv_image);
 		image_destroy(recv_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Dehaze service not available.\n");
+		g_message("Error: Segment service is not available.");
 	}
 
 	return status;				// GIMP_PDB_SUCCESS;
@@ -115,7 +148,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	gegl_init(NULL, NULL);
 
-	status = start_image_dehaze(drawable_id);
+	status = start_image_selection(drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
 

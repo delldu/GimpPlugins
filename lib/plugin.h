@@ -34,7 +34,7 @@ extern "C" {
 
 #define GIMP_PLUGIN_VERSION "1.1.0"
 #define AI_TASKSET "TAI"
-#define AI_WORKSPACE "tmp/"
+
 	int image_saveas_layer(IMAGE * image, char *name_prefix, gint32 image_id);
 	IMAGE *image_from_drawable(gint32 drawable_id, gint *channels, GeglRectangle * rect);
 	int image_saveto_drawable(IMAGE *image, gint32 drawable_id, gint channels, GeglRectangle * rect);
@@ -42,8 +42,14 @@ extern "C" {
 	gint32 get_reference_drawable(gint32 image_id, gint32 drawable_id);
 	IMAGE *get_selection_mask(gint32 image_id);
 
-	IMAGE *normal_service(char *taskset_name, char *service_name, IMAGE * send_image, char *addon);
-	IMAGE *style_service(char *taskset_name, char *service_name, IMAGE *send_image, IMAGE *style_image, char *addon);
+	IMAGE *normal_service(char *taskset_name, char *service_name, int id, IMAGE * send_image, char *addon);
+	IMAGE *style_service(char *taskset_name, char *service_name, int send_id, IMAGE *send_image, 
+		int style_id, IMAGE *style_image, char *addon);
+
+	int get_segment_color(int c);
+	char *get_segment_name(int c);
+	int get_cache_filename(char *prefix, int id, char *postfix, int namesize, char *filename);
+	int get_cache_filename2(char *prefix, int id1, int id2, char *postfix, int namesize, char *filename);
 
 #if defined(__cplusplus)
 }

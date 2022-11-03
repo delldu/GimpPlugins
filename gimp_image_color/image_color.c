@@ -14,26 +14,19 @@ static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-static IMAGE *color_rpc_service(IMAGE * send_image, IMAGE *color_image)
+static IMAGE *color_rpc_service(int send_id, IMAGE * send_image, int color_id, IMAGE *color_image)
 {
 	TASKARG taska;
 	TASKSET *tasks;
 	IMAGE *recv_image = NULL;
 	TIME start_time, wait_time;
-	char input_file[256], color_file[256], output_file[256], command[TASK_BUFFER_LEN], home_workspace[256];
+	char input_file[512], color_file[512], output_file[512], command[TASK_BUFFER_LEN];
 
 	CHECK_IMAGE(send_image);
 
-	snprintf(home_workspace, sizeof(home_workspace), "%s/%s", getenv("HOME"), AI_WORKSPACE);
-	// getenv("HOME") = /home/dell/snap/gimp/380
-
-	make_dir(home_workspace);
-	
-	// get_temp_fname comes from redos.h, prototype is:
-	// int get_temp_fname(char *prefix, char *postfix, char *filename, int size)
-	get_temp_fname(home_workspace, ".png", input_file, sizeof(input_file));
-	get_temp_fname(home_workspace, ".png", color_file, sizeof(color_file));
-	get_temp_fname(home_workspace, ".png", output_file, sizeof(output_file));
+	get_cache_filename("input", send_id, ".png", sizeof(input_file), input_file);
+	get_cache_filename("color", send_id, ".png", sizeof(color_file), color_file);
+	get_cache_filename2("output", send_id, color_id, ".png", sizeof(output_file), output_file);
 
 	image_save(send_image, input_file);
 	image_save(color_image, color_file);
@@ -77,28 +70,35 @@ static GimpPDBStatusType start_image_color(gint drawable_id, gint color_drawable
 	GeglRectangle rect;
 	IMAGE *send_image, *color_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
+	char output_file[512];
 
-	gimp_progress_init("Color ...");
+	send_image = NULL;
+	color_image = NULL;
+	recv_image = NULL;
 
-	send_image = image_from_drawable(drawable_id, &channels, &rect);
-	color_image = image_from_drawable(color_drawable_id, &channels, &rect);
-
-	if (image_valid(send_image) && image_valid(color_image)) {
-		recv_image = color_rpc_service(send_image, color_image);
-		if (image_valid(recv_image)) {
-			// image_saveto_drawable(recv_image, drawable_id, channels, &rect);
-			image_saveto_gimp(recv_image, "color");
-			image_destroy(recv_image);
+	get_cache_filename2("output", drawable_id, color_drawable_id, ".png", sizeof(output_file), output_file);
+	// Get result if cache file exists !!!
+	if (file_exist(output_file)) {
+		recv_image = image_load(output_file);
+	} else {
+		gimp_progress_init("Color ...");
+		send_image = image_from_drawable(drawable_id, &channels, &rect);
+		color_image = image_from_drawable(color_drawable_id, &channels, &rect);
+		if (image_valid(send_image) && image_valid(color_image)) {
+			recv_image = color_rpc_service(drawable_id, send_image, color_drawable_id, color_image);
+			gimp_progress_update(1.0);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Color service not avaible.\n");
+			g_message("Error: Color source.\n");
 		}
-		gimp_progress_update(1.0);
+	}
+	if (image_valid(recv_image)) {
+		image_saveto_gimp(recv_image, "color");
+		image_destroy(recv_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Color source.\n");
+		g_message("Error: Color service not avaible.\n");
 	}
-
 	if (image_valid(send_image))
 		image_destroy(send_image);
 	if (image_valid(color_image))
@@ -106,7 +106,6 @@ static GimpPDBStatusType start_image_color(gint drawable_id, gint color_drawable
 
 	return status;
 }
-
 
 GimpPlugInInfo PLUG_IN_INFO = {
 	NULL,

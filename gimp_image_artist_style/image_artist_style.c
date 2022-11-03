@@ -46,9 +46,9 @@ static void query(void)
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Transform/");
 }
 
-static IMAGE *artist_style_rpc_service(IMAGE * send_image, IMAGE *style_image)
+static IMAGE *artist_style_rpc_service(int send_id, IMAGE * send_image, int style_id, IMAGE *style_image)
 {
-	return style_service(AI_TASKSET, "image_artist_style", send_image, style_image, NULL);
+	return style_service(AI_TASKSET, "image_artist_style", send_id, send_image, style_id, style_image, NULL);
 }
 
 static GimpPDBStatusType start_image_artist_style(gint32 drawable_id, gint32 style_drawable_id)
@@ -57,23 +57,36 @@ static GimpPDBStatusType start_image_artist_style(gint32 drawable_id, gint32 sty
 	GeglRectangle rect;
 	IMAGE *send_image, *style_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
+	char output_file[512];
 
-	gimp_progress_init("Artist style ...");
-	style_image = image_from_drawable(style_drawable_id, &channels, &rect);
-	send_image = image_from_drawable(drawable_id, &channels, &rect);
-	if (image_valid(send_image) && image_valid(style_image)) {
-		recv_image = artist_style_rpc_service(send_image, style_image);
-		gimp_progress_update(1.0);
-		if (image_valid(recv_image)) {
-			image_saveto_gimp(recv_image, "artist_style");
-			image_destroy(recv_image);
+	send_image = NULL;
+	style_image = NULL;
+	recv_image = NULL;
+
+	get_cache_filename2("output", drawable_id, style_drawable_id, ".png", sizeof(output_file), output_file);
+	// get result if cache file exists !!!
+	if (file_exist(output_file)) {
+		recv_image = image_load(output_file);
+	} else {
+		gimp_progress_init("Artist style ...");
+
+		send_image = image_from_drawable(drawable_id, &channels, &rect);
+		style_image = image_from_drawable(style_drawable_id, &channels, &rect);
+
+		if (image_valid(send_image) && image_valid(style_image)) {
+			recv_image = artist_style_rpc_service(drawable_id, send_image, style_drawable_id, style_image);
+			gimp_progress_update(1.0);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Artist style service not available.\n");
+			g_message("Error: Artist style source.\n");
 		}
+	}
+	if (image_valid(recv_image)) {
+		image_saveto_gimp(recv_image, "artist_style");
+		image_destroy(recv_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Artist style source.\n");
+		g_message("Error: Artist style service not available.\n");
 	}
 	if (image_valid(send_image))
 		image_destroy(send_image);

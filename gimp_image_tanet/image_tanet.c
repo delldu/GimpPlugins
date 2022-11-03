@@ -15,28 +15,18 @@ static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
 
-static char *tanet_rpc_service(IMAGE * send_image)
+static char *tanet_rpc_service(int id, IMAGE * send_image)
 {
 	int size;
 	TASKARG taska;
 	TASKSET *tasks;
 	TIME start_time, wait_time;
-	char input_file[256], output_file[256], command[TASK_BUFFER_LEN], home_workspace[256], *txt;
+	char input_file[512], output_file[512], command[TASK_BUFFER_LEN], *txt = NULL;
 
 	CHECK_IMAGE(send_image);
 
-	txt = NULL;
-
-	snprintf(home_workspace, sizeof(home_workspace), "%s/%s", getenv("HOME"), AI_WORKSPACE);
-	// getenv("HOME") = /home/dell/snap/gimp/380
-
-	make_dir(home_workspace);
-
-	// get_temp_fname comes from redos.h, prototype is:
-	// int get_temp_fname(char *prefix, char *postfix, char *filename, int size)
-	get_temp_fname(home_workspace, ".png", input_file, sizeof(input_file));
-	get_temp_fname(home_workspace, ".txt", output_file, sizeof(output_file));
-
+	get_cache_filename("input", id, ".png", sizeof(input_file), input_file);
+	get_cache_filename("output", id, ".txt", sizeof(output_file), output_file);
 	image_save(send_image, input_file);
 
 	snprintf(command, sizeof(command), "image_tanet(input_file=%s,output_file=%s)", input_file, output_file);
@@ -72,29 +62,39 @@ static char *tanet_rpc_service(IMAGE * send_image)
 
 static GimpPDBStatusType start_image_tanet(gint32 drawable_id)
 {
+	int size;
 	IMAGE *send_image;
-	char *recv_text = NULL;
+	char *recv_text;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
+	char output_file[512];
 
-	gimp_progress_init("Assessment ...");
+	send_image = NULL;
+	recv_text = NULL;
 
-	// send_image = image_from_select(drawable_id, x, y, width, height);
-	send_image = image_from_drawable(drawable_id, NULL, NULL);
+	get_cache_filename("output", drawable_id, ".png", sizeof(output_file), output_file);
+	// Get result if cache file exists !!!
+	if (file_exist(output_file)) {
+		recv_text = file_load(output_file, &size);
+	} else {
+		gimp_progress_init("Assessment ...");
 
-	if (image_valid(send_image)) {
-		recv_text = tanet_rpc_service(send_image);
-		if (recv_text != NULL) {
-			g_message("Aesthetic Score: %s\n", recv_text);
-			free(recv_text);
-			gimp_progress_update(1.0);
+		// send_image = image_from_select(drawable_id, x, y, width, height);
+		send_image = image_from_drawable(drawable_id, NULL, NULL);
+		if (image_valid(send_image)) {
+			recv_text = tanet_rpc_service(drawable_id, send_image);
+			image_destroy(send_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Aesthetics assessment service not avaible.\n");
+			g_message("Error: Aesthetics source.\n");
 		}
-		image_destroy(send_image);
+	}
+	if (recv_text != NULL) {
+		g_message("Aesthetic Score: %s\n", recv_text);
+		free(recv_text);
+		gimp_progress_update(1.0);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Aesthetics source.\n");
+		g_message("Aesthetics assessment service not avaible.\n");
 	}
 
 	return status;

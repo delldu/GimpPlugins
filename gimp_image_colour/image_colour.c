@@ -24,9 +24,9 @@ static int is_full_selection(IMAGE *mask)
 	return 1;
 }
 
-static IMAGE *colour_rpc_service(IMAGE * send_image)
+static IMAGE *colour_rpc_service(int id, IMAGE * send_image)
 {
-	return normal_service(AI_TASKSET, "image_colour", send_image, NULL);
+	return normal_service(AI_TASKSET, "image_colour", id, send_image, NULL);
 }
 
 static GimpPDBStatusType start_image_colour(gint image_id, gint drawable_id)
@@ -52,7 +52,7 @@ static GimpPDBStatusType start_image_colour(gint image_id, gint drawable_id)
 				send_image->ie[i][j].a = 0;
 		}
 
-		recv_image = colour_rpc_service(send_image);
+		recv_image = colour_rpc_service(drawable_id, send_image);
 		if (image_valid(recv_image)) {
 			// image_saveto_drawable(recv_image, drawable_id, channels, &rect);
 			image_saveto_gimp(recv_image, "Colour");
