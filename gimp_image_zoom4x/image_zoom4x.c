@@ -62,17 +62,19 @@ static GimpPDBStatusType start_image_zoom4x(gint32 drawable_id)
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Zoom4x source.\n");
+		g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
 	}
 	gimp_progress_update(1.0);
 
-
+	if (status != GIMP_PDB_SUCCESS)
+		return status;
+	
 	if (image_valid(recv_image)) {
 		image_saveto_gimp(recv_image, "zoom4x");
 		image_destroy(recv_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Zoom4x service not available.\n");
+		g_message("Zoom4x service not available.\n");
 	}
 
 	return status;				// GIMP_PDB_SUCCESS;
@@ -83,6 +85,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 {
 	static GimpParam values[1];
 	GimpRunMode run_mode;
+	// gint32 image_id;
 	gint32 drawable_id;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
@@ -100,9 +103,11 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	}
 
 	run_mode = (GimpRunMode) param[0].data.d_int32;
+	// image_id = param[1].data.d_image;
 	drawable_id = param[2].data.d_drawable;
 
 	image_ai_cache_init();
+	// gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
 	status = start_image_zoom4x(drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)

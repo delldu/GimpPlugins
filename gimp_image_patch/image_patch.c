@@ -44,10 +44,13 @@ static GimpPDBStatusType start_image_patch(gint drawable_id)
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Patch source.\n");
+		g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
 	}
 	gimp_progress_update(1.0);
 
+	if (status != GIMP_PDB_SUCCESS)
+		return status;
+	
 	if (image_valid(recv_image)) {
 		// image_saveto_gimp(recv_image, "patch");
 		image_saveto_drawable(recv_image, drawable_id, channels, &rect);
@@ -122,6 +125,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		gimp_layer_add_alpha(drawable_id);
 
 	image_ai_cache_init();
+	// gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
 	status = start_image_patch(drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)

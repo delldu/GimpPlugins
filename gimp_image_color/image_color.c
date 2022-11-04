@@ -78,15 +78,19 @@ static GimpPDBStatusType start_image_color(gint drawable_id, gint color_drawable
 		recv_image = color_rpc_service(drawable_id, send_image, color_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Color source.\n");
+		g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
 	}
 	gimp_progress_update(1.0);
+
+	if (status != GIMP_PDB_SUCCESS)
+		return status;
+
 	if (image_valid(recv_image)) {
 		image_saveto_gimp(recv_image, "color");
 		image_destroy(recv_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Color service not avaible.\n");
+		g_message("Color service not avaible.\n");
 	}
 	if (image_valid(send_image))
 		image_destroy(send_image);
@@ -152,6 +156,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	drawable_id = param[2].data.d_drawable;
 
 	image_ai_cache_init();
+	// gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
 	if (gimp_image_base_type(image_id) != GIMP_RGB)
 		gimp_image_convert_rgb(image_id);
@@ -161,7 +166,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	color_drawable_id = get_reference_drawable(image_id, drawable_id);
 	if (color_drawable_id < 0) {
-		g_message("Reference Color Image NOT Found ! Please use menu 'File->Open as layers...' to one.\n");
+		g_message("No reference color image, use menu 'File->Open as layers...' to one.\n");
 		return;
 	}
 

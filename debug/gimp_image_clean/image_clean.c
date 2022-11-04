@@ -52,7 +52,7 @@ static GimpPDBStatusType start_image_clean(gint drawable_id)
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Clean source(drawable channel is not 1-4 ?).\n");
+		g_message("Source error.\n");
 	}
 	gimp_progress_update(1.0);
 

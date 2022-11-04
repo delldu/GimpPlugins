@@ -64,16 +64,19 @@ static GimpPDBStatusType start_image_photo_style(gint32 drawable_id, gint32 styl
 		recv_image = photo_style_rpc_service(drawable_id, send_image, style_drawable_id, style_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Photo style source.\n");
+		g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
 	}
 	gimp_progress_update(1.0);
 
+	if (status != GIMP_PDB_SUCCESS)
+		return status;
+	
 	if (image_valid(recv_image)) {
 		image_saveto_gimp(recv_image, "photo_style");
 		image_destroy(recv_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Photo style service not available.\n");
+		g_message("Photo style service not available.\n");
 	}
 
 	if (image_valid(send_image))
@@ -112,11 +115,12 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	style_drawable_id = get_reference_drawable(image_id, drawable_id);
 	if (style_drawable_id < 0) {
-		g_message("Style Image NOT Found ! Please use menu 'File->Open as layers...' to add one.\n");
+		g_message("No style image, use menu 'File->Open as layers...' to add one.\n");
 		return;
 	}
 
 	image_ai_cache_init();
+	// gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
 	status = start_image_photo_style(drawable_id, style_drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)

@@ -71,9 +71,12 @@ static GimpPDBStatusType start_image_tanet(gint32 drawable_id)
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Aesthetics source.\n");
+		g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
 	}
 	gimp_progress_update(1.0);
+
+	if (status != GIMP_PDB_SUCCESS)
+		return status;
 
 	if (recv_text != NULL) {
 		g_message("Aesthetic Score: %s\n", recv_text);
@@ -121,6 +124,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	static GimpParam values[1];
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	GimpRunMode run_mode;
+	// gint32 image_id;
 	gint32 drawable_id;
 
 	// INIT_I18N();
@@ -137,9 +141,11 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	}
 
 	run_mode = (GimpRunMode) param[0].data.d_int32;
+	// image_id = param[1].data.d_image;
 	drawable_id = param[2].data.d_drawable;
 
 	image_ai_cache_init();
+	// gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
 	status = start_image_tanet(drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)

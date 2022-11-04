@@ -57,12 +57,12 @@ static GimpPDBStatusType start_image_colour(gint image_id, gint drawable_id)
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Colour service is avaible.\n");
+			g_message("Colour service is avaible.\n");
 		}
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Error: Colour source.\n");
+		g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
 	}
 	gimp_progress_update(1.0);
 
@@ -135,6 +135,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		gimp_layer_add_alpha(drawable_id);
 
 	image_ai_cache_init();
+	// gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
 	status = start_image_colour(image_id, drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
