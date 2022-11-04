@@ -26,37 +26,27 @@ static GimpPDBStatusType start_image_patch(gint drawable_id)
 	GeglRectangle rect;
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
-	char output_file[512];
 
-	send_image = NULL;
+	gimp_progress_init("Patch ...");
 	recv_image = NULL;
-
-	get_cache_filename("output", drawable_id, ".png", sizeof(output_file), output_file);
-	// Get result if cache file exists !!!
-	if (file_exist(output_file)) {
-		recv_image = image_load(output_file);
-	} else {
-		gimp_progress_init("Patch ...");
-
-		send_image = image_from_drawable(drawable_id, &channels, &rect);
-
-		// make sure image is not leak masked infomation
-		image_foreach(send_image, i, j) {
-			if (send_image->ie[i][j].a < 230) {
-				send_image->ie[i][j].r = send_image->ie[i][j].g = send_image->ie[i][j].b = 0;
-				send_image->ie[i][j].a = 0;
-			} else {
-				send_image->ie[i][j].a = 255;
-			}
-		}
-		if (image_valid(send_image)) {
-			recv_image = patch_rpc_service(drawable_id, send_image);
-			image_destroy(send_image);
+	send_image = image_from_drawable(drawable_id, &channels, &rect);
+	// make sure image is not leak masked infomation
+	image_foreach(send_image, i, j) {
+		if (send_image->ie[i][j].a < 230) {
+			send_image->ie[i][j].r = send_image->ie[i][j].g = send_image->ie[i][j].b = 0;
+			send_image->ie[i][j].a = 0;
 		} else {
-			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Patch source.\n");
+			send_image->ie[i][j].a = 255;
 		}
 	}
+	if (image_valid(send_image)) {
+		recv_image = patch_rpc_service(drawable_id, send_image);
+		image_destroy(send_image);
+	} else {
+		status = GIMP_PDB_EXECUTION_ERROR;
+		g_message("Error: Patch source.\n");
+	}
+	gimp_progress_update(1.0);
 
 	if (image_valid(recv_image)) {
 		// image_saveto_gimp(recv_image, "patch");
@@ -134,7 +124,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	if (! gimp_drawable_has_alpha(drawable_id))
 		gimp_layer_add_alpha(drawable_id);
 
-	gegl_init(NULL, NULL);
+	image_ai_cache_init();
 
 	status = start_image_patch(drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
@@ -143,5 +133,5 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	// Output result for pdb
 	values[0].data.d_status = status;
 
-	gegl_exit();
+	image_ai_cache_exit();
 }

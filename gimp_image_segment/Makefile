@@ -8,14 +8,10 @@
 #
 INSTALL_DIR := $(shell grep -w INSTALL_DIR ../Makefile | cut -d '=' -f 2)
 
-TARGET1 := gimp_image_segment
-TARGET2 := gimp_image_selection
+TARGET := gimp_image_segment
 
-SOURCE1 :=  \
+SOURCE :=  \
 	image_segment.c
-
-SOURCE2 :=  \
-	image_selection.c
 
 INCS	:= -I../lib $(shell gimptool-2.0 --cflags) $(shell nimagetool --cflags)
 LIBS	:= -L../lib -lplugin $(shell gimptool-2.0 --libs) $(shell nimagetool --libs) $(shell redostool --libs)
@@ -31,24 +27,19 @@ LDFLAGS := -fPIC
 CFLAGS   := ${CFLAGS} ${DEFINES}
 CXXFLAGS := ${CXXFLAGS} ${DEFINES}
 
-OBJECT1 := $(addsuffix .o,$(basename ${SOURCE1}))
-OBJECT2 := $(addsuffix .o,$(basename ${SOURCE2}))
+OBJECT := $(addsuffix .o,$(basename ${SOURCE}))
 
 #****************************************************************************
 # Compile block
 #****************************************************************************
-all: ${TARGET1} ${TARGET2}
+all: ${TARGET}
 
-${TARGET1}: ${OBJECT1}
-	${CC} ${LDFLAGS} -o ${TARGET1} ${OBJECT1} ${LIBS}
-
-${TARGET2}: ${OBJECT2}
-	${CC} ${LDFLAGS} -o ${TARGET2} ${OBJECT2} ${LIBS}
+${TARGET}: ${OBJECT}
+	${CC} ${LDFLAGS} -o ${TARGET} ${OBJECT} ${LIBS}
 
 
-install: ${TARGET1} ${TARGET2}
-	install -m 755 ${TARGET1} ${INSTALL_DIR}
-	install -m 755 ${TARGET2} ${INSTALL_DIR}
+install: ${TARGET}
+	install -m 755 ${TARGET} ${INSTALL_DIR}
 
 #****************************************************************************
 # common rules
@@ -65,8 +56,7 @@ install: ${TARGET1} ${TARGET2}
 depend:
 
 clean:
-	rm -rf ${OBJECT1} ${TARGET1} ${OBJECT2} ${TARGET2}
+	rm -rf ${OBJECT} ${TARGET}
 
 uninstall:
-	rm -rf ${INSTALL_DIR}/${TARGET1}
-	rm -rf ${INSTALL_DIR}/${TARGET2}
+	rm -rf ${INSTALL_DIR}/${TARGET}

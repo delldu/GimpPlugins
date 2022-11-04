@@ -54,6 +54,7 @@ static GimpPDBStatusType start_image_clean(gint drawable_id)
 		status = GIMP_PDB_EXECUTION_ERROR;
 		g_message("Error: Clean source(drawable channel is not 1-4 ?).\n");
 	}
+	gimp_progress_update(1.0);
 
 	return status;
 }
@@ -135,7 +136,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		break;
 	}
 
-	gegl_init(NULL, NULL);
+	image_ai_cache_init();
 
 	status = start_image_clean(drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
@@ -149,5 +150,5 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	values[0].data.d_status = status;
 
 	// free resources used by gegl
-	gegl_exit();
+	image_ai_cache_exit();
 }

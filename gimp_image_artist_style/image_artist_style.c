@@ -57,29 +57,19 @@ static GimpPDBStatusType start_image_artist_style(gint32 drawable_id, gint32 sty
 	GeglRectangle rect;
 	IMAGE *send_image, *style_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
-	char output_file[512];
 
-	send_image = NULL;
-	style_image = NULL;
+	gimp_progress_init("Artist style ...");
 	recv_image = NULL;
-
-	get_cache_filename2("output", drawable_id, style_drawable_id, ".png", sizeof(output_file), output_file);
-	// get result if cache file exists !!!
-	if (file_exist(output_file)) {
-		recv_image = image_load(output_file);
+	style_image = image_from_drawable(style_drawable_id, &channels, &rect);
+	send_image = image_from_drawable(drawable_id, &channels, &rect);
+	if (image_valid(send_image) && image_valid(style_image)) {
+		recv_image = artist_style_rpc_service(drawable_id, send_image, style_drawable_id, style_image);
 	} else {
-		gimp_progress_init("Artist style ...");
-
-		style_image = image_from_drawable(style_drawable_id, &channels, &rect);
-		send_image = image_from_drawable(drawable_id, &channels, &rect);
-		if (image_valid(send_image) && image_valid(style_image)) {
-			recv_image = artist_style_rpc_service(drawable_id, send_image, style_drawable_id, style_image);
-			gimp_progress_update(1.0);
-		} else {
-			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Artist style source.\n");
-		}
+		status = GIMP_PDB_EXECUTION_ERROR;
+		g_message("Error: Artist style source.\n");
 	}
+	gimp_progress_update(1.0);
+
 	if (image_valid(recv_image)) {
 		image_saveto_gimp(recv_image, "artist_style");
 		image_destroy(recv_image);
@@ -121,17 +111,17 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	image_id = param[1].data.d_image;
 	drawable_id = param[2].data.d_drawable;
 
+	image_ai_cache_init();
+
 	style_drawable_id = get_reference_drawable(image_id, drawable_id);
 	if (style_drawable_id < 0) {
 		g_message("Style Image NOT Found ! Please use menu 'File->Open as layers...' to add one.\n");
 		return;
 	}
 
-	gegl_init(NULL, NULL);
-
 	status = start_image_artist_style(drawable_id, style_drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
 
-	gegl_exit();
+	image_ai_cache_exit();
 }

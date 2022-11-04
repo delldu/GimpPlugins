@@ -57,29 +57,18 @@ static GimpPDBStatusType start_image_photo_style(gint32 drawable_id, gint32 styl
 	GeglRectangle rect;
 	IMAGE *send_image, *style_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
-	char output_file[512];
 
-	send_image = NULL;
-	style_image = NULL;
+	gimp_progress_init("Photo style ...");
 	recv_image = NULL;
-
-	get_cache_filename2("output", drawable_id, style_drawable_id, ".png", sizeof(output_file), output_file);
-	// get result if cache file exists !!!
-	if (file_exist(output_file)) {
-		recv_image = image_load(output_file);
+	style_image = image_from_drawable(style_drawable_id, &channels, &rect);
+	send_image = image_from_drawable(drawable_id, &channels, &rect);
+	if (image_valid(send_image) && image_valid(style_image)) {
+		recv_image = photo_style_rpc_service(drawable_id, send_image, style_drawable_id, style_image);
 	} else {
-		gimp_progress_init("Photo style ...");
-
-		style_image = image_from_drawable(style_drawable_id, &channels, &rect);
-		send_image = image_from_drawable(drawable_id, &channels, &rect);
-		if (image_valid(send_image) && image_valid(style_image)) {
-			recv_image = photo_style_rpc_service(drawable_id, send_image, style_drawable_id, style_image);
-			gimp_progress_update(1.0);
-		} else {
-			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Photo style source.\n");
-		}
+		status = GIMP_PDB_EXECUTION_ERROR;
+		g_message("Error: Photo style source.\n");
 	}
+	gimp_progress_update(1.0);
 
 	if (image_valid(recv_image)) {
 		image_saveto_gimp(recv_image, "photo_style");
@@ -129,11 +118,11 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		return;
 	}
 
-	gegl_init(NULL, NULL);
+	image_ai_cache_init();
 
 	status = start_image_photo_style(drawable_id, style_drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
 
-	gegl_exit();
+	image_ai_cache_exit();
 }

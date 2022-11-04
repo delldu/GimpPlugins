@@ -14,7 +14,7 @@ static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-static IMAGE *color_rpc_service(int send_id, IMAGE * send_image, int color_id, IMAGE *color_image)
+static IMAGE *color_rpc_service(int send_id, IMAGE * send_image, IMAGE *color_image)
 {
 	TASKARG taska;
 	TASKSET *tasks;
@@ -24,9 +24,9 @@ static IMAGE *color_rpc_service(int send_id, IMAGE * send_image, int color_id, I
 
 	CHECK_IMAGE(send_image);
 
-	get_cache_filename("input", send_id, ".png", sizeof(input_file), input_file);
-	get_cache_filename("color", send_id, ".png", sizeof(color_file), color_file);
-	get_cache_filename2("output", send_id, color_id, ".png", sizeof(output_file), output_file);
+	image_ai_cache_filename("input", send_id, ".png", sizeof(input_file), input_file);
+	image_ai_cache_filename("color", send_id, ".png", sizeof(color_file), color_file);
+	image_ai_cache_filename("output", send_id, ".png", sizeof(output_file), output_file);
 
 	image_save(send_image, input_file);
 	image_save(color_image, color_file);
@@ -51,6 +51,11 @@ static IMAGE *color_rpc_service(int send_id, IMAGE * send_image, int color_id, I
 	if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
 		recv_image = image_load(output_file);
 	}
+	if (getenv("DEBUG") == NULL) { // NOT denug Mode
+		unlink(input_file);
+		unlink(color_file);
+		unlink(output_file);
+	}
 
 failure:
 	taskset_destroy(tasks);
@@ -64,28 +69,18 @@ static GimpPDBStatusType start_image_color(gint drawable_id, gint color_drawable
 	GeglRectangle rect;
 	IMAGE *send_image, *color_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
-	char output_file[512];
 
-	send_image = NULL;
-	color_image = NULL;
+	gimp_progress_init("Color ...");
 	recv_image = NULL;
-
-	get_cache_filename2("output", drawable_id, color_drawable_id, ".png", sizeof(output_file), output_file);
-	// Get result if cache file exists !!!
-	if (file_exist(output_file)) {
-		recv_image = image_load(output_file);
+	color_image = image_from_drawable(color_drawable_id, &channels, &rect);
+	send_image = image_from_drawable(drawable_id, &channels, &rect);
+	if (image_valid(send_image) && image_valid(color_image)) {
+		recv_image = color_rpc_service(drawable_id, send_image, color_image);
 	} else {
-		gimp_progress_init("Color ...");
-		color_image = image_from_drawable(color_drawable_id, &channels, &rect);
-		send_image = image_from_drawable(drawable_id, &channels, &rect);
-		if (image_valid(send_image) && image_valid(color_image)) {
-			recv_image = color_rpc_service(drawable_id, send_image, color_drawable_id, color_image);
-			gimp_progress_update(1.0);
-		} else {
-			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Color source.\n");
-		}
+		status = GIMP_PDB_EXECUTION_ERROR;
+		g_message("Error: Color source.\n");
 	}
+	gimp_progress_update(1.0);
 	if (image_valid(recv_image)) {
 		image_saveto_gimp(recv_image, "color");
 		image_destroy(recv_image);
@@ -158,19 +153,19 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	image_id = param[1].data.d_image;
 	drawable_id = param[2].data.d_drawable;
 
+	image_ai_cache_init();
+
 	if (gimp_image_base_type (image_id) != GIMP_RGB)
 		gimp_image_convert_rgb (image_id);
 
-	if (! gimp_drawable_has_alpha(drawable_id))
-		gimp_layer_add_alpha(drawable_id);
+	// if (! gimp_drawable_has_alpha(drawable_id))
+	// 	gimp_layer_add_alpha(drawable_id);
 
 	color_drawable_id = get_reference_drawable(image_id, drawable_id);
 	if (color_drawable_id < 0) {
 		g_message("Reference Color Image NOT Found ! Please use menu 'File->Open as layers...' to one.\n");
 		return;
 	}
-
-	gegl_init(NULL, NULL);
 
 	status = start_image_color(drawable_id, color_drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
@@ -180,5 +175,5 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	values[0].data.d_status = status;
 
 
-	gegl_exit();
+	image_ai_cache_exit();
 }

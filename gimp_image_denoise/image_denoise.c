@@ -57,27 +57,19 @@ static GimpPDBStatusType start_image_denoise(gint32 drawable_id)
 	GeglRectangle rect;
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
-	char output_file[512];
 
-	send_image = NULL;
+	gimp_progress_init("Denoise ...");
 	recv_image = NULL;
-
-	get_cache_filename("output", drawable_id, ".png", sizeof(output_file), output_file);
-	// Get result if cache file exists !!!
-	if (file_exist(output_file)) {
-		recv_image = image_load(output_file);
+	send_image = image_from_drawable(drawable_id, &channels, &rect);
+	if (image_valid(send_image)) {
+		recv_image = denoise_rpc_service(drawable_id, send_image);
+		image_destroy(send_image);
 	} else {
-		gimp_progress_init("Denoise ...");
-		send_image = image_from_drawable(drawable_id, &channels, &rect);
-		if (image_valid(send_image)) {
-			recv_image = denoise_rpc_service(drawable_id, send_image);
-			gimp_progress_update(1.0);
-			image_destroy(send_image);
-		} else {
-			status = GIMP_PDB_EXECUTION_ERROR;
-			g_message("Error: Denoise source (drawable channel is not 1-4 ?).\n");
-		}
+		status = GIMP_PDB_EXECUTION_ERROR;
+		g_message("Error: Denoise source (drawable channel is not 1-4 ?).\n");
 	}
+	gimp_progress_update(1.0);
+
 	if (image_valid(recv_image)) {
 		image_saveto_drawable(recv_image, drawable_id, channels, &rect);
 		image_destroy(recv_image);
@@ -113,11 +105,11 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	run_mode = (GimpRunMode) param[0].data.d_int32;
 	drawable_id = param[2].data.d_drawable;
 
-	gegl_init(NULL, NULL);
+	image_ai_cache_init();
 
 	status = start_image_denoise(drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
 
-	gegl_exit();
+	image_ai_cache_exit();
 }

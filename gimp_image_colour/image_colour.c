@@ -38,7 +38,7 @@ static GimpPDBStatusType start_image_colour(gint image_id, gint drawable_id)
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
 	gimp_progress_init("Colour ...");
-
+	recv_image = NULL;
 	mask = get_selection_mask(image_id);
 	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
@@ -61,11 +61,11 @@ static GimpPDBStatusType start_image_colour(gint image_id, gint drawable_id)
 			g_message("Error: Colour service is avaible.\n");
 		}
 		image_destroy(send_image);
-		gimp_progress_update(1.0);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
 		g_message("Error: Colour source.\n");
 	}
+	gimp_progress_update(1.0);
 
 	if (mask)
 		image_destroy(mask);
@@ -131,14 +131,13 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	image_id = param[1].data.d_image;
 	drawable_id = param[2].data.d_drawable;
 
-
 	if (gimp_image_base_type (image_id) != GIMP_RGB)
 		gimp_image_convert_rgb (image_id);
 
 	if (! gimp_drawable_has_alpha(drawable_id))
 		gimp_layer_add_alpha(drawable_id);
 
-	gegl_init(NULL, NULL);
+	image_ai_cache_init();
 
 	status = start_image_colour(image_id, drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
@@ -147,5 +146,5 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	// Output result for pdb
 	values[0].data.d_status = status;
 
-	gegl_exit();
+	image_ai_cache_exit();
 }
