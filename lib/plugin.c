@@ -155,35 +155,34 @@ IMAGE *normal_service(char *service_name, int id, IMAGE * send_image, char *addo
 		recv_image = image_load(output_file);
 	}
 
-	if (getenv("DEBUG") == NULL) { // NOT denug Mode
+	if (getenv("DEBUG") == NULL) {	// NOT denug Mode
 		unlink(input_file);
 		unlink(output_file);
 	}
 
-failure:
+  failure:
 	taskset_destroy(tasks);
 
 	return recv_image;
 }
 
 
-IMAGE *image_from_drawable(gint32 drawable_id, gint *channels, GeglRectangle * rect)
+IMAGE *image_from_drawable(gint32 drawable_id, gint * channels, GeglRectangle * rect)
 {
 	guchar *rawdata;
 	const Babl *format;
 	GeglBuffer *buffer;
 	IMAGE *image;
 
-	if (! gimp_drawable_mask_intersect(drawable_id, &(rect->x), &(rect->y), &(rect->width), &(rect->height))) {
+	if (!gimp_drawable_mask_intersect(drawable_id, &(rect->x), &(rect->y), &(rect->width), &(rect->height))) {
 		syslog_error("Call gimp_drawable_mask_intersect()");
 		return NULL;
 	}
 	CheckPoint("Drawable mask: x=%d, y=%d, width=%d, height=%d", rect->x, rect->y, rect->width, rect->height);
-	if (rect->width * rect->height < 256) { // 16 * 16
+	if (rect->width * rect->height < 256) {	// 16 * 16
 		syslog_error("Drawable mask size is too small.");
 		return NULL;
 	}
-
 	// Gegl buffer & shadow buffer for reading/writing
 	buffer = gimp_drawable_get_buffer(drawable_id);
 	format = gimp_drawable_get_format(drawable_id);
@@ -255,7 +254,7 @@ int image_saveto_drawable(IMAGE * image, gint32 drawable_id, gint channels, Gegl
 }
 
 
-static int image_saveto_region(IMAGE * image, gint32 drawable_id, GeglRectangle *rect)
+static int image_saveto_region(IMAGE * image, gint32 drawable_id, GeglRectangle * rect)
 {
 	int ret;
 	gint channels;
@@ -267,7 +266,7 @@ static int image_saveto_region(IMAGE * image, gint32 drawable_id, GeglRectangle 
 
 	channels = gimp_drawable_bpp(drawable_id);
 	rgn_data = g_new(guchar, rect->height * rect->width * channels);
-	if (! rgn_data) {
+	if (!rgn_data) {
 		syslog_error("Memory allocate (%d bytes).", rect->height * rect->width * channels);
 		return RET_ERROR;
 	}
@@ -324,7 +323,7 @@ int image_saveas_layer(IMAGE * image, char *name_prefix, gint32 image_id)
 		rect.height = image->height;
 		rect.width = image->width;
 		ret = image_saveto_region(image, layer_id, &rect);
-		if (! gimp_image_insert_layer(image_id, layer_id, 0, 0)) {
+		if (!gimp_image_insert_layer(image_id, layer_id, 0, 0)) {
 			syslog_error("Call gimp_image_insert_layer().");
 			ret = RET_ERROR;
 		}
@@ -389,11 +388,11 @@ IMAGE *get_selection_mask(gint32 image_id)
 
 	// rawdata = g_new(guchar, rect->width * rect->height * temp_channels);
 	// if (rawdata == NULL) {
-	// 	syslog_error("Allocate memory for rawdata.");
-	// 	return NULL;
+	//  syslog_error("Allocate memory for rawdata.");
+	//  return NULL;
 	// }
 	// gegl_buffer_get(select_buffer, GEGL_RECTANGLE(rect->x, rect->y, rect->width, rect->height),
-	// 				1.0, format, rawdata, GEGL_AUTO_ROWSTRIDE, GEGL_ABYSS_NONE);
+	//              1.0, format, rawdata, GEGL_AUTO_ROWSTRIDE, GEGL_ABYSS_NONE);
 
 	// // Transform rawdata
 	// image = image_from_rawdata(temp_channels, rect->height, rect->width, rawdata);
@@ -407,7 +406,7 @@ IMAGE *get_selection_mask(gint32 image_id)
 	// return image;
 }
 
-IMAGE *style_service(char *service_name, int send_id, IMAGE *send_image, int style_id, IMAGE *style_image)
+IMAGE *style_service(char *service_name, int send_id, IMAGE * send_image, int style_id, IMAGE * style_image)
 {
 	TASKARG taska;
 	TASKSET *tasks;
@@ -425,7 +424,7 @@ IMAGE *style_service(char *service_name, int send_id, IMAGE *send_image, int sty
 	image_save(style_image, style_file);
 
 	snprintf(command, sizeof(command), "%s(input_file=%s,style_file=%s,output_file=%s)",
-			service_name, input_file, style_file, output_file);
+			 service_name, input_file, style_file, output_file);
 
 	tasks = taskset_create(AI_TASKSET);
 	if (set_queue_task(tasks, command, &taska) != RET_OK)
@@ -444,13 +443,13 @@ IMAGE *style_service(char *service_name, int send_id, IMAGE *send_image, int sty
 	if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
 		recv_image = image_load(output_file);
 	}
-	if (getenv("DEBUG") == NULL) { // NOT denug Mode
+	if (getenv("DEBUG") == NULL) {	// NOT denug Mode
 		unlink(input_file);
 		unlink(style_file);
 		unlink(output_file);
 	}
 
-failure:
+  failure:
 	taskset_destroy(tasks);
 
 	return recv_image;
@@ -468,7 +467,7 @@ int image_ai_cache_init()
 
 	gegl_init(NULL, NULL);
 
-	return (ret > 0)? RET_OK : RET_ERROR;
+	return (ret > 0) ? RET_OK : RET_ERROR;
 }
 
 int image_ai_cache_filename(char *prefix, gint32 drawable_id, char *postfix, int namesize, char *filename)
@@ -476,7 +475,7 @@ int image_ai_cache_filename(char *prefix, gint32 drawable_id, char *postfix, int
 	int ret;
 	ret = snprintf(filename, namesize - 1, "%s/%s/%s_%d%s", getenv("HOME"), CACHE_PATH, prefix, drawable_id, postfix);
 
-	return (ret > 0)?RET_OK : RET_ERROR;
+	return (ret > 0) ? RET_OK : RET_ERROR;
 }
 
 void image_ai_cache_exit()

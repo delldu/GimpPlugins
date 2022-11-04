@@ -83,10 +83,7 @@ static void query(void)
 						   _("Patch"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
-						   "2020-2022",
-						   _("Patch"),
-						   "RGB*, GRAY*", 
-						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2022", _("Patch"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/");
 }
@@ -117,11 +114,11 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	image_id = param[1].data.d_image;
 	drawable_id = param[2].data.d_drawable;
 
-	if (gimp_image_base_type (image_id) != GIMP_RGB)
-		gimp_image_convert_rgb (image_id);
+	if (gimp_image_base_type(image_id) != GIMP_RGB)
+		gimp_image_convert_rgb(image_id);
 
 	// Add alpha channel !!!
-	if (! gimp_drawable_has_alpha(drawable_id))
+	if (!gimp_drawable_has_alpha(drawable_id))
 		gimp_layer_add_alpha(drawable_id);
 
 	image_ai_cache_init();

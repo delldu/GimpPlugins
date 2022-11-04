@@ -58,7 +58,7 @@ static char *tanet_rpc_service(int id, IMAGE * send_image)
 static GimpPDBStatusType start_image_tanet(gint32 drawable_id)
 {
 	gint channels;
-	GeglRectangle rect;	
+	GeglRectangle rect;
 	IMAGE *send_image;
 	char *recv_text;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
@@ -110,10 +110,7 @@ static void query(void)
 						   _("Aesthetics Assess"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
-						   "2020-2022", 
-						   _("AA"),
-						   "RGB*, GRAY*",
-						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2022", _("AA"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/");
 }

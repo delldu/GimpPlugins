@@ -38,10 +38,7 @@ static void query(void)
 						   _("Derain"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
-						   "2020-2022", 
-						   _("Derain"),
-						   "RGB*, GRAY*", 
-						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2022", _("Derain"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Clean");
 }

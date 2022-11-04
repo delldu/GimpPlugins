@@ -39,9 +39,7 @@ static void query(void)
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022",
-						   _("Face Detect"),
-						   "RGB*, GRAY*", 
-						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   _("Face Detect"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Detect");
 }

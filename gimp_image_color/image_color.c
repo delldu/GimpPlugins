@@ -14,7 +14,7 @@ static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-static IMAGE *color_rpc_service(int send_id, IMAGE * send_image, IMAGE *color_image)
+static IMAGE *color_rpc_service(int send_id, IMAGE * send_image, IMAGE * color_image)
 {
 	TASKARG taska;
 	TASKSET *tasks;
@@ -32,7 +32,7 @@ static IMAGE *color_rpc_service(int send_id, IMAGE * send_image, IMAGE *color_im
 	image_save(color_image, color_file);
 
 	snprintf(command, sizeof(command), "image_color(input_file=%s,color_file=%s,output_file=%s)",
-		input_file, color_file, output_file);
+			 input_file, color_file, output_file);
 
 	tasks = taskset_create(AI_TASKSET);
 	if (set_queue_task(tasks, command, &taska) != RET_OK)
@@ -51,13 +51,13 @@ static IMAGE *color_rpc_service(int send_id, IMAGE * send_image, IMAGE *color_im
 	if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
 		recv_image = image_load(output_file);
 	}
-	if (getenv("DEBUG") == NULL) { // NOT denug Mode
+	if (getenv("DEBUG") == NULL) {	// NOT denug Mode
 		unlink(input_file);
 		unlink(color_file);
 		unlink(output_file);
 	}
 
-failure:
+  failure:
 	taskset_destroy(tasks);
 
 	return recv_image;
@@ -119,10 +119,8 @@ static void query(void)
 						   _("Reference Color"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
-						   "2020-2022", 
-						   _("Reference Color"),
-						   "RGB*, GRAY*", 
-						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2022",
+						   _("Reference Color"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Color");
 }
@@ -155,11 +153,11 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	image_ai_cache_init();
 
-	if (gimp_image_base_type (image_id) != GIMP_RGB)
-		gimp_image_convert_rgb (image_id);
+	if (gimp_image_base_type(image_id) != GIMP_RGB)
+		gimp_image_convert_rgb(image_id);
 
 	// if (! gimp_drawable_has_alpha(drawable_id))
-	// 	gimp_layer_add_alpha(drawable_id);
+	//  gimp_layer_add_alpha(drawable_id);
 
 	color_drawable_id = get_reference_drawable(image_id, drawable_id);
 	if (color_drawable_id < 0) {

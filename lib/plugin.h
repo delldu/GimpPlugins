@@ -24,7 +24,7 @@ extern "C" {
 
 
 // /usr/share/locale/zh_CN/LC_MESSAGES/gimp20.mo
-#include <glib/gi18n.h> // ==> #define _(string) gettext(string)
+#include <glib/gi18n.h>			// ==> #define _(string) gettext(string)
 #define GETTEXT_PACKAGE "gimp20"
 #define INIT_I18N() G_STMT_START { \
   bindtextdomain (GETTEXT_PACKAGE, gimp_locale_directory ()); \
@@ -36,14 +36,14 @@ extern "C" {
 #define AI_TASKSET "TAI"
 
 	int image_saveas_layer(IMAGE * image, char *name_prefix, gint32 image_id);
-	IMAGE *image_from_drawable(gint32 drawable_id, gint *channels, GeglRectangle * rect);
-	int image_saveto_drawable(IMAGE *image, gint32 drawable_id, gint channels, GeglRectangle * rect);
+	IMAGE *image_from_drawable(gint32 drawable_id, gint * channels, GeglRectangle * rect);
+	int image_saveto_drawable(IMAGE * image, gint32 drawable_id, gint channels, GeglRectangle * rect);
 	int image_saveto_gimp(IMAGE * image, char *name_prefix);
 	gint32 get_reference_drawable(gint32 image_id, gint32 drawable_id);
 	IMAGE *get_selection_mask(gint32 image_id);
 
 	IMAGE *normal_service(char *service_name, int id, IMAGE * send_image, char *addon);
-	IMAGE *style_service(char *service_name, int send_id, IMAGE *send_image, int style_id, IMAGE *style_image);
+	IMAGE *style_service(char *service_name, int send_id, IMAGE * send_image, int style_id, IMAGE * style_image);
 
 	int image_ai_cache_init();
 	int image_ai_cache_filename(char *prefix, gint32 drawable_id, char *postfix, int namesize, char *filename);

@@ -37,10 +37,7 @@ static void query(void)
 						   _("Zoom 2X"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
-						   "2020-2022", 
-						   _("Zoom 2X"),
-						   "RGB*, GRAY*", 
-						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2022", _("Zoom 2X"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Zoom In/");
 }
@@ -53,7 +50,7 @@ static IMAGE *zoom2x_rpc_service(int id, IMAGE * send_image)
 static GimpPDBStatusType start_image_zoom2x(gint32 drawable_id)
 {
 	gint channels;
-	GeglRectangle rect;	
+	GeglRectangle rect;
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 

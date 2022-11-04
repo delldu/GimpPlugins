@@ -38,15 +38,13 @@ static void query(void)
 						   _("Artist Style"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
-						   "2020-2022", 
-						   _("Artist Style"),
-						   "RGB*, GRAY*", 
-						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2022",
+						   _("Artist Style"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Transform/");
 }
 
-static IMAGE *artist_style_rpc_service(int send_id, IMAGE * send_image, int style_id, IMAGE *style_image)
+static IMAGE *artist_style_rpc_service(int send_id, IMAGE * send_image, int style_id, IMAGE * style_image)
 {
 	return style_service("image_artist_style", send_id, send_image, style_id, style_image);
 }

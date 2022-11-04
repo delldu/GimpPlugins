@@ -14,7 +14,7 @@ static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-static int is_full_selection(IMAGE *mask)
+static int is_full_selection(IMAGE * mask)
 {
 	int i, j;
 	image_foreach(mask, i, j) {
@@ -43,11 +43,10 @@ static GimpPDBStatusType start_image_colour(gint image_id, gint drawable_id)
 	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
 		// more color weight if pixel is selected (mask marked) ...
-		if (mask && mask->height == send_image->height && mask->width == send_image->width 
-				&& ! is_full_selection(mask)) {
+		if (mask && mask->height == send_image->height && mask->width == send_image->width && !is_full_selection(mask)) {
 			image_foreach(mask, i, j)
-				send_image->ie[i][j].a = (mask->ie[i][j].r > 5)? 128 : 0; // 5 -- delta
-		} else { //  full selection == None selection !!!
+				send_image->ie[i][j].a = (mask->ie[i][j].r > 5) ? 128 : 0;	// 5 -- delta
+		} else {				//  full selection == None selection !!!
 			image_foreach(send_image, i, j)
 				send_image->ie[i][j].a = 0;
 		}
@@ -97,10 +96,8 @@ static void query(void)
 						   _("Guide Color"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
-						   "2020-2022", 
-						   _("Guide Color"),
-						   "RGB*, GRAY*", 
-						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2022",
+						   _("Guide Color"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Color/");
 }
@@ -131,10 +128,10 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	image_id = param[1].data.d_image;
 	drawable_id = param[2].data.d_drawable;
 
-	if (gimp_image_base_type (image_id) != GIMP_RGB)
-		gimp_image_convert_rgb (image_id);
+	if (gimp_image_base_type(image_id) != GIMP_RGB)
+		gimp_image_convert_rgb(image_id);
 
-	if (! gimp_drawable_has_alpha(drawable_id))
+	if (!gimp_drawable_has_alpha(drawable_id))
 		gimp_layer_add_alpha(drawable_id);
 
 	image_ai_cache_init();

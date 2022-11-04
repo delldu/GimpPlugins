@@ -24,7 +24,7 @@ static IMAGE *clean_rpc_service(IMAGE * send_image, int msgcode)
 	if (msgcode == IMAGE_CLEAN_SERVICE_WITH_WEATHER)
 		return normal_service("image_clean_weather", send_image, addon);
 
-	if (msgcode == IMAGE_CLEAN_SERVICE_WITH_GUIDE )
+	if (msgcode == IMAGE_CLEAN_SERVICE_WITH_GUIDE)
 		return normal_service("image_clean_guide", send_image, addon);
 
 	return normal_service("image_clean", send_image, addon);
@@ -85,10 +85,8 @@ static void query(void)
 						   "Blind remove image noise with AI",
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
-						   "2020-2022", 
-						   "_Blind Denoise", 
-						   "RGB*, GRAY*", 
-						   GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2022",
+						   "_Blind Denoise", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI/Clean");
 }
