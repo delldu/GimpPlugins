@@ -48,11 +48,13 @@ static void query(void)
 
 static IMAGE *image_face_detect_rpc_service(int id, IMAGE * send_image)
 {
-	return normal_service(AI_TASKSET, "image_face_detect", id, send_image, NULL);
+	return normal_service("image_face_detect", id, send_image, NULL);
 }
 
 static GimpPDBStatusType start_image_face_detect(gint32 drawable_id)
 {
+	gint channels;
+	GeglRectangle rect;
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	char output_file[512];
@@ -66,7 +68,8 @@ static GimpPDBStatusType start_image_face_detect(gint32 drawable_id)
 		recv_image = image_load(output_file);
 	} else {
 		gimp_progress_init("Face detect ...");
-		send_image = image_from_drawable(drawable_id, NULL, NULL);
+		send_image = image_from_drawable(drawable_id, &channels, &rect);
+		
 		if (image_valid(send_image)) {
 			recv_image = image_face_detect_rpc_service(drawable_id, send_image);
 			gimp_progress_update(1.0);

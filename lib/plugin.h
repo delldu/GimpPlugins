@@ -42,14 +42,16 @@ extern "C" {
 	gint32 get_reference_drawable(gint32 image_id, gint32 drawable_id);
 	IMAGE *get_selection_mask(gint32 image_id);
 
-	IMAGE *normal_service(char *taskset_name, char *service_name, int id, IMAGE * send_image, char *addon);
-	IMAGE *style_service(char *taskset_name, char *service_name, int send_id, IMAGE *send_image, 
-		int style_id, IMAGE *style_image, char *addon);
+	IMAGE *normal_service(char *service_name, int id, IMAGE * send_image, char *addon);
+	IMAGE *style_service(char *service_name, int send_id, IMAGE *send_image, int style_id, IMAGE *style_image);
 
 	int get_segment_color(int c);
 	char *get_segment_name(int c);
+	int get_drawable_uuid(gint32 drawable_id, int uuid_size, char *uuid_buffer);
 	int get_cache_filename(char *prefix, int id, char *postfix, int namesize, char *filename);
 	int get_cache_filename2(char *prefix, int id1, int id2, char *postfix, int namesize, char *filename);
+
+	void dump_drawable_rectangle(gint32 drawable_id);
 
 #if defined(__cplusplus)
 }

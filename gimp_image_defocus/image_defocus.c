@@ -48,7 +48,7 @@ static void query(void)
 
 static IMAGE *defocus_rpc_service(int id, IMAGE * send_image)
 {
-	return normal_service(AI_TASKSET, "image_defocus", id, send_image, NULL);
+	return normal_service("image_defocus", id, send_image, NULL);
 }
 
 static GimpPDBStatusType start_image_defocus(gint32 drawable_id)

@@ -26,7 +26,7 @@ MAIN()
 
 static IMAGE *light_rpc_service(int id, IMAGE * send_image)
 {
-	return normal_service(AI_TASKSET, "image_light", id, send_image, NULL);
+	return normal_service("image_light", id, send_image, NULL);
 }
 
 static GimpPDBStatusType start_image_light(gint drawable_id)

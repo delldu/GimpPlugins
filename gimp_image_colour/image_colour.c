@@ -26,7 +26,7 @@ static int is_full_selection(IMAGE *mask)
 
 static IMAGE *colour_rpc_service(int id, IMAGE * send_image)
 {
-	return normal_service(AI_TASKSET, "image_colour", id, send_image, NULL);
+	return normal_service("image_colour", id, send_image, NULL);
 }
 
 static GimpPDBStatusType start_image_colour(gint image_id, gint drawable_id)
@@ -54,8 +54,7 @@ static GimpPDBStatusType start_image_colour(gint image_id, gint drawable_id)
 
 		recv_image = colour_rpc_service(drawable_id, send_image);
 		if (image_valid(recv_image)) {
-			// image_saveto_drawable(recv_image, drawable_id, channels, &rect);
-			image_saveto_gimp(recv_image, "Colour");
+			image_saveto_gimp(recv_image, "colour");
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;

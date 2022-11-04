@@ -8,6 +8,8 @@
 
 #include "plugin.h"
 
+#define CACHE_PATH "image_ai_cache"
+
 // Reference https://github.com/h4k1m0u/gimp-plugin
 static int ade20k_class_colors[150] = {
 	0x787878, 0xb47878, 0x06e6e6, 0x503232, 0x04c803, 0x787850, 0x8c8c8c, 0xcc05ff, 
@@ -109,7 +111,7 @@ static IMAGE *image_from_rawdata(gint channels, gint height, gint width, guchar 
 	return image;
 }
 
-static int image_to_rawdata(IMAGE * image, gint channels, gint height, gint width, guchar * d)
+static int image_saveto_rawdata(IMAGE * image, gint channels, gint height, gint width, guchar * d)
 {
 	int i, j;
 
@@ -157,7 +159,7 @@ static int image_to_rawdata(IMAGE * image, gint channels, gint height, gint widt
 }
 
 
-IMAGE *normal_service(char *taskset_name, char *service_name, int id, IMAGE * send_image, char *addon)
+IMAGE *normal_service(char *service_name, int id, IMAGE * send_image, char *addon)
 {
 	TASKARG taska;
 	TASKSET *tasks;
@@ -170,6 +172,9 @@ IMAGE *normal_service(char *taskset_name, char *service_name, int id, IMAGE * se
 	get_cache_filename("input", id, ".png", sizeof(input_file), input_file);
 	get_cache_filename("output", id, ".png", sizeof(output_file), output_file);
 
+	CheckPoint("input_file = %s", input_file);
+	CheckPoint("output_file = %s", output_file);
+
 	image_save(send_image, input_file);
 
 	if (addon) {
@@ -178,8 +183,10 @@ IMAGE *normal_service(char *taskset_name, char *service_name, int id, IMAGE * se
 	} else {
 		snprintf(command, sizeof(command), "%s(input_file=%s,output_file=%s)", service_name, input_file, output_file);
 	}
+	CheckPoint("command = %s", command);
 
-	tasks = taskset_create(taskset_name);
+
+	tasks = taskset_create(AI_TASKSET);
 	if (set_queue_task(tasks, command, &taska) != RET_OK)
 		goto failure;
 
@@ -194,6 +201,8 @@ IMAGE *normal_service(char *taskset_name, char *service_name, int id, IMAGE * se
 	}
 	gimp_progress_update(0.9);
 	if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
+		CheckPoint("output_file = %s", output_file);
+
 		recv_image = image_load(output_file);
 	}
 
@@ -202,6 +211,18 @@ failure:
 
 	return recv_image;
 }
+
+void dump_drawable_rectangle(gint32 drawable_id)
+{
+	GeglRectangle rect;
+
+	if (! gimp_drawable_mask_intersect(drawable_id, &(rect.x), &(rect.y), &(rect.width), &(rect.height))) {
+		CheckPoint("drawable mask none");
+	}
+
+	CheckPoint("drawable mask: x = %d, y = %d, height =  %d, width = %d", rect.x, rect.y, rect.height, rect.width);
+}
+ 
 
 IMAGE *image_from_drawable(gint32 drawable_id, gint * channels, GeglRectangle * rect)
 {
@@ -212,6 +233,8 @@ IMAGE *image_from_drawable(gint32 drawable_id, gint * channels, GeglRectangle * 
 	GeglBuffer *buffer;
 	IMAGE *image;
 
+	dump_drawable_rectangle(drawable_id);
+
 	// Gegl buffer & shadow buffer for reading/writing
 	buffer = gimp_drawable_get_buffer(drawable_id);
 	format = gimp_drawable_get_format(drawable_id);
@@ -220,9 +243,12 @@ IMAGE *image_from_drawable(gint32 drawable_id, gint * channels, GeglRectangle * 
 	// Read all image at once from input buffer
 	temp_rect = gegl_buffer_get_extent(buffer);
 	if (temp_rect->width * temp_rect->height < 256) { // 16 * 16
-		syslog_error("Image selection size is too small.");
+		syslog_error("Image region size is too small.");
 		return NULL;
 	}
+
+	CheckPoint("Buffer rect: x=%d, y=%d, height=%d, width = %d", 
+		temp_rect->x, temp_rect->y, temp_rect->height, temp_rect->width);
 
 	rawdata = g_new(guchar, temp_rect->width * temp_rect->height * temp_channels);
 	if (rawdata == NULL) {
@@ -268,8 +294,8 @@ int image_saveto_drawable(IMAGE * image, gint32 drawable_id, gint channels, Gegl
 		return RET_ERROR;
 	}
 
-	if (image_to_rawdata(image, channels, rect->height, rect->width, rawdata) != RET_OK) {
-		syslog_error("Call image_to_rawdata()");
+	if (image_saveto_rawdata(image, channels, rect->height, rect->width, rawdata) != RET_OK) {
+		syslog_error("Call image_saveto_rawdata()");
 		return RET_ERROR;
 	}
 
@@ -311,7 +337,7 @@ static int image_saveto_region(IMAGE * image, gint32 drawable_id, GeglRectangle 
 		return RET_ERROR;
 	}
 
-	ret = image_to_rawdata(image, channels, rect->height, rect->width, rgn_data);
+	ret = image_saveto_rawdata(image, channels, rect->height, rect->width, rgn_data);
 	if (ret == RET_OK) {
 		drawable = gimp_drawable_get(drawable_id);
 		gimp_pixel_rgn_init(&output_rgn, drawable, 0, 0, drawable->width, drawable->height, TRUE, FALSE);
@@ -398,13 +424,16 @@ gint32 get_reference_drawable(gint32 image_id, gint32 drawable_id)
 
 IMAGE *get_selection_mask(gint32 image_id)
 {
-	guchar *rawdata;
-	gint temp_channels;
-	const Babl *format;
-	const GeglRectangle *rect;
+	// guchar *rawdata;
+	// gint temp_channels;
+	// const Babl *format;
+	// const GeglRectangle *rect;
+	gint channels;
+	GeglRectangle rect;
 	gint32 select_id;
-	GeglBuffer *select_buffer;
-	IMAGE *image;
+
+	// GeglBuffer *select_buffer;
+	// IMAGE *image;
 
 	/* Get selection channel */
 	if (gimp_selection_is_empty(image_id)) {
@@ -415,35 +444,35 @@ IMAGE *get_selection_mask(gint32 image_id)
 		return NULL;
 	}
 
-	select_buffer = gimp_drawable_get_buffer(select_id);
-	format = gimp_drawable_get_format(select_id);
-	temp_channels = gimp_drawable_bpp(select_id);
+	return image_from_drawable(select_id, &channels, &rect);
+	// select_buffer = gimp_drawable_get_buffer(select_id);
+	// format = gimp_drawable_get_format(select_id);
+	// temp_channels = gimp_drawable_bpp(select_id);
 
-	// Read all image at once from input buffer
-	rect = gegl_buffer_get_extent(select_buffer);
+	// // Read all image at once from input buffer
+	// rect = gegl_buffer_get_extent(select_buffer);
 
-	rawdata = g_new(guchar, rect->width * rect->height * temp_channels);
-	if (rawdata == NULL) {
-		syslog_error("Allocate memory for rawdata.");
-		return NULL;
-	}
-	gegl_buffer_get(select_buffer, GEGL_RECTANGLE(rect->x, rect->y, rect->width, rect->height),
-					1.0, format, rawdata, GEGL_AUTO_ROWSTRIDE, GEGL_ABYSS_NONE);
+	// rawdata = g_new(guchar, rect->width * rect->height * temp_channels);
+	// if (rawdata == NULL) {
+	// 	syslog_error("Allocate memory for rawdata.");
+	// 	return NULL;
+	// }
+	// gegl_buffer_get(select_buffer, GEGL_RECTANGLE(rect->x, rect->y, rect->width, rect->height),
+	// 				1.0, format, rawdata, GEGL_AUTO_ROWSTRIDE, GEGL_ABYSS_NONE);
 
-	// Transform rawdata
-	image = image_from_rawdata(temp_channels, rect->height, rect->width, rawdata);
-	CHECK_IMAGE(image);
+	// // Transform rawdata
+	// image = image_from_rawdata(temp_channels, rect->height, rect->width, rawdata);
+	// CHECK_IMAGE(image);
 
-	// Free allocated pointers & buffers
-	g_free(rawdata);
+	// // Free allocated pointers & buffers
+	// g_free(rawdata);
 
-	g_object_unref (select_buffer);
+	// g_object_unref (select_buffer);
 
-	return image;
+	// return image;
 }
 
-IMAGE *style_service(char *taskset_name, char *service_name, int send_id, IMAGE *send_image, 
-	int style_id, IMAGE *style_image, char *addon)
+IMAGE *style_service(char *service_name, int send_id, IMAGE *send_image, int style_id, IMAGE *style_image)
 {
 	TASKARG taska;
 	TASKSET *tasks;
@@ -465,15 +494,10 @@ IMAGE *style_service(char *taskset_name, char *service_name, int send_id, IMAGE 
 	image_save(send_image, input_file);
 	image_save(style_image, style_file);
 
-	if (addon) {
-		snprintf(command, sizeof(command), "%s(input_file=%s,style_file=%s,%s,output_file=%s)",
-			service_name, input_file, style_file, addon, output_file);
-	} else {
-		snprintf(command, sizeof(command), "%s(input_file=%s,style_file=%s,output_file=%s)",
+	snprintf(command, sizeof(command), "%s(input_file=%s,style_file=%s,output_file=%s)",
 			service_name, input_file, style_file, output_file);
-	}
 
-	tasks = taskset_create(taskset_name);
+	tasks = taskset_create(AI_TASKSET);
 	if (set_queue_task(tasks, command, &taska) != RET_OK)
 		goto failure;
 
@@ -511,28 +535,34 @@ char *get_segment_name(int c)
 }
 
 
+int get_drawable_uuid(gint32 drawable_id, int uuid_size, char *uuid_buffer)
+{
+	int ret;
+	GeglRectangle rect;
+
+	if (! gimp_drawable_mask_intersect(drawable_id, &(rect.x), &(rect.y), &(rect.width), &(rect.height))) {
+		ret = snprintf(uuid_buffer, uuid_size, "%d", drawable_id);
+	} else {
+		ret = snprintf(uuid_buffer, uuid_size, "%d_%d_%d_%d_%d", drawable_id, rect.x, rect.y, rect.width, rect.height);
+	}
+	return (ret > 0)? RET_OK:RET_ERROR;
+}
+
+
 int get_cache_filename(char *prefix, int id, char *postfix, int namesize, char *filename)
 {
-	#define CACHE_PATH "image_ai_cache"
-
 	char image_cache_path[512];
 	snprintf(image_cache_path, sizeof(image_cache_path), "%s/%s", getenv("HOME"), CACHE_PATH);
 
 	make_dir(image_cache_path);
 	return (snprintf(filename, namesize - 1, "%s/%s_%08d%s", image_cache_path, prefix, id, postfix) > 0)?RET_OK : RET_ERROR;
-	
-	#undef CACHE_PATH
 }
 
 int get_cache_filename2(char *prefix, int id1, int id2, char *postfix, int namesize, char *filename)
 {
-	#define CACHE_PATH "image_ai_cache"
-
 	char image_cache_path[512];
 	snprintf(image_cache_path, sizeof(image_cache_path), "%s/%s", getenv("HOME"), CACHE_PATH);
 
 	make_dir(image_cache_path);
 	return (snprintf(filename, namesize - 1, "%s/%s_%08d_%08d%s", image_cache_path, prefix, id1, id2, postfix) > 0)?RET_OK : RET_ERROR;
-	
-	#undef CACHE_PATH
 }

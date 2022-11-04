@@ -16,7 +16,7 @@ static void run(const gchar * name,
 
 static IMAGE *patch_rpc_service(int id, IMAGE * send_image)
 {
-	return normal_service(AI_TASKSET, "image_patch", id, send_image, NULL);
+	return normal_service("image_patch", id, send_image, NULL);
 }
 
 static GimpPDBStatusType start_image_patch(gint drawable_id)
@@ -59,7 +59,8 @@ static GimpPDBStatusType start_image_patch(gint drawable_id)
 	}
 
 	if (image_valid(recv_image)) {
-		image_saveto_gimp(recv_image, "patch");
+		// image_saveto_gimp(recv_image, "patch");
+		image_saveto_drawable(recv_image, drawable_id, channels, &rect);
 		image_destroy(recv_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;

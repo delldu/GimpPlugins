@@ -76,8 +76,8 @@ static GimpPDBStatusType start_image_color(gint drawable_id, gint color_drawable
 		recv_image = image_load(output_file);
 	} else {
 		gimp_progress_init("Color ...");
-		send_image = image_from_drawable(drawable_id, &channels, &rect);
 		color_image = image_from_drawable(color_drawable_id, &channels, &rect);
+		send_image = image_from_drawable(drawable_id, &channels, &rect);
 		if (image_valid(send_image) && image_valid(color_image)) {
 			recv_image = color_rpc_service(drawable_id, send_image, color_drawable_id, color_image);
 			gimp_progress_update(1.0);

@@ -57,6 +57,8 @@ static char *tanet_rpc_service(int id, IMAGE * send_image)
 
 static GimpPDBStatusType start_image_tanet(gint32 drawable_id)
 {
+	gint channels;
+	GeglRectangle rect;	
 	int size;
 	IMAGE *send_image;
 	char *recv_text;
@@ -68,13 +70,12 @@ static GimpPDBStatusType start_image_tanet(gint32 drawable_id)
 
 	get_cache_filename("output", drawable_id, ".png", sizeof(output_file), output_file);
 	// Get result if cache file exists !!!
-	if (file_exist(output_file)) {
+	if (file_exist(output_file) && 0 > 1) {
 		recv_text = file_load(output_file, &size);
 	} else {
 		gimp_progress_init("Assessment ...");
 
-		// send_image = image_from_select(drawable_id, x, y, width, height);
-		send_image = image_from_drawable(drawable_id, NULL, NULL);
+		send_image = image_from_drawable(drawable_id, &channels, &rect);
 		if (image_valid(send_image)) {
 			recv_text = tanet_rpc_service(drawable_id, send_image);
 			image_destroy(send_image);

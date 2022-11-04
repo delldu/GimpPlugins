@@ -48,11 +48,14 @@ static void query(void)
 
 static IMAGE *scratch_rpc_service(int id, IMAGE * send_image)
 {
-	return normal_service(AI_TASKSET, "image_scratch", id, send_image, NULL);
+	return normal_service("image_scratch", id, send_image, NULL);
 }
 
 static GimpPDBStatusType start_image_scratch(gint32 drawable_id)
 {
+	gint channels;
+	GeglRectangle rect;
+
 	IMAGE *send_image, *recv_image;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 	char output_file[512];
@@ -67,7 +70,7 @@ static GimpPDBStatusType start_image_scratch(gint32 drawable_id)
 	} else {
 		gimp_progress_init("Detect Scratch ...");
 		// send_image = image_from_select(drawable_id, x, y, width, height);
-		send_image = image_from_drawable(drawable_id, NULL, NULL);
+		send_image = image_from_drawable(drawable_id, &channels, &rect);
 		if (image_valid(send_image)) {
 			recv_image = scratch_rpc_service(drawable_id, send_image);
 			gimp_progress_update(1.0);
@@ -79,7 +82,8 @@ static GimpPDBStatusType start_image_scratch(gint32 drawable_id)
 	}
 
 	if (image_valid(recv_image)) {
-		image_saveto_gimp(recv_image, "scratch");
+		// image_saveto_gimp(recv_image, "scratch");
+		image_saveto_drawable(recv_image, drawable_id, channels, &rect);
 		image_destroy(recv_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;

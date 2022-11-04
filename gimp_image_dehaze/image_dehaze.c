@@ -48,7 +48,7 @@ static void query(void)
 
 static IMAGE *dehaze_rpc_service(int id, IMAGE * send_image)
 {
-	return normal_service(AI_TASKSET, "image_dehaze", id, send_image, NULL);
+	return normal_service("image_dehaze", id, send_image, NULL);
 }
 
 static GimpPDBStatusType start_image_dehaze(gint32 drawable_id)

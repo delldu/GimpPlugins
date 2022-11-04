@@ -48,7 +48,7 @@ static void query(void)
 
 static IMAGE *photo_style_rpc_service(int send_id, IMAGE *send_image, int style_id, IMAGE *style_image)
 {
-	return style_service(AI_TASKSET, "image_photo_style", send_id, send_image, style_id, style_image, NULL);
+	return style_service("image_photo_style", send_id, send_image, style_id, style_image);
 }
 
 static GimpPDBStatusType start_image_photo_style(gint32 drawable_id, gint32 style_drawable_id)
@@ -70,8 +70,8 @@ static GimpPDBStatusType start_image_photo_style(gint32 drawable_id, gint32 styl
 	} else {
 		gimp_progress_init("Photo style ...");
 
-		send_image = image_from_drawable(drawable_id, &channels, &rect);
 		style_image = image_from_drawable(style_drawable_id, &channels, &rect);
+		send_image = image_from_drawable(drawable_id, &channels, &rect);
 		if (image_valid(send_image) && image_valid(style_image)) {
 			recv_image = photo_style_rpc_service(drawable_id, send_image, style_drawable_id, style_image);
 			gimp_progress_update(1.0);
