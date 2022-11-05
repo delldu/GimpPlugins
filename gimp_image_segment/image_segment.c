@@ -10,6 +10,7 @@
 
 #define PLUG_IN_PROC "gimp_image_segment"
 
+static image_hash_t image_hash;
 
 static void query(void);
 static void run(const gchar * name,
@@ -34,9 +35,9 @@ static int save_segment_result(IMAGE * send_image, IMAGE * recv_image)
 		return RET_ERROR;
 	}
 
-	ret = image_saveas_layer(send_image, "sources", image_id);
+	ret = image_saveas_layer(send_image, "sources", image_id, 100.0);
 	if (ret == RET_OK) {
-		ret = image_saveas_layer(recv_image, "segment", image_id);
+		ret = image_saveas_layer(recv_image, "segment", image_id, 50.0);
 	}
 
 	if (ret == RET_OK) {
@@ -78,23 +79,27 @@ static void query(void)
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Matte and Segment");
 }
 
-static IMAGE *segment_rpc_service(int id, IMAGE * send_image)
-{
-	return normal_service("image_segment", id, send_image, NULL);
-}
-
 static GimpPDBStatusType start_image_segment(gint32 drawable_id)
 {
 	gint channels;
 	GeglRectangle rect;
 	IMAGE *send_image, *recv_image;
+	IMAGE_HASH hash;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
 	gimp_progress_init("Segment ...");
 	recv_image = NULL;
 	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
-		recv_image = segment_rpc_service(drawable_id, send_image);
+		char output_file[512];
+		get_image_hash(send_image, hash);
+		image_ai_cache_filename("image_segment_output", sizeof(output_file), output_file);
+		if (is_same_image_hash(image_hash.input, hash) && file_exist(output_file)) {
+			recv_image =  image_load(output_file);
+		} else {
+			recv_image = normal_service("image_segment", send_image, NULL, output_file);
+		}
+
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
 		g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
@@ -107,6 +112,8 @@ static GimpPDBStatusType start_image_segment(gint32 drawable_id)
 	if (image_valid(recv_image)) {
 		save_segment_result(send_image, recv_image);
 		image_destroy(recv_image);
+		// OK, updata hash ...
+		memcpy(image_hash.input, hash, sizeof(IMAGE_HASH));
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
 		g_message("Segment service not available.");
@@ -145,11 +152,13 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	drawable_id = param[2].data.d_drawable;
 
 	image_ai_cache_init();
+	gimp_get_data(PLUG_IN_PROC, &image_hash);
 	// gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
 	status = start_image_segment(drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
 
+	gimp_set_data(PLUG_IN_PROC, &image_hash, sizeof(image_hash));
 	image_ai_cache_exit();
 }

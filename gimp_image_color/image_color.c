@@ -10,24 +10,28 @@
 
 #define PLUG_IN_PROC "gimp_image_color"
 
+typedef struct {
+	IMAGE_HASH input;
+	IMAGE_HASH color;
+} color_hash_t;
+static color_hash_t color_hash;
+
 static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
-static IMAGE *color_rpc_service(int send_id, IMAGE * send_image, IMAGE * color_image)
+static IMAGE *color_rpc_service(IMAGE * send_image, IMAGE * color_image, char *output_file)
 {
 	TASKARG taska;
 	TASKSET *tasks;
 	IMAGE *recv_image = NULL;
 	TIME start_time, wait_time;
-	char input_file[512], color_file[512], output_file[512], command[TASK_BUFFER_LEN];
+	char input_file[512], color_file[512], command[TASK_BUFFER_LEN];
 
 	CHECK_IMAGE(send_image);
 
-	image_ai_cache_filename("input", send_id, ".png", sizeof(input_file), input_file);
-	image_ai_cache_filename("color", send_id, ".png", sizeof(color_file), color_file);
-	image_ai_cache_filename("output", send_id, ".png", sizeof(output_file), output_file);
-
+	image_ai_cache_filename("image_color_input", sizeof(input_file), input_file);
+	image_ai_cache_filename("image_color_color", sizeof(color_file), color_file);
 	image_save(send_image, input_file);
 	image_save(color_image, color_file);
 
@@ -51,11 +55,6 @@ static IMAGE *color_rpc_service(int send_id, IMAGE * send_image, IMAGE * color_i
 	if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
 		recv_image = image_load(output_file);
 	}
-	if (getenv("DEBUG") == NULL) {	// NOT denug Mode
-		unlink(input_file);
-		unlink(color_file);
-		unlink(output_file);
-	}
 
   failure:
 	taskset_destroy(tasks);
@@ -68,6 +67,7 @@ static GimpPDBStatusType start_image_color(gint drawable_id, gint color_drawable
 	gint channels;
 	GeglRectangle rect;
 	IMAGE *send_image, *color_image, *recv_image;
+	IMAGE_HASH hash1, hash2;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
 	gimp_progress_init("Color ...");
@@ -75,7 +75,15 @@ static GimpPDBStatusType start_image_color(gint drawable_id, gint color_drawable
 	color_image = image_from_drawable(color_drawable_id, &channels, &rect);
 	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image) && image_valid(color_image)) {
-		recv_image = color_rpc_service(drawable_id, send_image, color_image);
+		char output_file[512];
+		get_image_hash(send_image, hash1);
+		get_image_hash(color_image, hash2);
+		image_ai_cache_filename("image_color_output", sizeof(output_file), output_file);
+		if (is_same_image_hash(color_hash.input, hash1) && is_same_image_hash(color_hash.color, hash2) && file_exist(output_file)) {
+			recv_image = image_load(output_file);
+		} else {
+			recv_image = color_rpc_service(send_image, color_image, output_file);
+		}
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
 		g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
@@ -88,6 +96,9 @@ static GimpPDBStatusType start_image_color(gint drawable_id, gint color_drawable
 	if (image_valid(recv_image)) {
 		image_saveto_gimp(recv_image, "color");
 		image_destroy(recv_image);
+		// OK, updata hash ...
+		memcpy(color_hash.input, hash1, sizeof(IMAGE_HASH));
+		memcpy(color_hash.color, hash2, sizeof(IMAGE_HASH));
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
 		g_message("Color service not avaible.\n");
@@ -156,6 +167,8 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	drawable_id = param[2].data.d_drawable;
 
 	image_ai_cache_init();
+	gimp_get_data(PLUG_IN_PROC, &color_hash);
+
 	// gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
 	if (gimp_image_base_type(image_id) != GIMP_RGB)
@@ -166,7 +179,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 
 	color_drawable_id = get_reference_drawable(image_id, drawable_id);
 	if (color_drawable_id < 0) {
-		g_message("No reference color image, use menu 'File->Open as layers...' to one.\n");
+		g_message("No reference color image, use menu 'File->Open as layers...' to add one.\n");
 		return;
 	}
 
@@ -178,5 +191,6 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	values[0].data.d_status = status;
 
 
+	gimp_set_data(PLUG_IN_PROC, &color_hash, sizeof(color_hash));
 	image_ai_cache_exit();
 }

@@ -10,6 +10,7 @@
 
 #define PLUG_IN_PROC "gimp_image_artist_style"
 
+static style_hash_t style_hash;
 
 static void query(void);
 static void run(const gchar * name,
@@ -44,16 +45,13 @@ static void query(void)
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Transform/");
 }
 
-static IMAGE *artist_style_rpc_service(int send_id, IMAGE * send_image, int style_id, IMAGE * style_image)
-{
-	return style_service("image_artist_style", send_id, send_image, style_id, style_image);
-}
 
 static GimpPDBStatusType start_image_artist_style(gint32 drawable_id, gint32 style_drawable_id)
 {
 	gint channels;
 	GeglRectangle rect;
 	IMAGE *send_image, *style_image, *recv_image;
+	IMAGE_HASH hash1, hash2;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
 	gimp_progress_init("Artist style ...");
@@ -61,7 +59,15 @@ static GimpPDBStatusType start_image_artist_style(gint32 drawable_id, gint32 sty
 	style_image = image_from_drawable(style_drawable_id, &channels, &rect);
 	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image) && image_valid(style_image)) {
-		recv_image = artist_style_rpc_service(drawable_id, send_image, style_drawable_id, style_image);
+		char output_file[512];
+		get_image_hash(send_image, hash1);
+		get_image_hash(style_image, hash2);
+		image_ai_cache_filename("image_artist_style_output", sizeof(output_file), output_file);
+		if (is_same_image_hash(style_hash.input, hash1) && is_same_image_hash(style_hash.style, hash2) && file_exist(output_file)) {
+			recv_image =  image_load(output_file);
+		} else {
+			recv_image = style_service("image_artist_style", send_image, style_image, output_file);
+		}
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
 		g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
@@ -74,6 +80,9 @@ static GimpPDBStatusType start_image_artist_style(gint32 drawable_id, gint32 sty
 	if (image_valid(recv_image)) {
 		image_saveto_gimp(recv_image, "artist_style");
 		image_destroy(recv_image);
+		// OK, updata hash ...
+		memcpy(style_hash.input, hash1, sizeof(IMAGE_HASH));
+		memcpy(style_hash.style, hash2, sizeof(IMAGE_HASH));
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
 		g_message("Artist style service not available.\n");
@@ -113,6 +122,8 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	drawable_id = param[2].data.d_drawable;
 
 	image_ai_cache_init();
+	gimp_get_data(PLUG_IN_PROC, &style_hash);
+
 	// gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
 	style_drawable_id = get_reference_drawable(image_id, drawable_id);
@@ -125,5 +136,6 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
 
+	gimp_set_data(PLUG_IN_PROC, &style_hash, sizeof(style_hash));
 	image_ai_cache_exit();
 }

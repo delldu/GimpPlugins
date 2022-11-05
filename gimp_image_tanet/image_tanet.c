@@ -10,23 +10,24 @@
 
 #define PLUG_IN_PROC "gimp_image_tanet"
 
+static image_hash_t image_hash;
+
 static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
 
 
-static char *tanet_rpc_service(int id, IMAGE * send_image)
+static char *tanet_rpc_service(IMAGE * send_image, char *output_file)
 {
 	int size;
 	TASKARG taska;
 	TASKSET *tasks;
 	TIME start_time, wait_time;
-	char input_file[512], output_file[512], command[TASK_BUFFER_LEN], *txt = NULL;
+	char input_file[512], command[TASK_BUFFER_LEN], *txt = NULL;
 
 	CHECK_IMAGE(send_image);
 
-	image_ai_cache_filename("input", id, ".png", sizeof(input_file), input_file);
-	image_ai_cache_filename("output", id, ".txt", sizeof(output_file), output_file);
+	image_ai_cache_filename("image_tanet_input", sizeof(input_file), input_file);
 	image_save(send_image, input_file);
 
 	snprintf(command, sizeof(command), "image_tanet(input_file=%s,output_file=%s)", input_file, output_file);
@@ -61,13 +62,23 @@ static GimpPDBStatusType start_image_tanet(gint32 drawable_id)
 	GeglRectangle rect;
 	IMAGE *send_image;
 	char *recv_text;
+	IMAGE_HASH hash;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
 	gimp_progress_init("Assessment ...");
 	recv_text = NULL;
 	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
-		recv_text = tanet_rpc_service(drawable_id, send_image);
+		int size;
+		char output_file[512];
+
+		get_image_hash(send_image, hash);
+		image_ai_cache_filename("image_tanet_output", sizeof(output_file), output_file);
+		if (is_same_image_hash(image_hash.input, hash) && file_exist(output_file)) {
+			recv_text =  file_load(output_file, &size);
+		} else {
+			recv_text = tanet_rpc_service(send_image, output_file);
+		}
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
@@ -79,6 +90,9 @@ static GimpPDBStatusType start_image_tanet(gint32 drawable_id)
 		return status;
 
 	if (recv_text != NULL) {
+		// OK, updata hash ...
+		memcpy(image_hash.input, hash, sizeof(IMAGE_HASH));
+
 		g_message("Aesthetic Score: %s\n", recv_text);
 		free(recv_text);
 	} else {
@@ -145,6 +159,7 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	drawable_id = param[2].data.d_drawable;
 
 	image_ai_cache_init();
+	gimp_get_data(PLUG_IN_PROC, &image_hash);
 	// gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
 	status = start_image_tanet(drawable_id);
@@ -154,5 +169,6 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	// Output result for pdb
 	values[0].data.d_status = status;
 
+	gimp_set_data(PLUG_IN_PROC, &image_hash, sizeof(image_hash));
 	image_ai_cache_exit();
 }

@@ -10,6 +10,8 @@
 
 #define CACHE_PATH "image_ai_cache"
 
+extern void md5sum(uint8_t * initial_msg, size_t initial_len, uint8_t * digest);
+
 // Reference https://github.com/h4k1m0u/gimp-plugin
 
 static IMAGE *image_from_rawdata(gint channels, gint height, gint width, guchar * d)
@@ -59,7 +61,7 @@ static IMAGE *image_from_rawdata(gint channels, gint height, gint width, guchar 
 		break;
 	case 4:
 		// faster
-		memcpy(image->base, d, height * width * 4 * sizeof(BYTE));
+		memcpy(image->base, d, 4 * height * width);
 		break;
 	default:
 		break;
@@ -106,7 +108,7 @@ static int image_saveto_rawdata(IMAGE * image, gint channels, gint height, gint 
 		break;
 	case 4:
 		// faster
-		memcpy(d, image->base, height * width * 4 * sizeof(BYTE));
+		memcpy(d, image->base, 4 * height * width);
 		break;
 	default:
 		break;
@@ -116,18 +118,18 @@ static int image_saveto_rawdata(IMAGE * image, gint channels, gint height, gint 
 }
 
 
-IMAGE *normal_service(char *service_name, int id, IMAGE * send_image, char *addon)
+IMAGE *normal_service(char *service_name, IMAGE * send_image, char *addon, char *output_file)
 {
 	TASKARG taska;
 	TASKSET *tasks;
 	TIME start_time, wait_time;
 	IMAGE *recv_image = NULL;
-	char input_file[512], output_file[512], command[TASK_BUFFER_LEN];
+	char input_file[512], command[TASK_BUFFER_LEN];
 
 	CHECK_IMAGE(send_image);
 
-	image_ai_cache_filename("input", id, ".png", sizeof(input_file), input_file);
-	image_ai_cache_filename("output", id, ".png", sizeof(output_file), output_file);
+  	snprintf(command, sizeof(command), "%s_input", service_name);
+	image_ai_cache_filename(command, sizeof(input_file), input_file);
 	image_save(send_image, input_file);
 
 	if (addon) {
@@ -153,11 +155,6 @@ IMAGE *normal_service(char *service_name, int id, IMAGE * send_image, char *addo
 	gimp_progress_update(0.9);
 	if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
 		recv_image = image_load(output_file);
-	}
-
-	if (getenv("DEBUG") == NULL) {	// NOT denug Mode
-		unlink(input_file);
-		unlink(output_file);
 	}
 
   failure:
@@ -296,7 +293,7 @@ int image_saveto_gimp(IMAGE * image, char *name_prefix)
 		syslog_error("Call gimp_image_new().");
 		return RET_ERROR;
 	}
-	ret = image_saveas_layer(image, name_prefix, image_id);
+	ret = image_saveas_layer(image, name_prefix, image_id, 100.0);
 	if (ret == RET_OK) {
 		gimp_display_new(image_id);
 		gimp_displays_flush();
@@ -307,7 +304,7 @@ int image_saveto_gimp(IMAGE * image, char *name_prefix)
 	return ret;
 }
 
-int image_saveas_layer(IMAGE * image, char *name_prefix, gint32 image_id)
+int image_saveas_layer(IMAGE * image, char *name_prefix, gint32 image_id, float alpha)
 {
 	gchar name[64];
 	gint32 layer_id;
@@ -317,7 +314,7 @@ int image_saveas_layer(IMAGE * image, char *name_prefix, gint32 image_id)
 	check_image(image);
 	g_snprintf(name, sizeof(name), "%s_%d", name_prefix, image_id);
 
-	layer_id = gimp_layer_new(image_id, name, image->width, image->height, GIMP_RGBA_IMAGE, 100.0, GIMP_NORMAL_MODE);
+	layer_id = gimp_layer_new(image_id, name, image->width, image->height, GIMP_RGBA_IMAGE, alpha, GIMP_NORMAL_MODE);
 	if (layer_id > 0) {
 		rect.x = rect.y = 0;
 		rect.height = image->height;
@@ -406,19 +403,20 @@ IMAGE *get_selection_mask(gint32 image_id)
 	// return image;
 }
 
-IMAGE *style_service(char *service_name, int send_id, IMAGE * send_image, int style_id, IMAGE * style_image)
+IMAGE *style_service(char *service_name, IMAGE * send_image, IMAGE * style_image, char *output_file)
 {
 	TASKARG taska;
 	TASKSET *tasks;
 	TIME start_time, wait_time;
 	IMAGE *recv_image = NULL;
-	char input_file[512], style_file[512], output_file[512], command[TASK_BUFFER_LEN];
+	char input_file[512], style_file[512], command[TASK_BUFFER_LEN];
 
 	CHECK_IMAGE(send_image);
 
-	image_ai_cache_filename("input", send_id, ".png", sizeof(input_file), input_file);
-	image_ai_cache_filename("style", style_id, ".png", sizeof(style_file), style_file);
-	image_ai_cache_filename("output", send_id, ".png", sizeof(output_file), output_file);
+	snprintf(command, sizeof(command), "%s_input", service_name);
+	image_ai_cache_filename(command, sizeof(input_file), input_file);
+	snprintf(command, sizeof(command), "%s_style", service_name);
+	image_ai_cache_filename(command, sizeof(style_file), style_file);
 
 	image_save(send_image, input_file);
 	image_save(style_image, style_file);
@@ -443,11 +441,6 @@ IMAGE *style_service(char *service_name, int send_id, IMAGE * send_image, int st
 	if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
 		recv_image = image_load(output_file);
 	}
-	if (getenv("DEBUG") == NULL) {	// NOT denug Mode
-		unlink(input_file);
-		unlink(style_file);
-		unlink(output_file);
-	}
 
   failure:
 	taskset_destroy(tasks);
@@ -470,15 +463,31 @@ int image_ai_cache_init()
 	return (ret > 0) ? RET_OK : RET_ERROR;
 }
 
-int image_ai_cache_filename(char *prefix, gint32 drawable_id, char *postfix, int namesize, char *filename)
+int image_ai_cache_filename(char *prefix, int namesize, char *filename)
 {
-	int ret;
-	ret = snprintf(filename, namesize - 1, "%s/%s/%s_%d%s", getenv("HOME"), CACHE_PATH, prefix, drawable_id, postfix);
-
+	int ret = snprintf(filename, namesize - 1, "%s/%s/%s.png", getenv("HOME"), CACHE_PATH, prefix);
 	return (ret > 0) ? RET_OK : RET_ERROR;
 }
 
 void image_ai_cache_exit()
 {
 	gegl_exit();
+}
+
+int get_image_hash(IMAGE *image, IMAGE_HASH hash)
+{
+	int i;
+	unsigned char digest[16];
+
+	check_image(image);
+	md5sum((uint8_t *)image->base, 4 * image->height * image->width, (uint8_t *)digest);
+	for (i = 0; i < 16; ++i)
+		sprintf(&hash[i * 2], "%02x", (unsigned int) digest[i]);
+
+	return RET_OK;
+}
+
+int is_same_image_hash(IMAGE_HASH hash1, IMAGE_HASH hash2)
+{
+	return memcmp((void *)hash1, (void *)hash2, sizeof(IMAGE_HASH));
 }

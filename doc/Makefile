@@ -6,17 +6,19 @@
 #***
 #************************************************************************************/
 #
-TARGET := gimp-plugin-template-2.2.0
+INSTALL_DIR := $(shell grep -w INSTALL_DIR ../Makefile | cut -d '=' -f 2)
 
-SOURCE :=  interface.c  main.c  render.c
+TARGET := image_blur
 
+SOURCE :=  \
+	image_blur.c
 
 INCS	:= -I../lib $(shell gimptool-2.0 --cflags) $(shell nimagetool --cflags)
-LIBS	:= -L../lib -lplugin $(shell gimptool-2.0 --libs) $(shell nimagetool --libs)
+LIBS	:= -L../lib -lplugin $(shell gimptool-2.0 --libs) $(shell nimagetool --libs) $(shell redostool --libs)
 
 DEFINES :=
 
-CFLAGS := -O2 -fPIC -Wall -Wextra
+CFLAGS := -O2 -fPIC -Wall -Wextra -Wno-deprecated-declarations
 LDFLAGS := -fPIC
 
 #****************************************************************************
@@ -53,7 +55,7 @@ install: ${TARGET}
 depend:
 
 clean:
-	rm -f ${OBJECT} ${TARGET}
+	rm -rf ${OBJECT} ${TARGET}
 
 uninstall:
-	rm -f ${INSTALL_DIR}/${TARGET}
+	rm -rf ${INSTALL_DIR}/${TARGET}
