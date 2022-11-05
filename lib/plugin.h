@@ -34,16 +34,6 @@ extern "C" {
 #define GIMP_PLUGIN_VERSION "1.1.0"
 #define AI_TASKSET "TAI"
 
-	typedef char IMAGE_HASH[33]; // md5 hex digest
-	typedef struct {
-		IMAGE_HASH input;
-	} image_hash_t;
-	
-	typedef struct {
-		IMAGE_HASH input;
-		IMAGE_HASH style;
-	} style_hash_t;
-
 	int image_saveas_layer(IMAGE * image, char *name_prefix, gint32 image_id, float alpha);
 	IMAGE *image_from_drawable(gint32 drawable_id, gint * channels, GeglRectangle * rect);
 	int image_saveto_drawable(IMAGE * image, gint32 drawable_id, gint channels, GeglRectangle * rect);
@@ -51,13 +41,10 @@ extern "C" {
 	gint32 get_reference_drawable(gint32 image_id, gint32 drawable_id);
 	IMAGE *get_selection_mask(gint32 image_id);
 
-	IMAGE *normal_service(char *service_name, IMAGE * send_image, char *addon, char *output_file);
-	IMAGE *style_service(char *service_name, IMAGE * send_image, IMAGE * style_image, char *output_file);
-
+	IMAGE *normal_service(char *service_name, IMAGE * send_image, char *addon);
+	IMAGE *style_service(char *service_name, IMAGE * send_image, IMAGE * style_image);
 	int image_ai_cache_init();
 	int image_ai_cache_filename(char *prefix, int namesize, char *filename);
-	int get_image_hash(IMAGE *image, IMAGE_HASH hash);
-	int is_same_image_hash(IMAGE_HASH hash1, IMAGE_HASH hash2);
 	void image_ai_cache_exit();
 
 

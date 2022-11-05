@@ -10,8 +10,6 @@
 
 #define PLUG_IN_PROC "gimp_image_patch"
 
-static image_hash_t image_hash;
-
 static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
@@ -22,7 +20,6 @@ static GimpPDBStatusType start_image_patch(gint drawable_id)
 	gint channels;
 	GeglRectangle rect;
 	IMAGE *send_image, *recv_image;
-	IMAGE_HASH hash;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
 	gimp_progress_init("Patch ...");
@@ -38,14 +35,7 @@ static GimpPDBStatusType start_image_patch(gint drawable_id)
 		}
 	}
 	if (image_valid(send_image)) {
-		char output_file[512];
-		get_image_hash(send_image, hash);
-		image_ai_cache_filename("image_patch_output", sizeof(output_file), output_file);
-		if (is_same_image_hash(image_hash.input, hash) && file_exist(output_file)) {
-			recv_image =  image_load(output_file);
-		} else {
-			recv_image = normal_service("image_patch", send_image, NULL, output_file);
-		}
+		recv_image = normal_service("image_patch", send_image, NULL);
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
@@ -60,8 +50,6 @@ static GimpPDBStatusType start_image_patch(gint drawable_id)
 		// image_saveto_gimp(recv_image, "patch");
 		image_saveto_drawable(recv_image, drawable_id, channels, &rect);
 		image_destroy(recv_image);
-		// OK, updata hash ...
-		memcpy(image_hash.input, hash, sizeof(IMAGE_HASH));
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
 		g_message("Patch service not avaible.\n");
@@ -132,7 +120,6 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 		gimp_layer_add_alpha(drawable_id);
 
 	image_ai_cache_init();
-	gimp_get_data(PLUG_IN_PROC, &image_hash);
 	// gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
 	status = start_image_patch(drawable_id);
@@ -142,6 +129,5 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	// Output result for pdb
 	values[0].data.d_status = status;
 
-	gimp_set_data(PLUG_IN_PROC, &image_hash, sizeof(image_hash));
 	image_ai_cache_exit();
 }

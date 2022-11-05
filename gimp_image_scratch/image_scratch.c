@@ -10,8 +10,6 @@
 
 #define PLUG_IN_PROC "gimp_image_scratch"
 
-static image_hash_t image_hash;
-
 static void query(void);
 static void run(const gchar * name,
 				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
@@ -51,7 +49,6 @@ static GimpPDBStatusType start_image_scratch(gint32 drawable_id)
 	gint channels;
 	GeglRectangle rect;
 	IMAGE *send_image, *recv_image;
-	IMAGE_HASH hash;
 	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
 	gimp_progress_init("Detect Scratch ...");
@@ -59,14 +56,7 @@ static GimpPDBStatusType start_image_scratch(gint32 drawable_id)
 	// send_image = image_from_select(drawable_id, x, y, width, height);
 	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
-		char output_file[512];
-		get_image_hash(send_image, hash);
-		image_ai_cache_filename("image_light_output", sizeof(output_file), output_file);
-		if (is_same_image_hash(image_hash.input, hash) && file_exist(output_file)) {
-			recv_image =  image_load(output_file);
-		} else {
-			recv_image = normal_service("image_scratch", send_image, NULL, output_file);
-		}
+		recv_image = normal_service("image_scratch", send_image, NULL);
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
@@ -81,8 +71,6 @@ static GimpPDBStatusType start_image_scratch(gint32 drawable_id)
 		// image_saveto_gimp(recv_image, "scratch");
 		image_saveto_drawable(recv_image, drawable_id, channels, &rect);
 		image_destroy(recv_image);
-		// OK, updata hash ...
-		memcpy(image_hash.input, hash, sizeof(IMAGE_HASH));
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
 		g_message("Scratch detect service not available.\n");
@@ -118,13 +106,11 @@ run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_va
 	drawable_id = param[2].data.d_drawable;
 
 	image_ai_cache_init();
-	gimp_get_data(PLUG_IN_PROC, &image_hash);
 	// gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
 	status = start_image_scratch(drawable_id);
 	if (run_mode != GIMP_RUN_NONINTERACTIVE)
 		gimp_displays_flush();
 
-	gimp_set_data(PLUG_IN_PROC, &image_hash, sizeof(image_hash));
 	image_ai_cache_exit();
 }

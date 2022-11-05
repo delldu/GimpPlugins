@@ -118,18 +118,21 @@ static int image_saveto_rawdata(IMAGE * image, gint channels, gint height, gint 
 }
 
 
-IMAGE *normal_service(char *service_name, IMAGE * send_image, char *addon, char *output_file)
+IMAGE *normal_service(char *service_name, IMAGE * send_image, char *addon)
 {
 	TASKARG taska;
 	TASKSET *tasks;
 	TIME start_time, wait_time;
 	IMAGE *recv_image = NULL;
-	char input_file[512], command[TASK_BUFFER_LEN];
+	char input_file[512], output_file[512], command[TASK_BUFFER_LEN];
 
 	CHECK_IMAGE(send_image);
 
   	snprintf(command, sizeof(command), "%s_input", service_name);
 	image_ai_cache_filename(command, sizeof(input_file), input_file);
+  	snprintf(command, sizeof(command), "%s_output", service_name);
+	image_ai_cache_filename(command, sizeof(output_file), output_file);
+
 	image_save(send_image, input_file);
 
 	if (addon) {
@@ -157,7 +160,12 @@ IMAGE *normal_service(char *service_name, IMAGE * send_image, char *addon, char 
 		recv_image = image_load(output_file);
 	}
 
-  failure:
+	if (getenv("DEBUG") == NULL) { // Debug mode ? NO
+		unlink(input_file);
+		unlink(output_file);
+	}
+
+failure:
 	taskset_destroy(tasks);
 
 	return recv_image;
@@ -175,7 +183,6 @@ IMAGE *image_from_drawable(gint32 drawable_id, gint * channels, GeglRectangle * 
 		syslog_error("Call gimp_drawable_mask_intersect()");
 		return NULL;
 	}
-	CheckPoint("Drawable mask: x=%d, y=%d, width=%d, height=%d", rect->x, rect->y, rect->width, rect->height);
 	if (rect->width * rect->height < 256) {	// 16 * 16
 		syslog_error("Drawable mask size is too small.");
 		return NULL;
@@ -403,13 +410,13 @@ IMAGE *get_selection_mask(gint32 image_id)
 	// return image;
 }
 
-IMAGE *style_service(char *service_name, IMAGE * send_image, IMAGE * style_image, char *output_file)
+IMAGE *style_service(char *service_name, IMAGE * send_image, IMAGE * style_image)
 {
 	TASKARG taska;
 	TASKSET *tasks;
 	TIME start_time, wait_time;
 	IMAGE *recv_image = NULL;
-	char input_file[512], style_file[512], command[TASK_BUFFER_LEN];
+	char input_file[512], style_file[512], output_file[512], command[TASK_BUFFER_LEN];
 
 	CHECK_IMAGE(send_image);
 
@@ -417,6 +424,8 @@ IMAGE *style_service(char *service_name, IMAGE * send_image, IMAGE * style_image
 	image_ai_cache_filename(command, sizeof(input_file), input_file);
 	snprintf(command, sizeof(command), "%s_style", service_name);
 	image_ai_cache_filename(command, sizeof(style_file), style_file);
+	snprintf(command, sizeof(command), "%s_output", service_name);
+	image_ai_cache_filename(command, sizeof(output_file), output_file);
 
 	image_save(send_image, input_file);
 	image_save(style_image, style_file);
@@ -440,6 +449,12 @@ IMAGE *style_service(char *service_name, IMAGE * send_image, IMAGE * style_image
 	gimp_progress_update(0.9);
 	if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
 		recv_image = image_load(output_file);
+	}
+
+	if (getenv("DEBUG") == NULL) { // Debug Mode ? NO
+		unlink(input_file);
+		unlink(style_file);
+		unlink(output_file);
 	}
 
   failure:
@@ -472,22 +487,4 @@ int image_ai_cache_filename(char *prefix, int namesize, char *filename)
 void image_ai_cache_exit()
 {
 	gegl_exit();
-}
-
-int get_image_hash(IMAGE *image, IMAGE_HASH hash)
-{
-	int i;
-	unsigned char digest[16];
-
-	check_image(image);
-	md5sum((uint8_t *)image->base, 4 * image->height * image->width, (uint8_t *)digest);
-	for (i = 0; i < 16; ++i)
-		sprintf(&hash[i * 2], "%02x", (unsigned int) digest[i]);
-
-	return RET_OK;
-}
-
-int is_same_image_hash(IMAGE_HASH hash1, IMAGE_HASH hash2)
-{
-	return memcmp((void *)hash1, (void *)hash2, sizeof(IMAGE_HASH));
 }
