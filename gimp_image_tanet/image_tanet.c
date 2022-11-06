@@ -24,8 +24,8 @@ static char *tanet_rpc_service(IMAGE * send_image)
 	CHECK_IMAGE(send_image);
 
 	image_ai_cache_filename("image_tanet_input", sizeof(input_file), input_file);
-	image_save(send_image, input_file);
 	image_ai_cache_filename("image_tanet_output", sizeof(output_file), output_file);
+	image_save(send_image, input_file);
 
 	snprintf(command, sizeof(command), "image_tanet(input_file=%s,output_file=%s)", input_file, output_file);
 

@@ -158,6 +158,7 @@ IMAGE *normal_service(char *service_name, IMAGE * send_image, char *addon)
 	gimp_progress_update(0.9);
 	if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
 		recv_image = image_load(output_file);
+		CheckPoint("recv_image: (%dx%d)", recv_image->height, recv_image->width);
 	}
 
 	if (getenv("DEBUG") == NULL) { // Debug mode ? NO
@@ -362,16 +363,9 @@ gint32 get_reference_drawable(gint32 image_id, gint32 drawable_id)
 
 IMAGE *get_selection_mask(gint32 image_id)
 {
-	// guchar *rawdata;
-	// gint temp_channels;
-	// const Babl *format;
-	// const GeglRectangle *rect;
 	gint channels;
 	GeglRectangle rect;
 	gint32 select_id;
-
-	// GeglBuffer *select_buffer;
-	// IMAGE *image;
 
 	/* Get selection channel */
 	if (gimp_selection_is_empty(image_id)) {
@@ -383,31 +377,6 @@ IMAGE *get_selection_mask(gint32 image_id)
 	}
 
 	return image_from_drawable(select_id, &channels, &rect);
-	// select_buffer = gimp_drawable_get_buffer(select_id);
-	// format = gimp_drawable_get_format(select_id);
-	// temp_channels = gimp_drawable_bpp(select_id);
-
-	// // Read all image at once from input buffer
-	// rect = gegl_buffer_get_extent(select_buffer);
-
-	// rawdata = g_new(guchar, rect->width * rect->height * temp_channels);
-	// if (rawdata == NULL) {
-	//  syslog_error("Allocate memory for rawdata.");
-	//  return NULL;
-	// }
-	// gegl_buffer_get(select_buffer, GEGL_RECTANGLE(rect->x, rect->y, rect->width, rect->height),
-	//              1.0, format, rawdata, GEGL_AUTO_ROWSTRIDE, GEGL_ABYSS_NONE);
-
-	// // Transform rawdata
-	// image = image_from_rawdata(temp_channels, rect->height, rect->width, rawdata);
-	// CHECK_IMAGE(image);
-
-	// // Free allocated pointers & buffers
-	// g_free(rawdata);
-
-	// g_object_unref (select_buffer);
-
-	// return image;
 }
 
 IMAGE *style_service(char *service_name, IMAGE * send_image, IMAGE * style_image)
@@ -480,7 +449,7 @@ int image_ai_cache_init()
 
 int image_ai_cache_filename(char *prefix, int namesize, char *filename)
 {
-	int ret = snprintf(filename, namesize - 1, "%s/%s/%s.png", getenv("HOME"), CACHE_PATH, prefix);
+	int ret = snprintf(filename, namesize - 1, "%s/%s/%s_%d.png", getenv("HOME"), CACHE_PATH, prefix, getpid());
 	return (ret > 0) ? RET_OK : RET_ERROR;
 }
 
