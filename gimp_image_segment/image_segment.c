@@ -67,14 +67,14 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   _("Image Segment"),
-						   _("Image Segment"),
+						   _("Segment"),
+						   _("Segment"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022",
-						   _("Image Segment"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   _("Segment"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Matte and Segment");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/");
 }
 
 static GimpPDBStatusType start_image_segment(gint32 drawable_id)

@@ -16,10 +16,11 @@ XSUBDIRS :=  \
 	gimp_image_denoise \
 	gimp_image_deblur \
 	gimp_image_defocus \
+	gimp_image_demoire \
+	gimp_image_dereflection \
 	gimp_image_dehaze \
 	gimp_image_derain \
 	gimp_image_desnow \
-	gimp_image_dereflection \
 	gimp_image_colour \
 	gimp_image_color \
 	gimp_image_light \

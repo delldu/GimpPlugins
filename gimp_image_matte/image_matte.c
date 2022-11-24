@@ -67,14 +67,14 @@ static void query(void)
 	};
 
 	gimp_install_procedure(PLUG_IN_PROC,
-						   _("Image Matte"),
-						   _("Image Matte"),
+						   _("Matte"),
+						   _("Matte"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
 						   "2020-2022",
-						   _("Image Matte"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   _("Matte"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Matte and Segment/");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/");
 }
 
 static void
