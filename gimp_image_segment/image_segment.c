@@ -74,7 +74,7 @@ static void query(void)
 						   "2020-2022",
 						   _("Segment"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/");
+	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Matte and Segment/");
 }
 
 static GimpPDBStatusType start_image_segment(gint32 drawable_id)
