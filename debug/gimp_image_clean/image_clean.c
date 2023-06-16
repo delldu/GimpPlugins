@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-*** Copyright 2020-2022 Dell(18588220928@163.com), All Rights Reserved.
+*** Copyright 2020-2023 Dell(18588220928@163.com), All Rights Reserved.
 ***
 *** File Author: Dell, 2020-11-16 12:16:01
 ***
@@ -22,12 +22,12 @@ static IMAGE *clean_rpc_service(IMAGE * send_image, int msgcode)
 	snprintf(addon, sizeof(addon), "sigma=%d", clean_options.strength);
 	// TransWeather model
 	if (msgcode == IMAGE_CLEAN_SERVICE_WITH_WEATHER)
-		return normal_service("image_clean_weather", send_image, addon);
+		return normal_service((char *)"image_clean_weather", send_image, addon);
 
 	if (msgcode == IMAGE_CLEAN_SERVICE_WITH_GUIDE)
-		return normal_service("image_clean_guide", send_image, addon);
+		return normal_service((char *)"image_clean_guide", send_image, addon);
 
-	return normal_service("image_clean", send_image, addon);
+	return normal_service((char *)"image_clean", send_image, addon);
 }
 
 static GimpPDBStatusType start_image_clean(gint drawable_id)
@@ -85,7 +85,7 @@ static void query(void)
 						   "Blind remove image noise with AI",
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
-						   "2020-2022",
+						   "2020-2023",
 						   "_Blind Denoise", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI/Clean");

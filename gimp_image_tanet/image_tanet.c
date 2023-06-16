@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-*** Copyright 2020-2022 Dell(18588220928@163.com), All Rights Reserved.
+*** Copyright 2020-2023 Dell(18588220928@163.com), All Rights Reserved.
 ***
 *** File Author: Dell, 2020-11-16 12:16:01
 ***
@@ -23,8 +23,8 @@ static char *tanet_rpc_service(IMAGE * send_image)
 
 	CHECK_IMAGE(send_image);
 
-	image_ai_cache_filename("image_tanet_input", sizeof(input_file), input_file);
-	image_ai_cache_filename("image_tanet_output", sizeof(output_file), output_file);
+	image_ai_cache_filename((char *)"image_tanet_input", sizeof(input_file), input_file);
+	image_ai_cache_filename((char *)"image_tanet_output", sizeof(output_file), output_file);
 	image_save(send_image, input_file);
 
 	snprintf(command, sizeof(command), "image_tanet(input_file=%s,output_file=%s)", input_file, output_file);
@@ -51,6 +51,8 @@ static char *tanet_rpc_service(IMAGE * send_image)
 	if (getenv("DEBUG") == NULL) { // Debug mode ? NO
 		unlink(input_file);
 		unlink(output_file);
+
+		delete_task(tasks, taska.key);
 	}
 
   failure:
@@ -117,7 +119,7 @@ static void query(void)
 						   _("Aesthetics Assess"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
-						   "2020-2022", _("AA"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2023", _("AA"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/");
 }

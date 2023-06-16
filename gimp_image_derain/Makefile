@@ -1,6 +1,6 @@
 #/************************************************************************************
 #***
-#***	Copyright 2020-2022 Dell(18588220928@163.com), All Rights Reserved.
+#***	Copyright 2020-2023 Dell(18588220928@163.com), All Rights Reserved.
 #***
 #***	File Author: Dell, 2020-11-16 11:09:15
 #***
@@ -14,8 +14,8 @@ TARGET := gimp_image_derain
 SOURCE :=  \
 	image_derain.c
 
-INCS	:= -I../lib $(shell gimptool-2.0 --cflags) $(shell nimagetool --cflags)
-LIBS	:= -L../lib -lplugin $(shell gimptool-2.0 --libs) $(shell nimagetool --libs) $(shell redostool --libs)
+INCS	:= -I../lib $(shell gimptool-2.0 --cflags) $(shell pkg-config nimage --cflags)
+LIBS	:= -L../lib -lplugin $(shell gimptool-2.0 --libs) $(shell pkg-config nimage --libs) $(shell pkg-config redos --libs)
 
 DEFINES :=
 
@@ -36,7 +36,7 @@ OBJECT := $(addsuffix .o,$(basename ${SOURCE}))
 all: ${TARGET}
 
 ${TARGET}: ${OBJECT}
-	${CC} ${LDFLAGS} -o ${TARGET} ${OBJECT} ${LIBS}
+	${CXX} ${LDFLAGS} -o ${TARGET} ${OBJECT} ${LIBS}
 
 
 install: ${TARGET}

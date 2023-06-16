@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-*** Copyright 2020-2022 Dell(18588220928@163.com), All Rights Reserved.
+*** Copyright 2020-2023 Dell(18588220928@163.com), All Rights Reserved.
 ***
 *** File Author: Dell, 2020-11-16 12:16:01
 ***
@@ -37,7 +37,7 @@ static void query(void)
 						   _("Face Detect"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
-						   "2020-2022",
+						   "2020-2023",
 						   _("Face Detect"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Detect");
@@ -55,7 +55,7 @@ static GimpPDBStatusType start_image_face_detect(gint32 drawable_id)
 	recv_image = NULL;
 	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
-		recv_image = normal_service("image_face_detect", send_image, NULL);
+		recv_image = normal_service((char *)"image_face_detect", send_image, NULL);
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
@@ -67,7 +67,7 @@ static GimpPDBStatusType start_image_face_detect(gint32 drawable_id)
 		return status;
 	
 	if (image_valid(recv_image)) {
-		image_saveto_gimp(recv_image, "image_face_detect");
+		image_saveto_gimp(recv_image, (char *)"image_face_detect");
 		image_destroy(recv_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;

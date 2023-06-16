@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-*** Copyright 2020-2022 Dell(18588220928@163.com), All Rights Reserved.
+*** Copyright 2020-2023 Dell(18588220928@163.com), All Rights Reserved.
 ***
 *** File Author: Dell, 2020-11-16 12:16:01
 ***
@@ -24,9 +24,9 @@ static IMAGE *color_rpc_service(IMAGE * send_image, IMAGE * color_image)
 
 	CHECK_IMAGE(send_image);
 
-	image_ai_cache_filename("image_color_input", sizeof(input_file), input_file);
-	image_ai_cache_filename("image_color_color", sizeof(color_file), color_file);
-	image_ai_cache_filename("image_color_output", sizeof(output_file), output_file);
+	image_ai_cache_filename((char *)"image_color_input", sizeof(input_file), input_file);
+	image_ai_cache_filename((char *)"image_color_color", sizeof(color_file), color_file);
+	image_ai_cache_filename((char *)"image_color_output", sizeof(output_file), output_file);
 
 	image_save(send_image, input_file);
 	image_save(color_image, color_file);
@@ -56,6 +56,8 @@ static IMAGE *color_rpc_service(IMAGE * send_image, IMAGE * color_image)
 		unlink(input_file);
 		unlink(color_file);
 		unlink(output_file);
+
+		delete_task(tasks, taska.key);
 	}
 
 
@@ -88,7 +90,7 @@ static GimpPDBStatusType start_image_color(gint drawable_id, gint color_drawable
 		return status;
 
 	if (image_valid(recv_image)) {
-		image_saveto_gimp(recv_image, "color");
+		image_saveto_gimp(recv_image, (char *)"color");
 		image_destroy(recv_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
@@ -125,7 +127,7 @@ static void query(void)
 						   _("Reference Color"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
-						   "2020-2022",
+						   "2020-2023",
 						   _("Reference Color"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Color");

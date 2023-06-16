@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-*** Copyright 2020-2022 Dell(18588220928@163.com), All Rights Reserved.
+*** Copyright 2020-2023 Dell(18588220928@163.com), All Rights Reserved.
 ***
 *** File Author: Dell, 2020-11-16 12:16:01
 ***
@@ -46,10 +46,10 @@ static GimpPDBStatusType start_image_colour(gint image_id, gint drawable_id)
 				send_image->ie[i][j].a = 0;
 		}
 
-		recv_image = normal_service("image_colour", send_image, NULL);
+		recv_image = normal_service((char *)"image_colour", send_image, NULL);
 
 		if (image_valid(recv_image)) {
-			image_saveto_gimp(recv_image, "colour");
+			image_saveto_gimp(recv_image, (char *)"colour");
 			image_destroy(recv_image);
 		} else {
 			status = GIMP_PDB_EXECUTION_ERROR;
@@ -92,7 +92,7 @@ static void query(void)
 						   _("Guide Color"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
-						   "2020-2022",
+						   "2020-2023",
 						   _("Guide Color"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Color/");

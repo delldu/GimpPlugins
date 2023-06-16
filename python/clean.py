@@ -44,7 +44,7 @@ register(
     # copyright
     "Dell Du <18588220928@163.com>",
     # date
-    "2022",
+    "2023",
     # menupath
     "1. Auto",
     # imagetypes (use * for all, leave blank for none)
@@ -72,7 +72,7 @@ register(
     # copyright
     "Dell Du <18588220928@163.com>",
     # date
-    "2022",
+    "2023",
     # menupath
     "2. Denoise ...",
     # imagetypes (use * for all, leave blank for none)
@@ -99,7 +99,7 @@ register(
 #     # copyright
 #     "Dell Du <18588220928@163.com>",
 #     # date
-#     "2022",
+#     "2023",
 #     # menupath
 #     "2. Blind Denoise ...",
 #     # imagetypes (use * for all, leave blank for none)
@@ -127,7 +127,7 @@ register(
     # copyright
     "Dell Du <18588220928@163.com>",
     # date
-    "2022",
+    "2023",
     # menupath
     "3. Deblur",
     # imagetypes (use * for all, leave blank for none)
@@ -152,7 +152,7 @@ register(
     "Dell Du",
     "Dell Du <18588220928@163.com>",
     # date
-    "2022",
+    "2023",
     "4. Defocus",
     "",  # image types: "" means plugin will not push the current image as a variable
     [],
@@ -171,7 +171,7 @@ register(
     "Dell Du",
     "Dell Du <18588220928@163.com>",
     # date
-    "2022",
+    "2023",
     "5. Remove Scratch ...",
     "",  # image types: "" means plugin will not push the current image as a variable
     [],
@@ -191,7 +191,7 @@ register(
     "Dell Du",
     "Dell Du <18588220928@163.com>",
     # date
-    "2022",
+    "2023",
     "6. Remove Reflection",
     "",  # image types: "" means plugin will not push the current image as a variable
     [],
@@ -206,7 +206,7 @@ register(
     "Detect or Remove Shadow",
     "Dell Du",
     "Dell Du <18588220928@163.com>",
-    "2022",
+    "2023",
     "7. Remove Shadow ...",
     "",  # image types: "" means plugin will not push the current image as a variable
     [],
@@ -225,7 +225,7 @@ register(
     "Dell Du",
     "Dell Du <18588220928@163.com>",
     # date
-    "2022",
+    "2023",
     "1. Dehaze",
     "",  # image types: "" means plugin will not push the current image as a variable
     [],
@@ -245,7 +245,7 @@ register(
     "Dell Du",
     "Dell Du <18588220928@163.com>",
     # date
-    "2022",
+    "2023",
     "2. Derain",
     "",  # image types: "" means plugin will not push the current image as a variable
     [],

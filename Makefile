@@ -1,6 +1,6 @@
 #/************************************************************************************
 #***
-#***	Copyright 2020-2022 Dell(18588220928@163.com), All Rights Reserved.
+#***	Copyright 2020-2023 Dell(18588220928@163.com), All Rights Reserved.
 #***
 #***	File Author: Dell, 2020-11-16 11:31:56
 #***
@@ -38,9 +38,6 @@ XSUBDIRS :=  \
 	gimp_image_photo_style \
 	gimp_image_shape_style \
 	gimp_image_tanet \
-
-BSUBDIRS :=
-
 
 all: 
 	@for d in $(XSUBDIRS)  ; do \

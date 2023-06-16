@@ -1,25 +1,30 @@
 .
-├── gimp_image_clean
-│   ├── image_clean.c
-│   └── Makefile
+├── doc
+├── gimp_image_artist_style
+├── gimp_image_autops
 ├── gimp_image_color
-│   ├── image_color.c
-│   └── Makefile
-├── gimp_image_nima
-│   ├── image_nima.c
-│   └── Makefile
+├── gimp_image_colour
+├── gimp_image_curve
+├── gimp_image_deblur
+├── gimp_image_defocus
+├── gimp_image_dehaze
+├── gimp_image_demoire
+├── gimp_image_denoise
+├── gimp_image_derain
+├── gimp_image_dereflection
+├── gimp_image_desnow
+├── gimp_image_face_beauty
+├── gimp_image_face_detect
+├── gimp_image_light
+├── gimp_image_matte
 ├── gimp_image_patch
-│   ├── image_patch.c
-│   └── Makefile
-├── gimp_image_zoom
-│   ├── image_zoom.c
-│   └── Makefile
+├── gimp_image_photo_style
+├── gimp_image_scratch
+├── gimp_image_segment
+├── gimp_image_shadow
+├── gimp_image_tanet
+├── gimp_image_zoom2x
+├── gimp_image_zoom4x
 ├── lib
-│   ├── Makefile
-│   ├── plugin.c
-│   └── plugin.h
-├── LICENSE
-├── Makefile
-└── README.md
+└── python
 
-6 directories, 16 files

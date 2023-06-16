@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-*** Copyright 2020-2022 Dell(18588220928@163.com), All Rights Reserved.
+*** Copyright 2020-2023 Dell(18588220928@163.com), All Rights Reserved.
 ***
 *** File Author: Dell, 2020-11-16 12:16:01
 ***
@@ -36,7 +36,7 @@ static void query(void)
 						   _("Shadow detect"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
-						   "2020-2022",
+						   "2020-2023",
 						   _("Shadow detect"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Detect/");
@@ -54,7 +54,7 @@ static GimpPDBStatusType start_image_shadow(gint32 drawable_id)
 	recv_image = NULL;
 	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
-		recv_image = normal_service("image_shadow", send_image, NULL);
+		recv_image = normal_service((char *)"image_shadow", send_image, NULL);
 		image_destroy(send_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
@@ -66,7 +66,7 @@ static GimpPDBStatusType start_image_shadow(gint32 drawable_id)
 		return status;
 	
 	if (image_valid(recv_image)) {
-		// image_saveto_gimp(recv_image, "shadow");
+		// image_saveto_gimp(recv_image, (char *)"shadow");
 		image_saveto_drawable(recv_image, drawable_id, channels, &rect);
 		image_destroy(recv_image);
 	} else {

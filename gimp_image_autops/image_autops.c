@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-*** Copyright 2020-2022 Dell(18588220928@163.com), All Rights Reserved.
+*** Copyright 2020-2023 Dell(18588220928@163.com), All Rights Reserved.
 ***
 *** File Author: Dell, 2020-11-16 12:16:01
 ***
@@ -37,7 +37,7 @@ static void query(void)
 						   _("Autops"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
-						   "2020-2022", _("Autops"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+						   "2020-2023", _("Autops"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Beautify/");
 }
@@ -54,7 +54,7 @@ static GimpPDBStatusType start_image_autops(gint32 drawable_id)
 	recv_image = NULL;
 	send_image = image_from_drawable(drawable_id, &channels, &rect);
 	if (image_valid(send_image)) {
-		recv_image = normal_service("image_autops", send_image, NULL);
+		recv_image = normal_service((char *)"image_autops", send_image, NULL);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;
 		g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");

@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-***	Copyright 2021-2022 Dell(18588220928@163.com), All Rights Reserved.
+***	Copyright 2021-2023 Dell(18588220928@163.com), All Rights Reserved.
 ***
 ***	File Author: Dell, 2021-01-16 12:41:12
 ***
@@ -164,6 +164,8 @@ IMAGE *normal_service(char *service_name, IMAGE * send_image, char *addon)
 	if (getenv("DEBUG") == NULL) { // Debug mode ? NO
 		unlink(input_file);
 		unlink(output_file);
+
+		delete_task(tasks, taska.key);
 	}
 
 failure:
@@ -289,7 +291,6 @@ static int image_saveto_region(IMAGE * image, gint32 drawable_id, GeglRectangle 
 	return ret;
 }
 
-
 int image_saveto_gimp(IMAGE * image, char *name_prefix)
 {
 	gint32 image_id;
@@ -339,7 +340,6 @@ int image_saveas_layer(IMAGE * image, char *name_prefix, gint32 image_id, float 
 
 	return ret;
 }
-
 
 
 gint32 get_reference_drawable(gint32 image_id, gint32 drawable_id)
@@ -424,6 +424,8 @@ IMAGE *style_service(char *service_name, IMAGE * send_image, IMAGE * style_image
 		unlink(input_file);
 		unlink(style_file);
 		unlink(output_file);
+
+		delete_task(tasks, taska.key);
 	}
 
   failure:

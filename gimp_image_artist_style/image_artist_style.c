@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-*** Copyright 2020-2022 Dell(18588220928@163.com), All Rights Reserved.
+*** Copyright 2020-2023 Dell(18588220928@163.com), All Rights Reserved.
 ***
 *** File Author: Dell, 2020-11-16 12:16:01
 ***
@@ -37,7 +37,7 @@ static void query(void)
 						   _("Artist Style"),
 						   "Dell Du <18588220928@163.com>",
 						   "Dell Du",
-						   "2020-2022",
+						   "2020-2023",
 						   _("Artist Style"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
 	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Transform/");
@@ -67,7 +67,7 @@ static GimpPDBStatusType start_image_artist_style(gint32 drawable_id, gint32 sty
 		return status;
 
 	if (image_valid(recv_image)) {
-		image_saveto_gimp(recv_image, "artist_style");
+		image_saveto_gimp(recv_image, (char *)"artist_style");
 		image_destroy(recv_image);
 	} else {
 		status = GIMP_PDB_EXECUTION_ERROR;

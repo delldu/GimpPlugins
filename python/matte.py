@@ -25,7 +25,7 @@ register(
     # copyright
     "Dell Du <18588220928@163.com>",
     # date
-    "2022",
+    "2023",
     # menupath
     "1. Salience Matting",
     # imagetypes (use * for all, leave blank for none)
@@ -52,7 +52,7 @@ register(
     # copyright
     "Dell Du <18588220928@163.com>",
     # date
-    "2022",
+    "2023",
     # menupath
     "2. Semantics Matting",
     # imagetypes (use * for all, leave blank for none)

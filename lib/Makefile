@@ -1,6 +1,6 @@
 #/************************************************************************************
 #***
-#***	Copyright 2021-2022 Dell(18588220928@163.com), All Rights Reserved.
+#***	Copyright 2021-2023 Dell(18588220928@163.com), All Rights Reserved.
 #***
 #***	File Author: Dell, 2021-01-16 12:41:44
 #***
@@ -10,7 +10,7 @@
 LIB_NAME := libplugin
 
 INCS	:= \
-	$(shell gimptool-2.0 --cflags) $(shell nimagetool --cflags)
+	$(shell gimptool-2.0 --cflags) $(shell pkg-config nimage --cflags)
 
 	# -I$(BUILD_DIR)/include
 SOURCE :=  \
