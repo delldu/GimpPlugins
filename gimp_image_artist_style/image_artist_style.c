@@ -11,115 +11,130 @@
 #define PLUG_IN_PROC "gimp_image_artist_style"
 
 static void query(void);
-static void run(const gchar * name,
-				gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals);
-
+static void run(const gchar* name,
+    gint nparams, const GimpParam* param, gint* nreturn_vals, GimpParam** return_vals);
 
 GimpPlugInInfo PLUG_IN_INFO = {
-	NULL,
-	NULL,
-	query,
-	run
+    NULL,
+    NULL,
+    query,
+    run
 };
 
 MAIN()
 
+
 static void query(void)
 {
-	static GimpParamDef args[] = {
-		{GIMP_PDB_INT32, "run-mode", "Run mode"},
-		{GIMP_PDB_IMAGE, "image", "Input image"},
-		{GIMP_PDB_DRAWABLE, "drawable", "Input drawable"},
-	};
+    static GimpParamDef args[] = {
+        { GIMP_PDB_INT32, "run-mode", "Run mode" },
+        { GIMP_PDB_IMAGE, "image", "Input image" },
+        { GIMP_PDB_DRAWABLE, "drawable", "Input drawable" },
+    };
 
-	gimp_install_procedure(PLUG_IN_PROC,
-						   _("Artist Style"),
-						   _("Artist Style"),
-						   "Dell Du <18588220928@163.com>",
-						   "Dell Du",
-						   "2020-2023",
-						   _("Artist Style"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+    gimp_install_procedure(PLUG_IN_PROC,
+        _("Artist Style"),
+        _("Artist Style"),
+        "Dell Du <18588220928@163.com>",
+        "Dell Du",
+        "2020-2023",
+        _("Artist Style"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-	gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Transform/");
+    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Transform/");
 }
-
 
 static GimpPDBStatusType start_image_artist_style(gint32 drawable_id, gint32 style_drawable_id)
 {
-	gint channels;
-	GeglRectangle rect;
-	IMAGE *send_image, *style_image, *recv_image;
-	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
+    gint channels;
+    GeglRectangle rect;
+    IMAGE *send_image, *style_image, *recv_image;
+    GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-	gimp_progress_init("Artist style ...");
-	recv_image = NULL;
-	style_image = image_from_drawable(style_drawable_id, &channels, &rect);
-	send_image = image_from_drawable(drawable_id, &channels, &rect);
-	if (image_valid(send_image) && image_valid(style_image)) {
-		recv_image = style_service("image_artist_style", send_image, style_image);
-	} else {
-		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
-	}
-	gimp_progress_update(1.0);
-	
-	if (status != GIMP_PDB_SUCCESS)
-		return status;
+    gimp_progress_init("Artist style ...");
+    recv_image = NULL;
+    style_image = image_from_drawable(style_drawable_id, &channels, &rect);
+    send_image = image_from_drawable(drawable_id, &channels, &rect);
+    if (image_valid(send_image) && image_valid(style_image)) {
+        recv_image = style_service("image_artist_style", send_image, style_image);
+    } else {
+        status = GIMP_PDB_EXECUTION_ERROR;
+        g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
+    }
+    gimp_progress_update(1.0);
 
-	if (image_valid(recv_image)) {
-		image_saveto_gimp(recv_image, (char *)"artist_style");
-		image_destroy(recv_image);
-	} else {
-		status = GIMP_PDB_EXECUTION_ERROR;
-		g_message("Artist style service not available.\n");
-	}
-	if (image_valid(send_image))
-		image_destroy(send_image);
-	if (image_valid(style_image))
-		image_destroy(style_image);
+    if (status != GIMP_PDB_SUCCESS)
+        return status;
 
-	return status;				// GIMP_PDB_SUCCESS;
+    if (image_valid(recv_image)) {
+        image_saveto_gimp(recv_image, (char*)"artist_style");
+        image_destroy(recv_image);
+    } else {
+        status = GIMP_PDB_EXECUTION_ERROR;
+        g_message("Artist style service not available.\n");
+    }
+    if (image_valid(send_image))
+        image_destroy(send_image);
+    if (image_valid(style_image))
+        image_destroy(style_image);
+
+    return status; // GIMP_PDB_SUCCESS;
 }
 
 static void
-run(const gchar * name, gint nparams, const GimpParam * param, gint * nreturn_vals, GimpParam ** return_vals)
+run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals, GimpParam** return_vals)
 {
-	static GimpParam values[1];
-	GimpRunMode run_mode;
-	gint32 image_id;
-	gint32 drawable_id, style_drawable_id;
-	GimpPDBStatusType status = GIMP_PDB_SUCCESS;
+    static GimpParam values[1];
+    GimpRunMode run_mode;
+    gint32 image_id;
+    gint32 drawable_id, style_drawable_id;
+    GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-	INIT_I18N();
+    INIT_I18N();
 
-	/* Setting mandatory output values */
-	*nreturn_vals = 1;
-	*return_vals = values;
-	values[0].type = GIMP_PDB_STATUS;
-	values[0].data.d_status = status;
+    /* Setting mandatory output values */
+    *nreturn_vals = 1;
+    *return_vals = values;
+    values[0].type = GIMP_PDB_STATUS;
+    values[0].data.d_status = status;
 
-	if (strcmp(name, PLUG_IN_PROC) != 0 || nparams < 3) {
-		values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
-		return;
-	}
+    if (strcmp(name, PLUG_IN_PROC) != 0 || nparams < 3) {
+        values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
+        return;
+    }
 
-	run_mode = (GimpRunMode) param[0].data.d_int32;
-	image_id = param[1].data.d_image;
-	drawable_id = param[2].data.d_drawable;
+    run_mode = (GimpRunMode)param[0].data.d_int32;
+    image_id = param[1].data.d_image;
+    drawable_id = param[2].data.d_drawable;
 
-	image_ai_cache_init();
+    image_ai_cache_init();
 
-	// gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
+    // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
+    style_drawable_id = get_reference_drawable(image_id, drawable_id);
+    if (style_drawable_id < 0) {
+        gchar* filename = select_image_filename(PLUG_IN_PROC, _("Load Style Image"));
+        if (filename != NULL) {
+            style_drawable_id = gimp_file_load_layer(run_mode, image_id, filename);
+            if (style_drawable_id > 0) {
+                gimp_layer_set_opacity(style_drawable_id, 50.0);
+                if (!gimp_image_insert_layer(image_id, style_drawable_id, 0, 0)) {
+                    syslog_error("Call gimp_image_insert_layer().");
+                    style_drawable_id = -1; // force set -1 ==> error
+                }
+                if (run_mode != GIMP_RUN_NONINTERACTIVE)
+                    gimp_displays_flush();
+            }
+            g_free(filename);
+        }
+    }
 
-	style_drawable_id = get_reference_drawable(image_id, drawable_id);
-	if (style_drawable_id < 0) {
-		g_message("No style image, use menu 'File->Open as layers...' to add one.\n");
-		return;
-	}
+    if (style_drawable_id < 0) {
+        g_message("NO Style image, please use menu 'File->Open as Layers...' to add one.\n");
+        return;
+    }
 
-	status = start_image_artist_style(drawable_id, style_drawable_id);
-	if (run_mode != GIMP_RUN_NONINTERACTIVE)
-		gimp_displays_flush();
+    status = start_image_artist_style(drawable_id, style_drawable_id);
+    if (run_mode != GIMP_RUN_NONINTERACTIVE)
+        gimp_displays_flush();
 
-	image_ai_cache_exit();
+    image_ai_cache_exit();
 }
