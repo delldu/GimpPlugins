@@ -32,11 +32,11 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Denoise"),
-        _("Denoise"),
+        _("Denoise, Remove Noise"),
+        _("More_Denoise_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
-        "2020-2023", _("Denoise"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        "2020-2023", _("Noise"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
     gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Clean/");
 }
@@ -68,7 +68,7 @@ static GimpPDBStatusType start_image_denoise(gint32 drawable_id)
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Denoise service is not available.");
+        g_message("Service not available.");
     }
 
     return status; // GIMP_PDB_SUCCESS;

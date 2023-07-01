@@ -42,7 +42,7 @@ static GimpPDBStatusType start_image_matte(gint drawable_id)
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Matte service not avaible.\n");
+        g_message("Service not avaible.\n");
     }
 
     return status;
@@ -66,14 +66,14 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Matte"),
-        _("Matte"),
+        _("Cut Backgroud, Left Standout Object"),
+        _("More_Matte_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
         "2020-2023",
         _("Matte"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Matte and Segment/");
+    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/");
 }
 
 static void
@@ -105,7 +105,7 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     if (gimp_image_base_type(image_id) != GIMP_RGB)
         gimp_image_convert_rgb(image_id);
 
-    if (!gimp_drawable_has_alpha(drawable_id))
+    if (! gimp_drawable_has_alpha(drawable_id))
         gimp_layer_add_alpha(drawable_id);
 
     image_ai_cache_init();

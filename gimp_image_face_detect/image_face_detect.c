@@ -32,14 +32,14 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Face Detect"),
-        _("Face Detect"),
+        _("Crop Face and Beautify it !"),
+        _("More_Face_Crop_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
         "2020-2023",
-        _("Face Detect"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        _("Pure Face"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Detect");
+    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Beautify");
 }
 
 static GimpPDBStatusType start_image_face_detect(gint32 drawable_id)
@@ -49,7 +49,7 @@ static GimpPDBStatusType start_image_face_detect(gint32 drawable_id)
     IMAGE *send_image, *recv_image;
     GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-    gimp_progress_init("Face detect ...");
+    gimp_progress_init("Detect Face ...");
     recv_image = NULL;
     send_image = image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
@@ -65,11 +65,15 @@ static GimpPDBStatusType start_image_face_detect(gint32 drawable_id)
         return status;
 
     if (image_valid(recv_image)) {
-        image_saveto_gimp(recv_image, (char*)"image_face_detect");
+        if (recv_image->height < 1024 && recv_image < 1024) {
+            g_message("There seems NO FACE in picture.\n");
+        } else {
+            image_saveto_gimp(recv_image, (char*)"image_face_detect");
+        }
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Face detect service not available.\n");
+        g_message("Service not available.\n");
     }
 
     return status; // GIMP_PDB_SUCCESS;

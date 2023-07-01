@@ -32,12 +32,12 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Shadow detect"),
-        _("Shadow detect"),
+        _("Detect Shadow"),
+        _("More_Shadow_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
         "2020-2023",
-        _("Shadow detect"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        _("Shadow"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
     gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Detect/");
 }
@@ -70,7 +70,7 @@ static GimpPDBStatusType start_image_shadow(gint32 drawable_id)
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Shadow detect service not available.\n");
+        g_message("Service not available.\n");
     }
 
     return status; // GIMP_PDB_SUCCESS;

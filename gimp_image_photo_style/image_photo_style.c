@@ -32,8 +32,8 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Photo Style"),
-        _("Photo Style"),
+        _("Transform Photo with Realistic Style"),
+        _("More_Photo_Style_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
         "2020-2023",
@@ -49,7 +49,7 @@ static GimpPDBStatusType start_image_photo_style(gint32 drawable_id, gint32 styl
     IMAGE *send_image, *style_image, *recv_image;
     GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-    gimp_progress_init("Photo style ...");
+    gimp_progress_init("Photo Style ...");
     recv_image = NULL;
     style_image = image_from_drawable(style_drawable_id, &channels, &rect);
     send_image = image_from_drawable(drawable_id, &channels, &rect);
@@ -69,7 +69,7 @@ static GimpPDBStatusType start_image_photo_style(gint32 drawable_id, gint32 styl
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Photo style service not available.\n");
+        g_message("Service not available.\n");
     }
 
     if (image_valid(send_image))

@@ -32,11 +32,11 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Deblur"),
-        _("Deblur"),
+        _("Deblur, Remove Freground Blur"),
+        _("More_Deblur_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
-        "2020-2023", _("Deblur"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        "2020-2023", _("Blur"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
     gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Clean/");
 }
@@ -68,7 +68,7 @@ static GimpPDBStatusType start_image_deblur(gint32 drawable_id)
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Deblur service is available.\n");
+        g_message("Service not available.\n");
     }
 
     return status; // GIMP_PDB_SUCCESS;

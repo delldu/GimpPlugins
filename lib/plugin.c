@@ -195,7 +195,6 @@ IMAGE* image_from_drawable(gint32 drawable_id, gint* channels, GeglRectangle* re
     *channels = gimp_drawable_bpp(drawable_id);
 
     // Read all image at once from input buffer
-    // memcpy(rect,  gegl_buffer_get_extent(buffer), sizeof(GeglRectangle))
     rawdata = g_new(guchar, rect->width * rect->height * (*channels));
     if (rawdata == NULL) {
         syslog_error("Allocate memory for rawdata.");

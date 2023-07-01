@@ -66,14 +66,14 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Segment"),
-        _("Segment"),
+        _("Semantic Segment"),
+        _("More_Segment_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
         "2020-2023",
         _("Segment"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Matte and Segment/");
+    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/");
 }
 
 static GimpPDBStatusType start_image_segment(gint32 drawable_id)
@@ -102,7 +102,7 @@ static GimpPDBStatusType start_image_segment(gint32 drawable_id)
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Segment service not available.");
+        g_message("Service not available.");
     }
     if (image_valid(send_image)) {
         image_destroy(send_image);

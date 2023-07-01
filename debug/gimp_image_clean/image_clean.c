@@ -47,7 +47,7 @@ static GimpPDBStatusType start_image_clean(gint drawable_id)
             image_destroy(recv_image);
         } else {
             status = GIMP_PDB_EXECUTION_ERROR;
-            g_message("Clean service is not avaible.\n");
+            g_message("Service not avaible.\n");
         }
         image_destroy(send_image);
     } else {

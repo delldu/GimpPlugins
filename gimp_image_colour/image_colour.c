@@ -41,14 +41,10 @@ static GimpPDBStatusType start_image_colour(gint image_id, gint drawable_id)
         // more color weight if pixel is selected (mask marked) ...
         if (mask && mask->height == send_image->height && mask->width == send_image->width && !is_full_selection(mask)) {
             image_foreach(mask, i, j)
-                send_image->ie[i][j]
-                    .a
-                = (mask->ie[i][j].r > 5) ? 128 : 0; // 5 -- delta
+                send_image->ie[i][j].a = (mask->ie[i][j].r > 5) ? 128 : 0; // 5 -- delta
         } else { //  full selection == None selection !!!
             image_foreach(send_image, i, j)
-                send_image->ie[i][j]
-                    .a
-                = 0;
+                send_image->ie[i][j].a = 0;
         }
 
         recv_image = normal_service((char*)"image_colour", send_image, NULL);
@@ -58,7 +54,7 @@ static GimpPDBStatusType start_image_colour(gint image_id, gint drawable_id)
             image_destroy(recv_image);
         } else {
             status = GIMP_PDB_EXECUTION_ERROR;
-            g_message("Colour service is avaible.\n");
+            g_message("Service not avaible.\n");
         }
         image_destroy(send_image);
     } else {
@@ -91,8 +87,8 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Guide Color"),
-        _("Guide Color"),
+        _("Coloring Picture via User Guide"),
+        _("More_Colour_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
         "2020-2023",

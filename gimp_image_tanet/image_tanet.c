@@ -123,7 +123,7 @@ static GimpPDBStatusType start_image_tanet(gint32 drawable_id)
         free(recv_text);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Aesthetics assess service not avaible.\n");
+        g_message("Service not avaible.\n");
     }
 
     return status;
@@ -147,8 +147,8 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Aesthetics Assess"),
-        _("Aesthetics Assess"),
+        _("Aesthetics Assess, Let Beauty Could Be Weighted !"),
+        _("More_AA_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
         "2020-2023", _("AA"), "RGB*, GRAY*", GIMP_PLUGIN,

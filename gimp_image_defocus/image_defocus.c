@@ -32,8 +32,8 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Defocus"),
-        _("Defocus"),
+        _("Defocus, Remove Backgroud Blur"),
+        _("More_Defocus_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
         "2020-2023", _("Defocus"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
@@ -68,7 +68,7 @@ static GimpPDBStatusType start_image_defocus(gint32 drawable_id)
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Defocus service not available.\n");
+        g_message("Service not available.\n");
     }
 
     return status; // GIMP_PDB_SUCCESS;

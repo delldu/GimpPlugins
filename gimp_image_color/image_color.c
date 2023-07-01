@@ -93,7 +93,7 @@ static GimpPDBStatusType start_image_color(gint drawable_id, gint color_drawable
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Color service not avaible.\n");
+        g_message("Service not avaible.\n");
     }
     if (image_valid(send_image))
         image_destroy(send_image);
@@ -121,8 +121,8 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Reference Color"),
-        _("Reference Color"),
+        _("Coloring Photo via Reference Picture"),
+        _("More_Color_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
         "2020-2023",

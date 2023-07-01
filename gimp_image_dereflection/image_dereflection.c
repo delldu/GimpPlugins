@@ -33,11 +33,11 @@ static void query(void)
 
     gimp_install_procedure(PLUG_IN_PROC,
         _("Remove Reflection"),
-        _("Remove Reflection"),
+        _("More_Dereflection_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
         "2020-2023",
-        _("Remove Reflection"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        _("Reflection"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
     gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Clean/");
 }
@@ -49,7 +49,7 @@ static GimpPDBStatusType start_image_dereflection(gint32 drawable_id)
     IMAGE *send_image, *recv_image;
     GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-    gimp_progress_init("Dereflection ...");
+    gimp_progress_init("Remove Reflection ...");
     recv_image = NULL;
     send_image = image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
@@ -69,7 +69,7 @@ static GimpPDBStatusType start_image_dereflection(gint32 drawable_id)
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Dereflection service not available.\n");
+        g_message("Service not available.\n");
     }
 
     return status; // GIMP_PDB_SUCCESS;

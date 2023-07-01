@@ -53,7 +53,7 @@ static GimpPDBStatusType start_image_patch(gint drawable_id)
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Patch service not avaible.\n");
+        g_message("Service not avaible.\n");
     }
 
     return status;
@@ -77,8 +77,8 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Patch"),
-        _("Patch"),
+        _("Inpainting Photo"),
+        _("More_Patch_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
         "2020-2023", _("Patch"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);

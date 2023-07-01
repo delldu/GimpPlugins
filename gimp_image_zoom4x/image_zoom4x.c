@@ -32,11 +32,11 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Zoom 4X"),
-        _("Zoom 4X"),
+        _("4X Super Resolution"),
+        _("More_Zoom4x_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
-        "2020-2023", _("Zoom 4X"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        "2020-2023", _("4X"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
     gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Zoom In/");
 }
@@ -68,7 +68,7 @@ static GimpPDBStatusType start_image_zoom4x(gint32 drawable_id)
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Zoom4x service not available.\n");
+        g_message("Service not available.\n");
     }
 
     return status; // GIMP_PDB_SUCCESS;

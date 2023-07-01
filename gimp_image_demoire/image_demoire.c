@@ -33,10 +33,10 @@ static void query(void)
 
     gimp_install_procedure(PLUG_IN_PROC,
         _("Remove Moire"),
-        _("Remove Moire"),
+        _("More_Demoire_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
-        "2020-2023", _("Remove Moire"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        "2020-2023", _("Moire"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
     gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Clean/");
 }
@@ -48,7 +48,7 @@ static GimpPDBStatusType start_image_demoire(gint32 drawable_id)
     IMAGE *send_image, *recv_image;
     GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-    gimp_progress_init("Remove moire ...");
+    gimp_progress_init("Remove Moire ...");
     recv_image = NULL;
     send_image = image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
@@ -68,7 +68,7 @@ static GimpPDBStatusType start_image_demoire(gint32 drawable_id)
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Remove moire service is not available.");
+        g_message("Service not available.");
     }
 
     return status; // GIMP_PDB_SUCCESS;
