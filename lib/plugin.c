@@ -157,7 +157,7 @@ IMAGE* normal_service(char* service_name, IMAGE* send_image, char* addon)
     gimp_progress_update(0.9);
     if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
         recv_image = image_load(output_file);
-        CheckPoint("recv_image: (%dx%d)", recv_image->height, recv_image->width);
+        // CheckPoint("recv_image: (%dx%d)", recv_image->height, recv_image->width);
     }
 
     if (getenv("DEBUG") == NULL) { // Debug mode ? NO
@@ -184,10 +184,12 @@ IMAGE* image_from_drawable(gint32 drawable_id, gint* channels, GeglRectangle* re
         syslog_error("Call gimp_drawable_mask_intersect()");
         return NULL;
     }
+#if 0 // xxxx8888    
     if (rect->width * rect->height < 256) { // 16 * 16
         syslog_error("Drawable mask size is too small.");
         return NULL;
     }
+#endif
 
     // Gegl buffer & shadow buffer for reading/writing
     buffer = gimp_drawable_get_buffer(drawable_id);

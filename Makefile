@@ -13,6 +13,7 @@ INSTALL_DIR=/home/dell/snap/gimp/393/.config/GIMP/2.10/plug-ins
 
 XSUBDIRS :=  \
 	lib \
+	select_to_alpha \
 	gimp_image_autops \
 	gimp_image_denoise \
 	gimp_image_deblur \
