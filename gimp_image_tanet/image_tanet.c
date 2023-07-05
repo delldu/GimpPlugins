@@ -112,12 +112,8 @@ static GimpPDBStatusType start_image_tanet(gint32 drawable_id)
         status = GIMP_PDB_EXECUTION_ERROR;
         g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
     }
-    gimp_progress_update(1.0);
 
-    if (status != GIMP_PDB_SUCCESS)
-        return status;
-
-    if (recv_text != NULL) {
+    if (status == GIMP_PDB_SUCCESS && recv_text != NULL) {
         // g_message("Aesthetic Score: %s\n", recv_text);
         display_score(recv_text);
         free(recv_text);
@@ -125,6 +121,9 @@ static GimpPDBStatusType start_image_tanet(gint32 drawable_id)
         status = GIMP_PDB_EXECUTION_ERROR;
         g_message("Service not avaible.\n");
     }
+
+    gimp_progress_update(1.0);
+    gimp_progress_end();
 
     return status;
 }

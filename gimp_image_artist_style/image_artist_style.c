@@ -60,12 +60,8 @@ static GimpPDBStatusType start_image_artist_style(gint32 drawable_id, gint32 sty
         status = GIMP_PDB_EXECUTION_ERROR;
         g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
     }
-    gimp_progress_update(1.0);
 
-    if (status != GIMP_PDB_SUCCESS)
-        return status;
-
-    if (image_valid(recv_image)) {
+    if (status == GIMP_PDB_SUCCESS && image_valid(recv_image)) {
         image_saveto_gimp(recv_image, (char*)"artist_style");
         image_destroy(recv_image);
     } else {
@@ -76,6 +72,9 @@ static GimpPDBStatusType start_image_artist_style(gint32 drawable_id, gint32 sty
         image_destroy(send_image);
     if (image_valid(style_image))
         image_destroy(style_image);
+
+    gimp_progress_update(1.0);
+    gimp_progress_end();
 
     return status; // GIMP_PDB_SUCCESS;
 }

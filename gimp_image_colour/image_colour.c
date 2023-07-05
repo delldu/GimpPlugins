@@ -61,10 +61,12 @@ static GimpPDBStatusType start_image_colour(gint image_id, gint drawable_id)
         status = GIMP_PDB_EXECUTION_ERROR;
         g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
     }
-    gimp_progress_update(1.0);
 
     if (mask)
         image_destroy(mask);
+
+    gimp_progress_update(1.0);
+    gimp_progress_end();
 
     return status;
 }

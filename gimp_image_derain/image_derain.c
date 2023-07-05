@@ -58,18 +58,17 @@ static GimpPDBStatusType start_image_derain(gint32 drawable_id)
         status = GIMP_PDB_EXECUTION_ERROR;
         g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
     }
-    gimp_progress_update(1.0);
 
-    if (status != GIMP_PDB_SUCCESS)
-        return status;
-
-    if (image_valid(recv_image)) {
+    if (status == GIMP_PDB_SUCCESS && image_valid(recv_image)) {
         image_saveto_drawable(recv_image, drawable_id, channels, &rect);
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
         g_message("Service not available.\n");
     }
+
+    gimp_progress_update(1.0);
+    gimp_progress_end();
 
     return status; // GIMP_PDB_SUCCESS;
 }

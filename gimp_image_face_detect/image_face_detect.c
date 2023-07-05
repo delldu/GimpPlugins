@@ -59,12 +59,8 @@ static GimpPDBStatusType start_image_face_detect(gint32 drawable_id)
         status = GIMP_PDB_EXECUTION_ERROR;
         g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
     }
-    gimp_progress_update(1.0);
 
-    if (status != GIMP_PDB_SUCCESS)
-        return status;
-
-    if (image_valid(recv_image)) {
+    if (status == GIMP_PDB_SUCCESS && image_valid(recv_image)) {
         if (recv_image->height < 1024 && recv_image < 1024) {
             g_message("There seems NO FACE in picture.\n");
         } else {
@@ -75,6 +71,9 @@ static GimpPDBStatusType start_image_face_detect(gint32 drawable_id)
         status = GIMP_PDB_EXECUTION_ERROR;
         g_message("Service not available.\n");
     }
+
+    gimp_progress_update(1.0);
+    gimp_progress_end();
 
     return status; // GIMP_PDB_SUCCESS;
 }

@@ -79,6 +79,43 @@ gboolean save_as_dialog()
     return run;
 }
 
+void test_drag_path(gint32 image_id)
+{
+    // https://cpp.hotexamples.com/examples/-/-/gimp_vectors_stroke_get_points/cpp-gimp_vectors_stroke_get_points-function-examples.html    
+
+    gint *vectors, num_vectors;
+    gint *strokes, num_strokes;
+
+    GimpVectorsStrokeType type;
+    gint num_points;
+    gdouble *points;
+    gboolean closed;
+
+    vectors = gimp_image_get_vectors(image_id, &num_vectors);
+    CheckPoint("num_vectors = %d", num_vectors); // num_vectors = 1, one path ?
+
+    for (int i = 0; i < num_vectors; i++) {
+        strokes = gimp_vectors_get_strokes(vectors[i], &num_strokes);
+        CheckPoint("Path %d, num_strokes = %d", i, num_strokes);
+
+        for (int j = 0; j < num_strokes; j++) {
+            type = gimp_vectors_stroke_get_points(vectors[i], strokes[j], &num_points, &points, &closed);
+            if (type != GIMP_VECTORS_STROKE_TYPE_BEZIER) {
+                g_free(points);
+                continue;
+            }
+            CheckPoint("j = %d, num_points = %d, closed = %s", j, num_points, closed?"True":"False");
+            if (num_points >= 12) {
+                CheckPoint("Drag Points: (%.2lf, %.2lf) --> (%.2lf, %.2lf)", points[0], points[1], points[6], points[7]);
+            } else if (num_points >= 6) {
+                CheckPoint("Pin Point: x=%.2lf, y=%.2lf", points[0], points[1]);
+            }
+            g_free(points);
+        }
+        g_free(strokes);
+    }
+    g_free(vectors);
+}
 
 
 static void query(void);
@@ -142,7 +179,7 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
 {
     static GimpParam values[1];
     GimpRunMode run_mode;
-    // gint32 image_id;
+    gint32 image_id;
     gint32 drawable_id;
     GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
@@ -161,8 +198,11 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     }
 
     run_mode = (GimpRunMode)param[0].data.d_int32;
-    // image_id = param[1].data.d_image;
+    image_id = param[1].data.d_image;
     drawable_id = param[2].data.d_drawable;
+
+    test_drag_path(image_id);
+
 
     if (run_mode == GIMP_RUN_INTERACTIVE && ! save_as_dialog())
         return;

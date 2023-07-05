@@ -55,6 +55,7 @@ static GimpPDBStatusType start_image_clean(gint drawable_id)
         g_message("Source error.\n");
     }
     gimp_progress_update(1.0);
+    gimp_progress_end();
 
     return status;
 }
