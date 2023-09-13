@@ -24,7 +24,7 @@ static GimpPDBStatusType start_image_patch(gint drawable_id)
 
     gimp_progress_init("Patch ...");
     recv_image = NULL;
-    send_image = image_from_drawable(drawable_id, &channels, &rect);
+    send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     // make sure image is not leak masked infomation
     image_foreach(send_image, i, j)
     {
@@ -36,7 +36,7 @@ static GimpPDBStatusType start_image_patch(gint drawable_id)
         }
     }
     if (image_valid(send_image)) {
-        recv_image = normal_service((char*)"image_patch", send_image, NULL);
+        recv_image = vision_image_service((char*)"image_patch", send_image, NULL);
         image_destroy(send_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
@@ -44,8 +44,8 @@ static GimpPDBStatusType start_image_patch(gint drawable_id)
     }
 
     if (status == GIMP_PDB_SUCCESS && image_valid(recv_image)) {
-        // image_saveto_gimp(recv_image, (char *)"patch");
-        image_saveto_drawable(recv_image, drawable_id, channels, &rect);
+        // vision_save_image_to_gimp(recv_image, (char *)"patch");
+        vision_save_image_to_drawable(recv_image, drawable_id, channels, &rect);
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
@@ -118,7 +118,7 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     if (!gimp_drawable_has_alpha(drawable_id))
         gimp_layer_add_alpha(drawable_id);
 
-    image_ai_cache_init();
+    vision_gimp_plugin_init();
     // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
     status = start_image_patch(drawable_id);
@@ -128,5 +128,5 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     // Output result for pdb
     values[0].data.d_status = status;
 
-    image_ai_cache_exit();
+    vision_gimp_plugin_exit();
 }

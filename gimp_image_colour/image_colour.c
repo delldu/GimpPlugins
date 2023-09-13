@@ -35,8 +35,8 @@ static GimpPDBStatusType start_image_colour(gint image_id, gint drawable_id)
 
     gimp_progress_init("Colour ...");
     recv_image = NULL;
-    mask = get_selection_mask(image_id);
-    send_image = image_from_drawable(drawable_id, &channels, &rect);
+    mask = vision_get_selection_mask(image_id);
+    send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
         // more color weight if pixel is selected (mask marked) ...
         if (mask && mask->height == send_image->height && mask->width == send_image->width && !is_full_selection(mask)) {
@@ -47,10 +47,10 @@ static GimpPDBStatusType start_image_colour(gint image_id, gint drawable_id)
                 send_image->ie[i][j].a = 0;
         }
 
-        recv_image = normal_service((char*)"image_colour", send_image, NULL);
+        recv_image = vision_image_service((char*)"image_colour", send_image, NULL);
 
         if (image_valid(recv_image)) {
-            image_saveto_gimp(recv_image, (char*)"colour");
+            vision_save_image_to_gimp(recv_image, (char*)"colour");
             image_destroy(recv_image);
         } else {
             status = GIMP_PDB_EXECUTION_ERROR;
@@ -131,7 +131,7 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     if (!gimp_drawable_has_alpha(drawable_id))
         gimp_layer_add_alpha(drawable_id);
 
-    image_ai_cache_init();
+    vision_gimp_plugin_init();
     // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
     status = start_image_colour(image_id, drawable_id);
@@ -141,5 +141,5 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     // Output result for pdb
     values[0].data.d_status = status;
 
-    image_ai_cache_exit();
+    vision_gimp_plugin_exit();
 }

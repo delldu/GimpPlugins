@@ -23,9 +23,9 @@ static GimpPDBStatusType start_image_matte(gint drawable_id)
 
     gimp_progress_init("Matte ...");
     recv_image = NULL;
-    send_image = image_from_drawable(drawable_id, &channels, &rect);
+    send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
-        recv_image = normal_service((char*)"image_matte", send_image, NULL);
+        recv_image = vision_image_service((char*)"image_matte", send_image, NULL);
         image_destroy(send_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
@@ -33,8 +33,8 @@ static GimpPDBStatusType start_image_matte(gint drawable_id)
     }
 
     if (status == GIMP_PDB_SUCCESS && image_valid(recv_image)) {
-        // image_saveto_gimp(recv_image, (char *)"matte");
-        image_saveto_drawable(recv_image, drawable_id, channels, &rect);
+        // vision_save_image_to_gimp(recv_image, (char *)"matte");
+        vision_save_image_to_drawable(recv_image, drawable_id, channels, &rect);
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
@@ -107,8 +107,16 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     if (! gimp_drawable_has_alpha(drawable_id))
         gimp_layer_add_alpha(drawable_id);
 
-    image_ai_cache_init();
+    vision_gimp_plugin_init();
     // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
+
+#if 0 // Test Selection Mask
+    IMAGE *mask = vision_get_selection_mask(image_id);
+    if (image_valid(mask)) {
+        image_save(mask, "/home/dell/tmp/mask_test.png");
+        image_destroy(mask);
+    }
+#endif
 
     status = start_image_matte(drawable_id);
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
@@ -117,5 +125,5 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     // Output result for pdb
     values[0].data.d_status = status;
 
-    image_ai_cache_exit();
+    vision_gimp_plugin_exit();
 }

@@ -89,11 +89,13 @@ gboolean clean_dialog()
     //  gdouble unconstrained_upper,
     //  const gchar *tooltip, const gchar *help_id);
 
-    adjustment = gimp_scale_entry_new(GTK_TABLE(table), 0, 1,
-        "Strength: ", SCALE_WIDTH, SPIN_BUTTON_WIDTH,
-        clean_options.strength, 0, 100 /*[lo, up] */, 1, 10 /*step */, 0, TRUE, 0, 0,
-        "Clean Strength", NULL);
-    g_signal_connect(adjustment, "value_changed", G_CALLBACK(gimp_int_adjustment_update), &clean_options.strength);
+    adjustment = gimp_scale_entry_new(GTK_TABLE(table), 0 /*col*/, 1 /*row*/,
+        "Strength: ", 256 /*SCALE_WIDTH */, 96 /*SPIN_BUTTON_WIDTH*/,
+        clean_options.strength, 0, 100 /*[lo, up] */, 1, 10 /*step */, 0 /*digits*/,
+        TRUE /*constrain*/, 0 /*unconstrained_lower*/, 0 /*unconstrained_upper*/,
+        "Clean Strength" /*tooltip*/, NULL /*help_id*/);
+    g_signal_connect(adjustment, "value_changed", G_CALLBACK(gimp_int_adjustment_update), 
+        &clean_options.strength);
 
     gtk_widget_show(main_vbox);
     gtk_widget_show(dialog);

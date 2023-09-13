@@ -15,19 +15,20 @@ static void query(void);
 static void run(const gchar* name,
     gint nparams, const GimpParam* param, gint* nreturn_vals, GimpParam** return_vals);
 
-static IMAGE* clean_rpc_service(IMAGE* send_image, int msgcode)
+static IMAGE* clean_service(IMAGE* send_image, int msgcode)
 {
     char addon[64];
-
+#if 0
     snprintf(addon, sizeof(addon), "sigma=%d", clean_options.strength);
     // TransWeather model
     if (msgcode == IMAGE_CLEAN_SERVICE_WITH_WEATHER)
-        return normal_service((char*)"image_clean_weather", send_image, addon);
+        return vision_image_service((char*)"image_clean_weather", send_image, addon);
 
     if (msgcode == IMAGE_CLEAN_SERVICE_WITH_GUIDE)
-        return normal_service((char*)"image_clean_guide", send_image, addon);
-
-    return normal_service((char*)"image_clean", send_image, addon);
+        return vision_image_service((char*)"image_clean_guide", send_image, addon);
+#endif
+    
+    return vision_image_service((char*)"image_clean", send_image, addon);
 }
 
 static GimpPDBStatusType start_image_clean(gint drawable_id)
@@ -39,11 +40,11 @@ static GimpPDBStatusType start_image_clean(gint drawable_id)
 
     gimp_progress_init("Clean ...");
 
-    send_image = image_from_drawable(drawable_id, &channels, &rect);
+    send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
-        recv_image = clean_rpc_service(send_image, clean_options.method);
+        recv_image = clean_service(send_image, clean_options.method);
         if (image_valid(recv_image)) {
-            image_saveto_drawable(recv_image, drawable_id, channels, &rect);
+            vision_save_image_to_drawable(recv_image, drawable_id, channels, &rect);
             image_destroy(recv_image);
         } else {
             status = GIMP_PDB_EXECUTION_ERROR;
@@ -133,7 +134,7 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
         break;
     }
 
-    image_ai_cache_init();
+    vision_gimp_plugin_init();
 
     status = start_image_clean(drawable_id);
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
@@ -147,5 +148,5 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     values[0].data.d_status = status;
 
     // free resources used by gegl
-    image_ai_cache_exit();
+    vision_gimp_plugin_exit();
 }

@@ -52,17 +52,17 @@ static GimpPDBStatusType start_image_artist_style(gint32 drawable_id, gint32 sty
 
     gimp_progress_init("Artist Style ...");
     recv_image = NULL;
-    style_image = image_from_drawable(style_drawable_id, &channels, &rect);
-    send_image = image_from_drawable(drawable_id, &channels, &rect);
+    style_image = vision_get_image_from_drawable(style_drawable_id, &channels, &rect);
+    send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image) && image_valid(style_image)) {
-        recv_image = style_service("image_artist_style", send_image, style_image);
+        recv_image = vision_style_service("image_artist_style", send_image, style_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
         g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
     }
 
     if (status == GIMP_PDB_SUCCESS && image_valid(recv_image)) {
-        image_saveto_gimp(recv_image, (char*)"artist_style");
+        vision_save_image_to_gimp(recv_image, (char*)"artist_style");
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
@@ -105,12 +105,12 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     image_id = param[1].data.d_image;
     drawable_id = param[2].data.d_drawable;
 
-    image_ai_cache_init();
+    vision_gimp_plugin_init();
 
     // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
-    style_drawable_id = get_reference_drawable(image_id, drawable_id);
+    style_drawable_id = vision_get_reference_drawable(image_id, drawable_id);
     if (style_drawable_id < 0) {
-        gchar* filename = select_image_filename(PLUG_IN_PROC, _("Load Style Image"));
+        gchar* filename = vision_select_image_filename(PLUG_IN_PROC, _("Load Style Image"));
         if (filename != NULL) {
             style_drawable_id = gimp_file_load_layer(run_mode, image_id, filename);
             if (style_drawable_id > 0) {
@@ -135,5 +135,5 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
         gimp_displays_flush();
 
-    image_ai_cache_exit();
+    vision_gimp_plugin_exit();
 }

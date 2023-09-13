@@ -8,7 +8,7 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "gimp_image_curve"
+#define PLUG_IN_PROC "gimp_image_midas"
 
 static void query(void);
 static void run(const gchar* name,
@@ -32,28 +32,28 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Beautify Color Photo"),
-        _("More_Curve_Help"),
+        _("Detect Depth"),
+        _("More_Depth_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
         "2020-2023",
-        _("Color Photo"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        _("Depth"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Beautify/");
+    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Detect/");
 }
 
-static GimpPDBStatusType start_image_curve(gint32 drawable_id)
+static GimpPDBStatusType start_image_depth(gint32 drawable_id)
 {
     gint channels;
     GeglRectangle rect;
     IMAGE *send_image, *recv_image;
     GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-    gimp_progress_init("Beautify ...");
+    gimp_progress_init("Detect Depth ...");
     recv_image = NULL;
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
-        recv_image = vision_image_service((char*)"image_curve", send_image, NULL);
+        recv_image = vision_image_service((char*)"image_midas", send_image, NULL);
         image_destroy(send_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
@@ -61,7 +61,7 @@ static GimpPDBStatusType start_image_curve(gint32 drawable_id)
     }
 
     if (status == GIMP_PDB_SUCCESS && image_valid(recv_image)) {
-        vision_save_image_to_drawable(recv_image, drawable_id, channels, &rect);
+        vision_save_image_to_gimp(recv_image, (char *)"depth");
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
@@ -103,7 +103,7 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     vision_gimp_plugin_init();
     // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
-    status = start_image_curve(drawable_id);
+    status = start_image_depth(drawable_id);
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
         gimp_displays_flush();
 

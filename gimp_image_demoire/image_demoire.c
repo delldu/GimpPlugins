@@ -50,9 +50,9 @@ static GimpPDBStatusType start_image_demoire(gint32 drawable_id)
 
     gimp_progress_init("Remove Moire ...");
     recv_image = NULL;
-    send_image = image_from_drawable(drawable_id, &channels, &rect);
+    send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
-        recv_image = normal_service((char*)"image_demoire", send_image, NULL);
+        recv_image = vision_image_service((char*)"image_demoire", send_image, NULL);
         image_destroy(send_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
@@ -60,7 +60,7 @@ static GimpPDBStatusType start_image_demoire(gint32 drawable_id)
     }
 
     if (status == GIMP_PDB_SUCCESS && image_valid(recv_image)) {
-        image_saveto_drawable(recv_image, drawable_id, channels, &rect);
+        vision_save_image_to_drawable(recv_image, drawable_id, channels, &rect);
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
@@ -99,12 +99,12 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     // image_id = param[1].data.d_image;
     drawable_id = param[2].data.d_drawable;
 
-    image_ai_cache_init();
+    vision_gimp_plugin_init();
     // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
     status = start_image_demoire(drawable_id);
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
         gimp_displays_flush();
 
-    image_ai_cache_exit();
+    vision_gimp_plugin_exit();
 }

@@ -36,21 +36,23 @@ extern "C" {
 #define GIMP_PLUGIN_VERSION "1.1.0"
 #define AI_TASKSET "TAI"
 
-int image_saveas_layer(IMAGE* image, char* name_prefix, gint32 image_id, float alpha);
-IMAGE* image_from_drawable(gint32 drawable_id, gint* channels, GeglRectangle* rect);
-int image_saveto_drawable(IMAGE* image, gint32 drawable_id, gint channels, GeglRectangle* rect);
-int image_saveto_gimp(IMAGE* image, char* name_prefix);
-gint32 get_reference_drawable(gint32 image_id, gint32 drawable_id);
-IMAGE* get_selection_mask(gint32 image_id);
+int vision_save_image_as_layer(IMAGE* image, char* name_prefix, gint32 image_id, float alpha);
+int vision_save_image_to_drawable(IMAGE* image, gint32 drawable_id, gint channels, GeglRectangle* rect);
+int vision_save_image_to_gimp(IMAGE* image, char* name_prefix);
+gint32 vision_get_reference_drawable(gint32 image_id, gint32 drawable_id);
+IMAGE* vision_get_selection_mask(gint32 image_id);
+IMAGE* vision_get_image_from_drawable(gint32 drawable_id, gint* channels, GeglRectangle* rect);
 
-IMAGE* normal_service(char* service_name, IMAGE* send_image, char* addon);
-IMAGE* style_service(char* service_name, IMAGE* send_image, IMAGE* style_image);
+IMAGE* vision_image_service(char* service_name, IMAGE* send_image, char* addon);
+char* vision_text_service(char* service_name, IMAGE* send_image, char* addon);
+IMAGE* vision_style_service(char* service_name, IMAGE* send_image, IMAGE* style_image);
+IMAGE* vision_color_service(char* service_name, IMAGE* send_image, IMAGE* color_image);
 
-int image_ai_cache_init();
-int image_ai_cache_filename(char* prefix, int namesize, char* filename);
-void image_ai_cache_exit();
+int vision_gimp_plugin_init();
+int vision_get_cache_filename(char* prefix, int namesize, char* filename);
+void vision_gimp_plugin_exit();
 
-gchar* select_image_filename(char *plug_in, char* title);
+gchar* vision_select_image_filename(char *plug_in, char* title);
 
 #if defined(__cplusplus)
 }

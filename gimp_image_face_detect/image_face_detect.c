@@ -51,9 +51,9 @@ static GimpPDBStatusType start_image_face_detect(gint32 drawable_id)
 
     gimp_progress_init("Detect Face ...");
     recv_image = NULL;
-    send_image = image_from_drawable(drawable_id, &channels, &rect);
+    send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
-        recv_image = normal_service((char*)"image_face_detect", send_image, NULL);
+        recv_image = vision_image_service((char*)"image_face_detect", send_image, NULL);
         image_destroy(send_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
@@ -61,10 +61,10 @@ static GimpPDBStatusType start_image_face_detect(gint32 drawable_id)
     }
 
     if (status == GIMP_PDB_SUCCESS && image_valid(recv_image)) {
-        if (recv_image->height < 1024 && recv_image < 1024) {
+        if (recv_image->height < 1024 && recv_image->width < 1024) {
             g_message("There seems NO FACE in picture.\n");
         } else {
-            image_saveto_gimp(recv_image, (char*)"image_face_detect");
+            vision_save_image_to_gimp(recv_image, (char*)"image_face_detect");
         }
         image_destroy(recv_image);
     } else {
@@ -104,12 +104,12 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     // image_id = param[1].data.d_image;
     drawable_id = param[2].data.d_drawable;
 
-    image_ai_cache_init();
+    vision_gimp_plugin_init();
     // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
     status = start_image_face_detect(drawable_id);
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
         gimp_displays_flush();
 
-    image_ai_cache_exit();
+    vision_gimp_plugin_exit();
 }

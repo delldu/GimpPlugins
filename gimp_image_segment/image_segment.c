@@ -33,16 +33,16 @@ static int save_segment_result(IMAGE* send_image, IMAGE* recv_image)
         return RET_ERROR;
     }
 
-    ret = image_saveas_layer(send_image, "sources", image_id, 100.0);
+    ret = vision_save_image_as_layer(send_image, "sources", image_id, 100.0);
     if (ret == RET_OK) {
-        ret = image_saveas_layer(recv_image, "segment", image_id, 50.0);
+        ret = vision_save_image_as_layer(recv_image, "segment", image_id, 50.0);
     }
 
     if (ret == RET_OK) {
         gimp_display_new(image_id);
         gimp_displays_flush();
     } else {
-        syslog_error("Call image_saveas_layer().");
+        syslog_error("Call vision_save_image_as_layer().");
     }
 
     return ret;
@@ -85,9 +85,9 @@ static GimpPDBStatusType start_image_segment(gint32 drawable_id)
 
     gimp_progress_init("Segment ...");
     recv_image = NULL;
-    send_image = image_from_drawable(drawable_id, &channels, &rect);
+    send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
-        recv_image = normal_service((char*)"image_segment", send_image, NULL);
+        recv_image = vision_image_service((char*)"image_segment", send_image, NULL);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
         g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
@@ -136,12 +136,12 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     // image_id = param[1].data.d_image;
     drawable_id = param[2].data.d_drawable;
 
-    image_ai_cache_init();
+    vision_gimp_plugin_init();
     // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
     status = start_image_segment(drawable_id);
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
         gimp_displays_flush();
 
-    image_ai_cache_exit();
+    vision_gimp_plugin_exit();
 }

@@ -47,52 +47,6 @@ static void display_score(char* score_text)
     gtk_widget_destroy(dialog);
 }
 
-static char* tanet_service(IMAGE* send_image)
-{
-    TASKARG taska;
-    TASKSET* tasks;
-    TIME start_time, wait_time;
-    char input_file[512], output_file[512], command[TASK_BUFFER_LEN], *txt = NULL;
-
-    CHECK_IMAGE(send_image);
-
-    image_ai_cache_filename((char*)"image_tanet_input", sizeof(input_file), input_file);
-    image_ai_cache_filename((char*)"image_tanet_output", sizeof(output_file), output_file);
-    image_save(send_image, input_file);
-
-    snprintf(command, sizeof(command), "image_tanet(input_file=%s,output_file=%s)", input_file, output_file);
-
-    tasks = taskset_create(AI_TASKSET);
-    if (set_queue_task(tasks, command, &taska) != RET_OK)
-        goto failure;
-
-    // wait time, e.g, 30 seconds
-    wait_time = 30 * 1000;
-    start_time = time_now();
-    while (time_now() - start_time < wait_time) {
-        usleep(300 * 1000); // 300 ms
-        if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file))
-            break;
-        gimp_progress_update((float)(time_now() - start_time) / wait_time * 0.90);
-    }
-    gimp_progress_update(0.9);
-    if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
-        int size;
-        txt = file_load(output_file, &size);
-    }
-
-    if (getenv("DEBUG") == NULL) { // Debug mode ? NO
-        unlink(input_file);
-        unlink(output_file);
-
-        delete_task(tasks, taska.key);
-    }
-
-failure:
-    taskset_destroy(tasks);
-
-    return txt;
-}
 
 static GimpPDBStatusType start_image_tanet(gint32 drawable_id)
 {
@@ -104,9 +58,9 @@ static GimpPDBStatusType start_image_tanet(gint32 drawable_id)
 
     gimp_progress_init("Assess ...");
     recv_text = NULL;
-    send_image = image_from_drawable(drawable_id, &channels, &rect);
+    send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
-        recv_text = tanet_service(send_image);
+        recv_text = vision_text_service((char *)"image_tanet", send_image, NULL);
         image_destroy(send_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
@@ -182,7 +136,7 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     // image_id = param[1].data.d_image;
     drawable_id = param[2].data.d_drawable;
 
-    image_ai_cache_init();
+    vision_gimp_plugin_init();
     // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
     status = start_image_tanet(drawable_id);
@@ -192,5 +146,5 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     // Output result for pdb
     values[0].data.d_status = status;
 
-    image_ai_cache_exit();
+    vision_gimp_plugin_exit();
 }

@@ -158,13 +158,13 @@ static GimpPDBStatusType save_to_alpha(gint drawable_id)
     IMAGE *image;
     GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-    image = image_from_drawable(drawable_id, &channels, &rect);
+    image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
 
     if (image_valid(image)) {
         image_foreach(image, i, j) {
             image->ie[i][j].a = alpha_value; //bg - 0,  unkown - 128, fg - 255
         }
-        image_saveto_drawable(image, drawable_id, channels, &rect);
+        vision_save_image_to_drawable(image, drawable_id, channels, &rect);
         image_destroy(image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;

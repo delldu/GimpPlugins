@@ -6,8 +6,6 @@
 #***
 #************************************************************************************/
 #
-# /home/dell/snap/gimp/380/.config/GIMP/2.10/plug-ins
-# /home/dell/snap/gimp/current/.config/GIMP/2.10/plug-ins
 # /home/dell/.config/GIMP/2.10/plug-ins
 INSTALL_DIR=/home/dell/snap/gimp/393/.config/GIMP/2.10/plug-ins
 
@@ -31,6 +29,10 @@ XSUBDIRS :=  \
 	gimp_image_zoom4x \
 	gimp_image_matte \
 	gimp_image_segment \
+	gimp_image_canny \
+	gimp_image_mlsd \
+	gimp_image_midas \
+	gimp_image_pose \
 	gimp_image_shadow \
 	gimp_image_scratch \
 	gimp_image_patch \
