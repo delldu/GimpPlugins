@@ -21,7 +21,7 @@
 ├── gimp_image_photo_style
 ├── gimp_image_scratch
 ├── gimp_image_segment
-├── gimp_image_shadow
+├── gimp_image_deshadow
 ├── gimp_image_tanet
 ├── gimp_image_zoom2x
 ├── gimp_image_zoom4x

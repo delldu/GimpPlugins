@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-*** Copyright 2020-2023 Dell(18588220928@163.com), All Rights Reserved.
+*** Copyright 2020-2024 Dell(18588220928@163.com), All Rights Reserved.
 ***
 *** File Author: Dell, 2020-11-16 12:16:01
 ***
@@ -85,7 +85,7 @@ static void query(void)
         "Blind remove image noise with AI",
         "Dell Du <18588220928@163.com>",
         "Dell Du",
-        "2020-2023",
+        "2020-2024",
         "_Blind Denoise", "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
     gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Filters/AI/Clean");

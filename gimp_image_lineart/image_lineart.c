@@ -8,7 +8,7 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "gimp_image_face_detect"
+#define PLUG_IN_PROC "gimp_image_lineart"
 
 static void query(void);
 static void run(const gchar* name,
@@ -32,28 +32,28 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Detect Face !"),
-        _("More_Face_Crop_Help"),
+        _("Detect Lineart"),
+        _("More_Lineart_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
         "2020-2024",
-        _("Face"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        _("Lineart"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
     gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Detect");
 }
 
-static GimpPDBStatusType start_image_face_detect(gint32 drawable_id)
+static GimpPDBStatusType start_image_lineart(gint32 drawable_id)
 {
     gint channels;
     GeglRectangle rect;
     IMAGE *send_image, *recv_image;
     GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-    gimp_progress_init("Detect Face ...");
+    gimp_progress_init("Detect Lineart ...");
     recv_image = NULL;
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
-        recv_image = vision_image_service((char*)"image_face_detect", send_image, NULL);
+        recv_image = vision_image_service((char*)"image_lineart", send_image, NULL);
         image_destroy(send_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
@@ -61,7 +61,7 @@ static GimpPDBStatusType start_image_face_detect(gint32 drawable_id)
     }
 
     if (status == GIMP_PDB_SUCCESS && image_valid(recv_image)) {
-        vision_save_image_to_gimp(recv_image, (char*)"image_face_detect");
+        vision_save_image_to_gimp(recv_image, (char*)"lineart");
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
@@ -103,7 +103,7 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     vision_gimp_plugin_init();
     // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
-    status = start_image_face_detect(drawable_id);
+    status = start_image_lineart(drawable_id);
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
         gimp_displays_flush();
 

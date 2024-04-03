@@ -8,10 +8,10 @@
 #
 INSTALL_DIR := $(shell grep -w INSTALL_DIR ../Makefile | cut -d '=' -f 2)
 
-TARGET := gimp_image_scratch
+TARGET := gimp_image_deshadow
 
 SOURCE :=  \
-	image_scratch.c
+	image_deshadow.c
 
 INCS	:= -I../lib $(shell gimptool-2.0 --cflags) $(shell pkg-config nimage --cflags)
 LIBS	:= -L../lib -lplugin $(shell gimptool-2.0 --libs) $(shell pkg-config nimage --libs) $(shell pkg-config redos --libs)

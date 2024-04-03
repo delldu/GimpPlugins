@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-*** Copyright 2020-2023 Dell(18588220928@163.com), All Rights Reserved.
+*** Copyright 2020-2024 Dell(18588220928@163.com), All Rights Reserved.
 ***
 *** File Author: Dell, 2020-11-16 12:16:01
 ***
@@ -60,7 +60,7 @@ static GimpPDBStatusType start_image_tanet(gint32 drawable_id)
     recv_text = NULL;
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
-        recv_text = vision_text_service((char *)"image_tanet", send_image, NULL);
+        recv_text = vision_text_service((char *)"image_aa", send_image, NULL);
         image_destroy(send_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
@@ -104,7 +104,7 @@ static void query(void)
         _("More_AA_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
-        "2020-2023", _("AA"), "RGB*, GRAY*", GIMP_PLUGIN,
+        "2020-2024", _("AA"), "RGB*, GRAY*", GIMP_PLUGIN,
         G_N_ELEMENTS(args), 0, args, NULL);
 
     gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/");

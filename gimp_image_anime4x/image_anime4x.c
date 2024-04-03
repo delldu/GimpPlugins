@@ -8,35 +8,35 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "gimp_image_zoom4x"
+#define PLUG_IN_PROC "gimp_image_anime4x"
 
-static guint32 image_scale_times = 4; // 4x
+static guint32 anime_scale_times = 4; // 4x
 
 void toggle_4x_button(GtkRadioButton *button, gpointer user_data)
 {
     (void)button; (void)user_data; // avoid compiler complaint
-    image_scale_times = 4;
+    anime_scale_times = 4;
 }
 
 void toggle_3x_button(GtkRadioButton *button, gpointer user_data)
 {
     (void)button; (void)user_data; // avoid compiler complaint
-    image_scale_times = 3;
+    anime_scale_times = 3;
 }
 
 void toggle_2x_button(GtkRadioButton *button, gpointer user_data)
 {
     (void)button; (void)user_data; // avoid compiler complaint
-    image_scale_times = 2;
+    anime_scale_times = 2;
 }
 
 void toggle_1x_button(GtkRadioButton *button, gpointer user_data)
 {
     (void)button; (void)user_data; // avoid compiler complaint
-    image_scale_times = 1;
+    anime_scale_times = 1;
 }
 
-static gboolean image_scale_times_dialog()
+static gboolean anime_scale_times_dialog()
 {
     GtkWidget* dialog;
     GtkWidget* vbox;
@@ -107,16 +107,16 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Image Super Resolution"),
-        _("More_Zoom4x_Help"),
+        _("Anime Super Resolution"),
+        _("More_Anime4x_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
-        "2020-2024", _("Image"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        "2020-2024", _("Anime"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
     gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Zoom In/");
 }
 
-static GimpPDBStatusType start_image_zoom4x(gint32 drawable_id)
+static GimpPDBStatusType start_image_anime4x(gint32 drawable_id)
 {
     gint channels;
     GeglRectangle rect;
@@ -124,12 +124,12 @@ static GimpPDBStatusType start_image_zoom4x(gint32 drawable_id)
     GimpPDBStatusType status = GIMP_PDB_SUCCESS;
     char command[256];
 
-    snprintf(command, sizeof(command) - 1, "Zoom %dX ...", image_scale_times);
-    gimp_progress_init(command); // "Zoom 4X ...";
+    snprintf(command, sizeof(command) - 1, "Zoom %dX ...", anime_scale_times);
+    gimp_progress_init(command);
     recv_image = NULL;
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
-        snprintf(command, sizeof(command) - 1, "image_zoom%dx", image_scale_times);
+        snprintf(command, sizeof(command) - 1, "image_anime%dx", anime_scale_times);
         recv_image = vision_image_service(command, send_image, NULL);
         image_destroy(send_image);
     } else {
@@ -138,7 +138,7 @@ static GimpPDBStatusType start_image_zoom4x(gint32 drawable_id)
     }
 
     if (status == GIMP_PDB_SUCCESS && image_valid(recv_image)) {
-        snprintf(command, sizeof(command) - 1, "image_zoom%dx", image_scale_times);
+        snprintf(command, sizeof(command) - 1, "anime%dx", anime_scale_times);
         vision_save_image_to_gimp(recv_image, command);
         image_destroy(recv_image);
     } else {
@@ -179,12 +179,13 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     drawable_id = param[2].data.d_drawable;
 
     vision_gimp_plugin_init();
-    // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
-    if (run_mode == GIMP_RUN_INTERACTIVE && ! image_scale_times_dialog())
+    if (run_mode == GIMP_RUN_INTERACTIVE && ! anime_scale_times_dialog())
         return;
 
-    status = start_image_zoom4x(drawable_id);
+    // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
+
+    status = start_image_anime4x(drawable_id);
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
         gimp_displays_flush();
 

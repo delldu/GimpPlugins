@@ -8,11 +8,17 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "gimp_image_face_detect"
+#define PLUG_IN_PROC "gimp_image_edge"
 
 static void query(void);
 static void run(const gchar* name,
     gint nparams, const GimpParam* param, gint* nreturn_vals, GimpParam** return_vals);
+
+struct params {
+    gint low;
+    gint high;
+};
+
 
 GimpPlugInInfo PLUG_IN_INFO = {
     NULL,
@@ -32,38 +38,37 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Detect Face !"),
-        _("More_Face_Crop_Help"),
+        _("Detect Edge With AI"),
+        _("More_Edge_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
         "2020-2024",
-        _("Face"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        _("Edge"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Detect");
+    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Detect/");
 }
 
-static GimpPDBStatusType start_image_face_detect(gint32 drawable_id)
+static GimpPDBStatusType start_image_edge(gint32 drawable_id)
 {
+    int ret = RET_ERROR;
     gint channels;
     GeglRectangle rect;
-    IMAGE *send_image, *recv_image;
+    IMAGE *recv_image, *send_image;
     GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-    gimp_progress_init("Detect Face ...");
+    gimp_progress_init("Detect Edge ...");
     recv_image = NULL;
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
-        recv_image = vision_image_service((char*)"image_face_detect", send_image, NULL);
+        recv_image = vision_image_service((char*)"image_edge", send_image, NULL);
+        if (image_valid(recv_image)) {
+            vision_save_image_to_gimp(recv_image, (char *)"edge");
+            image_destroy(recv_image);
+            ret = RET_OK;
+        }
         image_destroy(send_image);
-    } else {
-        status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
     }
-
-    if (status == GIMP_PDB_SUCCESS && image_valid(recv_image)) {
-        vision_save_image_to_gimp(recv_image, (char*)"image_face_detect");
-        image_destroy(recv_image);
-    } else {
+    if (ret != RET_OK) {
         status = GIMP_PDB_EXECUTION_ERROR;
         g_message("Service not available.\n");
     }
@@ -100,10 +105,11 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     // image_id = param[1].data.d_image;
     drawable_id = param[2].data.d_drawable;
 
-    vision_gimp_plugin_init();
-    // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
-    status = start_image_face_detect(drawable_id);
+
+    vision_gimp_plugin_init();
+
+    status = start_image_edge(drawable_id);
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
         gimp_displays_flush();
 

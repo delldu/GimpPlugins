@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-*** Copyright 2020-2023 Dell(18588220928@163.com), All Rights Reserved.
+*** Copyright 2020-2024 Dell(18588220928@163.com), All Rights Reserved.
 ***
 *** File Author: Dell, 2020-11-16 12:16:01
 ***
@@ -8,7 +8,7 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "gimp_image_shadow"
+#define PLUG_IN_PROC "gimp_image_deshadow"
 
 static void query(void);
 static void run(const gchar* name,
@@ -32,28 +32,28 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Detect Shadow"),
-        _("More_Shadow_Help"),
+        _("Remove Shadow"),
+        _("More_Deshadow_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
-        "2020-2023",
+        "2020-2024",
         _("Shadow"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Detect");
+    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Clean/");
 }
 
-static GimpPDBStatusType start_image_shadow(gint32 drawable_id)
+static GimpPDBStatusType start_image_deshadow(gint32 drawable_id)
 {
     gint channels;
     GeglRectangle rect;
     IMAGE *send_image, *recv_image;
     GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-    gimp_progress_init("Detect Shadow ...");
+    gimp_progress_init("Remove Shadow ...");
     recv_image = NULL;
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
-        recv_image = vision_image_service((char*)"image_shadow", send_image, NULL);
+        recv_image = vision_image_service((char*)"image_deshadow", send_image, NULL);
         image_destroy(send_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
@@ -104,7 +104,7 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     vision_gimp_plugin_init();
     // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
-    status = start_image_shadow(drawable_id);
+    status = start_image_deshadow(drawable_id);
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
         gimp_displays_flush();
 

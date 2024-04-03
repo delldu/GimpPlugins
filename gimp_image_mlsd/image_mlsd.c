@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-*** Copyright 2020-2023 Dell(18588220928@163.com), All Rights Reserved.
+*** Copyright 2020-2024 Dell(18588220928@163.com), All Rights Reserved.
 ***
 *** File Author: Dell, 2020-11-16 12:16:01
 ***
@@ -32,12 +32,12 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Detect Line Segment"),
+        _("Detect Lines"),
         _("More_MLSD_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
-        "2020-2023",
-        _("Line Segment"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        "2020-2024",
+        _("Lines"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
     gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Detect/");
 }
@@ -49,11 +49,11 @@ static GimpPDBStatusType start_image_mlsd(gint32 drawable_id)
     IMAGE *send_image, *recv_image;
     GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-    gimp_progress_init("Detect Line Segment ...");
+    gimp_progress_init("Detect Lines ...");
     recv_image = NULL;
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
-        recv_image = vision_image_service((char*)"image_shadow", send_image, NULL);
+        recv_image = vision_image_service((char*)"image_mlsd", send_image, NULL);
         image_destroy(send_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;

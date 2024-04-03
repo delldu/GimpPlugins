@@ -1,6 +1,6 @@
 #/************************************************************************************
 #***
-#***	Copyright 2020-2023 Dell(18588220928@163.com), All Rights Reserved.
+#***	Copyright 2020-2024 Dell(18588220928@163.com), All Rights Reserved.
 #***
 #***	File Author: Dell, 2020-11-16 11:09:15
 #***
@@ -8,10 +8,10 @@
 #
 INSTALL_DIR := $(shell grep -w INSTALL_DIR ../Makefile | cut -d '=' -f 2)
 
-TARGET := gimp_image_shadow
+TARGET := gimp_image_lineart
 
 SOURCE :=  \
-	image_shadow.c
+	image_lineart.c
 
 INCS	:= -I../lib $(shell gimptool-2.0 --cflags) $(shell pkg-config nimage --cflags)
 LIBS	:= -L../lib -lplugin $(shell gimptool-2.0 --libs) $(shell pkg-config nimage --libs) $(shell pkg-config redos --libs)

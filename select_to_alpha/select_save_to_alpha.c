@@ -1,8 +1,8 @@
 /************************************************************************************
 ***
-*** Copyright 2023 Dell(18588220928@163.com), All Rights Reserved.
+*** Copyright 2024 Dell(18588220928@163.com), All Rights Reserved.
 ***
-*** File Author: Dell, Sat 01 Jul 2023 05:09:03 PM CST
+*** File Author: Dell, Sat 01 Jul 2024 05:09:03 PM CST
 ***
 ************************************************************************************/
 
@@ -27,7 +27,7 @@ void toggle_bg_button(GtkRadioButton *button, gpointer user_data)
 void toggle_unkown_button(GtkRadioButton *button, gpointer user_data)
 {
     (void)button; (void)user_data; // avoid compiler complaint
-   alpha_value = 128;
+    alpha_value = 128;
 }
 
 gboolean save_as_dialog()
@@ -140,7 +140,7 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Save the selection as foregroud to alpha channel"),
+        _("Save the selection as foregroud/background/unkown to alpha channel"),
         _("More_Select_Save_To_Alpha_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",

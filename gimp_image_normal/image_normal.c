@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-*** Copyright 2020-2023 Dell(18588220928@163.com), All Rights Reserved.
+*** Copyright 2020-2024 Dell(18588220928@163.com), All Rights Reserved.
 ***
 *** File Author: Dell, 2020-11-16 12:16:01
 ***
@@ -8,7 +8,7 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "gimp_image_zoom2x"
+#define PLUG_IN_PROC "gimp_image_normal"
 
 static void query(void);
 static void run(const gchar* name,
@@ -32,27 +32,28 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("2X Super Resolution"),
-        _("More_Zoom2x_Help"),
+        _("Detect Normal"),
+        _("More_Normal_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
-        "2020-2023", _("2X"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        "2020-2024",
+        _("Normal"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Zoom In/");
+    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Detect/");
 }
 
-static GimpPDBStatusType start_image_zoom2x(gint32 drawable_id)
+static GimpPDBStatusType start_image_normal(gint32 drawable_id)
 {
     gint channels;
     GeglRectangle rect;
     IMAGE *send_image, *recv_image;
     GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-    gimp_progress_init("Zoom 2X ...");
+    gimp_progress_init("Detect Normal ...");
     recv_image = NULL;
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
-        recv_image = vision_image_service((char*)"image_zoom2x", send_image, NULL);
+        recv_image = vision_image_service((char*)"image_normal", send_image, NULL);
         image_destroy(send_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
@@ -60,7 +61,7 @@ static GimpPDBStatusType start_image_zoom2x(gint32 drawable_id)
     }
 
     if (status == GIMP_PDB_SUCCESS && image_valid(recv_image)) {
-        vision_save_image_to_gimp(recv_image, (char*)"zoom2x");
+        vision_save_image_to_gimp(recv_image, (char *)"normal");
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
@@ -102,7 +103,7 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     vision_gimp_plugin_init();
     // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
-    status = start_image_zoom2x(drawable_id);
+    status = start_image_normal(drawable_id);
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
         gimp_displays_flush();
 

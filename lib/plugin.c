@@ -1,6 +1,6 @@
 /************************************************************************************
 ***
-***	Copyright 2021-2023 Dell(18588220928@163.com), All Rights Reserved.
+***	Copyright 2021-2024 Dell(18588220928@163.com), All Rights Reserved.
 ***
 ***	File Author: Dell, 2021-01-16 12:41:12
 ***
@@ -361,8 +361,8 @@ gchar* vision_select_image_filename(char *plug_in, char* title)
 
 IMAGE* vision_image_service(char* service_name, IMAGE* send_image, char* addon)
 {
-    TASKARG taska;
-    TASKSET* tasks;
+    TASKARG taskarg;
+    TASKSET* taskset;
     TIME start_time, wait_time;
     IMAGE* recv_image = NULL;
     char input_file[512], output_file[512], command[TASK_BUFFER_LEN];
@@ -383,8 +383,8 @@ IMAGE* vision_image_service(char* service_name, IMAGE* send_image, char* addon)
         snprintf(command, sizeof(command), "%s(input_file=%s,output_file=%s)", service_name, input_file, output_file);
     }
 
-    tasks = taskset_create(AI_TASKSET);
-    if (set_queue_task(tasks, command, &taska) != RET_OK)
+    taskset = redos_open(AI_TASKSET);
+    if (redos_queue_task(taskset, command, &taskarg) != RET_OK)
         goto failure;
 
     // Wait time, e.g, 60 seconds
@@ -392,12 +392,12 @@ IMAGE* vision_image_service(char* service_name, IMAGE* send_image, char* addon)
     start_time = time_now();
     while (time_now() - start_time < wait_time) {
         usleep(300 * 1000); // 300 ms
-        if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file))
+        if (redos_get_state(taskset, taskarg.key) == 100 && file_exist(output_file))
             break;
         gimp_progress_update((float)(time_now() - start_time) / wait_time * 0.90);
     }
     gimp_progress_update(0.9);
-    if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
+    if (redos_get_state(taskset, taskarg.key) == 100 && file_exist(output_file)) {
         recv_image = image_load(output_file);
     }
 
@@ -405,11 +405,11 @@ IMAGE* vision_image_service(char* service_name, IMAGE* send_image, char* addon)
         unlink(input_file);
         unlink(output_file);
 
-        delete_task(tasks, taska.key);
+        redos_delete_task(taskset, taskarg.key);
     }
 
 failure:
-    taskset_destroy(tasks);
+    redos_close(taskset);
 
     return recv_image;
 }
@@ -417,8 +417,8 @@ failure:
 
 IMAGE* vision_color_service(char* service_name, IMAGE* send_image, IMAGE* color_image)
 {
-    TASKARG taska;
-    TASKSET* tasks;
+    TASKARG taskarg;
+    TASKSET* taskset;
     IMAGE* recv_image = NULL;
     TIME start_time, wait_time;
     char input_file[512], color_file[512], output_file[512], command[TASK_BUFFER_LEN];
@@ -440,8 +440,8 @@ IMAGE* vision_color_service(char* service_name, IMAGE* send_image, IMAGE* color_
     snprintf(command, sizeof(command), "%s(input_file=%s,color_file=%s,output_file=%s)",
         service_name, input_file, color_file, output_file);
 
-    tasks = taskset_create(AI_TASKSET);
-    if (set_queue_task(tasks, command, &taska) != RET_OK)
+    taskset = redos_open(AI_TASKSET);
+    if (redos_queue_task(taskset, command, &taskarg) != RET_OK)
         goto failure;
 
     // wait time, e.g, 60 seconds
@@ -449,12 +449,12 @@ IMAGE* vision_color_service(char* service_name, IMAGE* send_image, IMAGE* color_
     start_time = time_now();
     while (time_now() - start_time < wait_time) {
         usleep(300 * 1000); // 300 ms
-        if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file))
+        if (redos_get_state(taskset, taskarg.key) == 100 && file_exist(output_file))
             break;
         gimp_progress_update((float)(time_now() - start_time) / wait_time * 0.90);
     }
     gimp_progress_update(0.9);
-    if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
+    if (redos_get_state(taskset, taskarg.key) == 100 && file_exist(output_file)) {
         recv_image = image_load(output_file);
     }
 
@@ -463,11 +463,11 @@ IMAGE* vision_color_service(char* service_name, IMAGE* send_image, IMAGE* color_
         unlink(color_file);
         unlink(output_file);
 
-        delete_task(tasks, taska.key);
+        redos_delete_task(taskset, taskarg.key);
     }
 
 failure:
-    taskset_destroy(tasks);
+    redos_close(taskset);
 
     return recv_image;
 }
@@ -475,8 +475,8 @@ failure:
 
 IMAGE* vision_style_service(char* service_name, IMAGE* send_image, IMAGE* style_image)
 {
-    TASKARG taska;
-    TASKSET* tasks;
+    TASKARG taskarg;
+    TASKSET* taskset;
     TIME start_time, wait_time;
     IMAGE* recv_image = NULL;
     char input_file[512], style_file[512], output_file[512], command[TASK_BUFFER_LEN];
@@ -496,8 +496,8 @@ IMAGE* vision_style_service(char* service_name, IMAGE* send_image, IMAGE* style_
     snprintf(command, sizeof(command), "%s(input_file=%s,style_file=%s,output_file=%s)",
         service_name, input_file, style_file, output_file);
 
-    tasks = taskset_create(AI_TASKSET);
-    if (set_queue_task(tasks, command, &taska) != RET_OK)
+    taskset = redos_open(AI_TASKSET);
+    if (redos_queue_task(taskset, command, &taskarg) != RET_OK)
         goto failure;
 
     // Wait time, e.g, 60 seconds
@@ -505,12 +505,12 @@ IMAGE* vision_style_service(char* service_name, IMAGE* send_image, IMAGE* style_
     start_time = time_now();
     while (time_now() - start_time < wait_time) {
         usleep(300 * 1000); // 300 ms
-        if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file))
+        if (redos_get_state(taskset, taskarg.key) == 100 && file_exist(output_file))
             break;
         gimp_progress_update((float)(time_now() - start_time) / wait_time * 0.90);
     }
     gimp_progress_update(0.9);
-    if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
+    if (redos_get_state(taskset, taskarg.key) == 100 && file_exist(output_file)) {
         recv_image = image_load(output_file);
     }
 
@@ -519,19 +519,19 @@ IMAGE* vision_style_service(char* service_name, IMAGE* send_image, IMAGE* style_
         unlink(style_file);
         unlink(output_file);
 
-        delete_task(tasks, taska.key);
+        redos_delete_task(taskset, taskarg.key);
     }
 
 failure:
-    taskset_destroy(tasks);
+    redos_close(taskset);
 
     return recv_image;
 }
 
 char* vision_text_service(char* service_name, IMAGE* send_image, char* addon)
 {
-    TASKARG taska;
-    TASKSET* tasks;
+    TASKARG taskarg;
+    TASKSET* taskset;
     TIME start_time, wait_time;
     char input_file[512], output_file[512], command[TASK_BUFFER_LEN], *txt = NULL;
 
@@ -553,8 +553,8 @@ char* vision_text_service(char* service_name, IMAGE* send_image, char* addon)
         snprintf(command, sizeof(command), "%s(input_file=%s,output_file=%s)", service_name, input_file, output_file);
     }
 
-    tasks = taskset_create(AI_TASKSET);
-    if (set_queue_task(tasks, command, &taska) != RET_OK)
+    taskset = redos_open(AI_TASKSET);
+    if (redos_queue_task(taskset, command, &taskarg) != RET_OK)
         goto failure;
 
     // wait time, e.g, 60 seconds
@@ -562,12 +562,12 @@ char* vision_text_service(char* service_name, IMAGE* send_image, char* addon)
     start_time = time_now();
     while (time_now() - start_time < wait_time) {
         usleep(300 * 1000); // 300 ms
-        if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file))
+        if (redos_get_state(taskset, taskarg.key) == 100 && file_exist(output_file))
             break;
         gimp_progress_update((float)(time_now() - start_time) / wait_time * 0.90);
     }
     gimp_progress_update(0.9);
-    if (get_task_state(tasks, taska.key) == 100 && file_exist(output_file)) {
+    if (redos_get_state(taskset, taskarg.key) == 100 && file_exist(output_file)) {
         int size;
         txt = file_load(output_file, &size);
     }
@@ -576,11 +576,11 @@ char* vision_text_service(char* service_name, IMAGE* send_image, char* addon)
         unlink(input_file);
         unlink(output_file);
 
-        delete_task(tasks, taska.key);
+        redos_delete_task(taskset, taskarg.key);
     }
 
 failure:
-    taskset_destroy(tasks);
+    redos_close(taskset);
 
     return txt;
 }
