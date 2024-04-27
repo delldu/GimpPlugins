@@ -140,7 +140,7 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Save the selection as foregroud/background/unkown to alpha channel"),
+        _("Save selection as foregroud/background/unkown to alpha channel"),
         _("More_Select_Save_To_Alpha_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",

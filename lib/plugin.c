@@ -12,6 +12,12 @@
 
 extern void md5sum(uint8_t* initial_msg, size_t initial_len, uint8_t* digest);
 
+static int image_saveto_rawdata(IMAGE* image, gint channels, gint height, gint width, guchar* d);
+static IMAGE* image_from_rawdata(gint channels, gint height, gint width, guchar* d);
+
+// ------------------------------------------------------------------------------------------------
+
+
 // Reference https://github.com/h4k1m0u/gimp-plugin
 
 static IMAGE* image_from_rawdata(gint channels, gint height, gint width, guchar* d)
@@ -313,7 +319,12 @@ int vision_gimp_plugin_init()
 
 int vision_get_cache_filename(char* prefix, int namesize, char* filename)
 {
-    int ret = snprintf(filename, namesize - 1, "%s/%s/%s_%d.png", getenv("HOME"), CACHE_PATH, prefix, getpid());
+    int ret;
+    if (strchr(prefix, '.') != NULL) {
+        ret = snprintf(filename, namesize - 1, "%s/%s/%s_%d", getenv("HOME"), CACHE_PATH, prefix, getpid());
+    } else { // no ext, suppose it is image
+        ret = snprintf(filename, namesize - 1, "%s/%s/%s_%d.png", getenv("HOME"), CACHE_PATH, prefix, getpid());
+    }
     return (ret > 0) ? RET_OK : RET_ERROR;
 }
 
@@ -583,4 +594,61 @@ failure:
     redos_close(taskset);
 
     return txt;
+}
+
+IMAGE* vision_json_service(char* service_name, IMAGE* send_image, char *jstr)
+{
+    TASKARG taskarg;
+    TASKSET* taskset;
+    IMAGE* recv_image = NULL;
+    TIME start_time, wait_time;
+    char input_file[512], json_file[512], output_file[512], command[TASK_BUFFER_LEN];
+
+    CHECK_IMAGE(send_image);
+
+
+    snprintf(command, sizeof(command), "%s_input", service_name);
+    vision_get_cache_filename(command, sizeof(input_file), input_file);
+    snprintf(command, sizeof(command), "%s_json.txt", service_name);
+    vision_get_cache_filename(command, sizeof(json_file), json_file);
+    snprintf(command, sizeof(command), "%s_output", service_name);
+    vision_get_cache_filename(command, sizeof(output_file), output_file);
+
+    image_save(send_image, input_file);
+    file_save(json_file, jstr, strlen(jstr));
+    file_chown(json_file, input_file); // model is -rw------- ???
+
+    snprintf(command, sizeof(command), "%s(input_file=%s,json_file=%s,output_file=%s)",
+        service_name, input_file, json_file, output_file);
+
+    taskset = redos_open(AI_TASKSET);
+    if (redos_queue_task(taskset, command, &taskarg) != RET_OK)
+        goto failure;
+
+    // wait time, e.g, 60 seconds
+    wait_time = 60 * 1000;
+    start_time = time_now();
+    while (time_now() - start_time < wait_time) {
+        usleep(300 * 1000); // 300 ms
+        if (redos_get_state(taskset, taskarg.key) == 100 && file_exist(output_file))
+            break;
+        gimp_progress_update((float)(time_now() - start_time) / wait_time * 0.90);
+    }
+    gimp_progress_update(0.9);
+    if (redos_get_state(taskset, taskarg.key) == 100 && file_exist(output_file)) {
+        recv_image = image_load(output_file);
+    }
+
+    if (getenv("DEBUG") == NULL) { // Debug mode ? NO !
+        unlink(input_file);
+        unlink(json_file);
+        unlink(output_file);
+
+        redos_delete_task(taskset, taskarg.key);
+    }
+
+failure:
+    redos_close(taskset);
+
+    return recv_image;
 }

@@ -32,7 +32,7 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Dehaze, Remove Haze/Fog"),
+        _("Clean haze/fog, Dehaze, Remove haze/fog"),
         _("More_Dehaze_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",

@@ -89,12 +89,12 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Coloring Picture via User Guide"),
+        _("Color photo via user guide"),
         _("More_Colour_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
         "2020-2024",
-        _("Guide Color"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        _("Guide"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
     gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Color/");
 }

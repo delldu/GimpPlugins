@@ -32,7 +32,7 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Detect Lines"),
+        _("Detect lines"),
         _("More_MLSD_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",

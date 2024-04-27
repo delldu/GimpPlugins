@@ -6,7 +6,6 @@
 #***
 #************************************************************************************/
 #
-# /home/dell/.config/GIMP/2.10/plug-ins
 INSTALL_DIR=/home/dell/snap/gimp/current/.config/GIMP/2.10/plug-ins
 
 XSUBDIRS :=  \
@@ -14,6 +13,7 @@ XSUBDIRS :=  \
 	select_to_alpha \
 	gimp_image_aa \
 	gimp_image_autops \
+	gimp_image_create \
 	gimp_image_denoise \
 	gimp_image_deblur \
 	gimp_image_defocus \
@@ -23,6 +23,7 @@ XSUBDIRS :=  \
 	gimp_image_dehaze \
 	gimp_image_derain \
 	gimp_image_desnow \
+	gimp_image_ddcolor \
 	gimp_image_colour \
 	gimp_image_color \
 	gimp_image_light \

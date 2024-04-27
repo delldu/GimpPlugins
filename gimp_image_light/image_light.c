@@ -64,12 +64,12 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("High Light Photo"),
+        _("Deep light, Image relighting, Beautify dark light"),
         _("More_Low_Light_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
         "2020-2024",
-        _("Light"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        _("Deep Light"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
     gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Beautify/");
 }

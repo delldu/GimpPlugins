@@ -32,12 +32,12 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Beautify Color"),
+        _("Deep curve, Beautify color"),
         _("More_Curve_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
         "2020-2024",
-        _("Color"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        _("Deep Curve"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
     gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Beautify/");
 }
@@ -49,7 +49,7 @@ static GimpPDBStatusType start_image_curve(gint32 drawable_id)
     IMAGE *send_image, *recv_image;
     GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-    gimp_progress_init("Beautify ...");
+    gimp_progress_init("Deep Curve ...");
     recv_image = NULL;
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {

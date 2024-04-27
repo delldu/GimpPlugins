@@ -107,13 +107,13 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Anime Super Resolution"),
+        _("Super resolution, Super quality, Beautify Anime"),
         _("More_Anime4x_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
-        "2020-2024", _("Anime"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        "2020-2024", _("Anime Image"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Zoom In/");
+    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Beautify");
 }
 
 static GimpPDBStatusType start_image_anime4x(gint32 drawable_id)

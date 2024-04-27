@@ -100,7 +100,7 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Aesthetics Assess, Let Beauty Could Be Weighted !"),
+        _("Aesthetics assess, Let beauty could be weighted !"),
         _("More_AA_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",

@@ -32,7 +32,7 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Denoise, Remove Noise"),
+        _("Clean noise, Denoise, Remove noise"),
         _("More_Denoise_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",

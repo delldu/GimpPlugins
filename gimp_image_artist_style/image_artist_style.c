@@ -33,7 +33,7 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Transform Photo with Artistic Style"),
+        _("Transform your photo like an artist"),
         _("More_Artist_Style_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",

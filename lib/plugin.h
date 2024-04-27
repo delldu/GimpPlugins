@@ -47,12 +47,15 @@ IMAGE* vision_image_service(char* service_name, IMAGE* send_image, char* addon);
 char* vision_text_service(char* service_name, IMAGE* send_image, char* addon);
 IMAGE* vision_style_service(char* service_name, IMAGE* send_image, IMAGE* style_image);
 IMAGE* vision_color_service(char* service_name, IMAGE* send_image, IMAGE* color_image);
+IMAGE* vision_json_service(char* service_name, IMAGE* send_image, char *jstr);
+
 
 int vision_gimp_plugin_init();
 int vision_get_cache_filename(char* prefix, int namesize, char* filename);
 void vision_gimp_plugin_exit();
 
 gchar* vision_select_image_filename(char *plug_in, char* title);
+
 
 #if defined(__cplusplus)
 }

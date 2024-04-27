@@ -41,7 +41,7 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Detect Edge With Canny"),
+        _("Detect edge with canny"),
         _("More_Canny_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
@@ -69,7 +69,7 @@ static GimpPDBStatusType start_image_canny(gint32 drawable_id)
     }
 
     if (status == GIMP_PDB_SUCCESS && ret == RET_OK) {
-        vision_save_image_to_gimp(recv_image, (char *)"edge");
+        vision_save_image_to_gimp(recv_image, (char *)"canny");
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;

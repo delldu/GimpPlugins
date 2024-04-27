@@ -66,7 +66,7 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Semantic Segment"),
+        _("Semantic segment, Lightweight !"),
         _("More_Segment_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",

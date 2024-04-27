@@ -32,7 +32,7 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Detect Depth"),
+        _("Detect depth"),
         _("More_Depth_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",

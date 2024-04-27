@@ -32,7 +32,7 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Detect Pose"),
+        _("Detect pose"),
         _("More_Pose_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",

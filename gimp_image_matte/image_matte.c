@@ -26,20 +26,27 @@ static GimpPDBStatusType start_image_matte(gint drawable_id)
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
         recv_image = vision_image_service((char*)"image_matte", send_image, NULL);
-        image_destroy(send_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
         g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
     }
-
-    if (status == GIMP_PDB_SUCCESS && image_valid(recv_image)) {
+    if (status == GIMP_PDB_SUCCESS && image_valid(recv_image) 
+        && send_image->height == recv_image->height && send_image->width == recv_image->width) {
         // vision_save_image_to_gimp(recv_image, (char *)"matte");
+        // need restore RGB channel from send_image
+        int i, j;
+        image_foreach(send_image, i, j) {
+            recv_image->ie[i][j].r = send_image->ie[i][j].r;
+            recv_image->ie[i][j].g = send_image->ie[i][j].g;
+            recv_image->ie[i][j].b = send_image->ie[i][j].b;
+        }
         vision_save_image_to_drawable(recv_image, drawable_id, channels, &rect);
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
         g_message("Service not avaible.\n");
     }
+    image_destroy(send_image);
 
     gimp_progress_update(1.0);
     gimp_progress_end();
@@ -65,7 +72,7 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Cut Backgroud, Left Standout Object"),
+        _("Image matting, The world is your green screen"),
         _("More_Matte_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",

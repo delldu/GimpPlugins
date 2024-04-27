@@ -32,12 +32,12 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Beautify Face"),
+        _("Beautify face, Light in eyes, Love in heart"),
         _("More_Face_Beauty_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
         "2020-2024",
-        _("Face"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        _("Human Face"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
     gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Beautify");
 }
@@ -49,7 +49,7 @@ static GimpPDBStatusType start_image_face_beauty(gint32 drawable_id)
     IMAGE *send_image, *recv_image;
     GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
-    gimp_progress_init("Beautify ...");
+    gimp_progress_init("Beautify Face ...");
     recv_image = NULL;
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
@@ -61,7 +61,7 @@ static GimpPDBStatusType start_image_face_beauty(gint32 drawable_id)
     }
 
     if (status == GIMP_PDB_SUCCESS && image_valid(recv_image)) {
-        // vision_save_image_to_gimp(recv_image, (char *)"image_face_beauty");
+        // vision_save_image_to_gimp(recv_image, (char *)"beauty_face");
         vision_save_image_to_drawable(recv_image, drawable_id, channels, &rect);
         image_destroy(recv_image);
     } else {

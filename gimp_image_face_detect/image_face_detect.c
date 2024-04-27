@@ -32,7 +32,7 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Detect Face !"),
+        _("Detect face !"),
         _("More_Face_Crop_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
@@ -61,7 +61,7 @@ static GimpPDBStatusType start_image_face_detect(gint32 drawable_id)
     }
 
     if (status == GIMP_PDB_SUCCESS && image_valid(recv_image)) {
-        vision_save_image_to_gimp(recv_image, (char*)"image_face_detect");
+        vision_save_image_to_gimp(recv_image, (char*)"detect_face");
         image_destroy(recv_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;

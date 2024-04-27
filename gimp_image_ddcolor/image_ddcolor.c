@@ -8,42 +8,37 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "gimp_image_color"
+#define PLUG_IN_PROC "gimp_image_ddcolor"
 
 static void query(void);
 static void run(const gchar* name,
     gint nparams, const GimpParam* param, gint* nreturn_vals, GimpParam** return_vals);
 
-
-static GimpPDBStatusType start_image_color(gint drawable_id, gint color_drawable_id)
+static GimpPDBStatusType start_image_ddcolor(gint drawable_id)
 {
     gint channels;
     GeglRectangle rect;
-    IMAGE *send_image, *color_image, *recv_image;
+    IMAGE *send_image, *recv_image;
     GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
     gimp_progress_init("Color ...");
     recv_image = NULL;
-    color_image = vision_get_image_from_drawable(color_drawable_id, &channels, &rect);
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
-    if (image_valid(send_image) && image_valid(color_image)) {
-        recv_image = vision_color_service((char *)"image_color", send_image, color_image);
+    if (image_valid(send_image)) {
+        recv_image = vision_image_service((char*)"image_ddcolor", send_image, NULL);
+
+        if (image_valid(recv_image)) {
+            vision_save_image_to_gimp(recv_image, (char*)"auto_color");
+            image_destroy(recv_image);
+        } else {
+            status = GIMP_PDB_EXECUTION_ERROR;
+            g_message("Service not avaible.\n");
+        }
+        image_destroy(send_image);
     } else {
         status = GIMP_PDB_EXECUTION_ERROR;
         g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
     }
-
-    if (status == GIMP_PDB_SUCCESS && image_valid(recv_image)) {
-        vision_save_image_to_gimp(recv_image, (char*)"color");
-        image_destroy(recv_image);
-    } else {
-        status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Service not avaible.\n");
-    }
-    if (image_valid(send_image))
-        image_destroy(send_image);
-    if (image_valid(color_image))
-        image_destroy(color_image);
 
     gimp_progress_update(1.0);
     gimp_progress_end();
@@ -69,14 +64,14 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Color photo via reference"),
-        _("More_Color_Help"),
+        _("Color Photo, Automatic !"),
+        _("More_Auto_Color_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
         "2020-2024",
-        _("Reference"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        _("Auto"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Color");
+    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Color/");
 }
 
 static void
@@ -86,7 +81,7 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     GimpPDBStatusType status = GIMP_PDB_SUCCESS;
     GimpRunMode run_mode;
     gint32 image_id;
-    gint32 drawable_id, color_drawable_id;
+    gint32 drawable_id;
 
     // INIT_I18N();
 
@@ -105,39 +100,13 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     image_id = param[1].data.d_image;
     drawable_id = param[2].data.d_drawable;
 
-    vision_gimp_plugin_init();
-    // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
-
     if (gimp_image_base_type(image_id) != GIMP_RGB)
         gimp_image_convert_rgb(image_id);
 
-    // if (! gimp_drawable_has_alpha(drawable_id))
-    //  gimp_layer_add_alpha(drawable_id);
+    vision_gimp_plugin_init();
+    // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
-    color_drawable_id = vision_get_reference_drawable(image_id, drawable_id);
-    if (color_drawable_id < 0) {
-        gchar* filename = vision_select_image_filename(PLUG_IN_PROC, _("Load Reference Color Image"));
-        if (filename != NULL) {
-            color_drawable_id = gimp_file_load_layer(run_mode, image_id, filename);
-            if (color_drawable_id > 0) {
-                gimp_layer_set_opacity(color_drawable_id, 50.0);
-                if (!gimp_image_insert_layer(image_id, color_drawable_id, 0, 0)) {
-                    syslog_error("Call gimp_image_insert_layer().");
-                    color_drawable_id = -1; // force set -1 ==> error
-                }
-                if (run_mode != GIMP_RUN_NONINTERACTIVE)
-                    gimp_displays_flush();
-            }
-            g_free(filename);
-        }
-    }
-
-    if (color_drawable_id < 0) {
-        g_message("No reference color image, please use menu 'File->Open as Layers...' to add one.\n");
-        return;
-    }
-
-    status = start_image_color(drawable_id, color_drawable_id);
+    status = start_image_ddcolor(drawable_id);
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
         gimp_displays_flush();
 

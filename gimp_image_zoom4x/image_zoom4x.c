@@ -107,13 +107,13 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Image Super Resolution"),
+        _("Deep learning, Super resolution, Beautify Image"),
         _("More_Zoom4x_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
-        "2020-2024", _("Image"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        "2020-2024", _("Natural Image"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Zoom In/");
+    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Beautify");
 }
 
 static GimpPDBStatusType start_image_zoom4x(gint32 drawable_id)

@@ -32,7 +32,7 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Defocus, Remove Backgroud Blur"),
+        _("Clean defocus, Defocus, Remove backgroud blur"),
         _("More_Defocus_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",

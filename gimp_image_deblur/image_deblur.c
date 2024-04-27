@@ -32,7 +32,7 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Deblur, Remove Freground Blur"),
+        _("Clean blur, Deblur, Remove blur"),
         _("More_Deblur_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
