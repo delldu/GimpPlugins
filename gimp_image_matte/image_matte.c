@@ -117,14 +117,6 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     vision_gimp_plugin_init();
     // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
-#if 0 // Test Selection Mask
-    IMAGE *mask = vision_get_selection_mask(image_id);
-    if (image_valid(mask)) {
-        image_save(mask, "/home/dell/tmp/mask_test.png");
-        image_destroy(mask);
-    }
-#endif
-
     status = start_image_matte(drawable_id);
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
         gimp_displays_flush();

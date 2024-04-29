@@ -40,8 +40,8 @@ int vision_save_image_as_layer(IMAGE* image, char* name_prefix, gint32 image_id,
 int vision_save_image_to_drawable(IMAGE* image, gint32 drawable_id, gint channels, GeglRectangle* rect);
 int vision_save_image_to_gimp(IMAGE* image, char* name_prefix);
 gint32 vision_get_reference_drawable(gint32 image_id, gint32 drawable_id);
-IMAGE* vision_get_selection_mask(gint32 image_id);
 IMAGE* vision_get_image_from_drawable(gint32 drawable_id, gint* channels, GeglRectangle* rect);
+IMAGE *vision_get_selection_mask(gint image_id);
 
 IMAGE* vision_image_service(char* service_name, IMAGE* send_image, char* addon);
 char* vision_text_service(char* service_name, IMAGE* send_image, char* addon);

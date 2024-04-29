@@ -14,38 +14,39 @@ static void query(void);
 static void run(const gchar* name,
     gint nparams, const GimpParam* param, gint* nreturn_vals, GimpParam** return_vals);
 
-static int is_full_selection(IMAGE* mask)
-{
-    int i, j;
-    image_foreach(mask, i, j)
-    {
-        if (mask->ie[i][j].r != 255)
-            return 0;
-    }
-    return 1;
-}
+// static int is_full_selection(IMAGE* mask)
+// {
+//     int i, j;
+//     image_foreach(mask, i, j)
+//     {
+//         if (mask->ie[i][j].r != 255)
+//             return 0;
+//     }
+//     return 1;
+// }
 
-static GimpPDBStatusType start_image_colour(gint image_id, gint drawable_id)
+// static GimpPDBStatusType start_image_colour(gint image_id, gint drawable_id)
+static GimpPDBStatusType start_image_colour(gint drawable_id)
 {
-    int i, j;
     gint channels;
     GeglRectangle rect;
-    IMAGE *send_image, *recv_image, *mask;
+    IMAGE *send_image, *recv_image; // , *mask;
     GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
     gimp_progress_init("Colour ...");
     recv_image = NULL;
-    mask = vision_get_selection_mask(image_id);
+    // mask = vision_get_selection_mask(image_id);
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
-        // more color weight if pixel is selected (mask marked) ...
-        if (mask && mask->height == send_image->height && mask->width == send_image->width && !is_full_selection(mask)) {
-            image_foreach(mask, i, j)
-                send_image->ie[i][j].a = (mask->ie[i][j].r > 5) ? 128 : 0; // 5 -- delta
-        } else { //  full selection == None selection !!!
-            image_foreach(send_image, i, j)
-                send_image->ie[i][j].a = 0;
-        }
+        // // more color weight if pixel is selected (mask marked) ...
+        // int i, j;
+        // if (mask && mask->height == send_image->height && mask->width == send_image->width && !is_full_selection(mask)) {
+        //     image_foreach(mask, i, j)
+        //         send_image->ie[i][j].a = (mask->ie[i][j].r > 5) ? 128 : 0; // 5 -- delta
+        // } else { //  full selection == None selection !!!
+        //     image_foreach(send_image, i, j)
+        //         send_image->ie[i][j].a = 0;
+        // }
 
         recv_image = vision_image_service((char*)"image_colour", send_image, NULL);
 
@@ -62,8 +63,8 @@ static GimpPDBStatusType start_image_colour(gint image_id, gint drawable_id)
         g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
     }
 
-    if (mask)
-        image_destroy(mask);
+    // if (mask)
+    //     image_destroy(mask);
 
     gimp_progress_update(1.0);
     gimp_progress_end();
@@ -134,7 +135,8 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     vision_gimp_plugin_init();
     // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
-    status = start_image_colour(image_id, drawable_id);
+    // status = start_image_colour(image_id, drawable_id);
+    status = start_image_colour(drawable_id);
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
         gimp_displays_flush();
 

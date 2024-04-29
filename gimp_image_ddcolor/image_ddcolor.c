@@ -64,7 +64,7 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Color Photo, Automatic !"),
+        _("Color photo, Automatic !"),
         _("More_Auto_Color_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",

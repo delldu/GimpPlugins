@@ -46,6 +46,7 @@ XSUBDIRS :=  \
 	gimp_image_artist_style \
 	gimp_image_photo_style \
 	gimp_image_shape_style \
+	gimp_image_harmonize
 
 all: 
 	@for d in $(XSUBDIRS)  ; do \

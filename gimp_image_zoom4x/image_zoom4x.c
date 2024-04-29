@@ -107,7 +107,7 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Deep learning, Super resolution, Beautify Image"),
+        _("Scale size, Zoom in, Deep learning, Super resolution, Beautify Image"),
         _("More_Zoom4x_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",

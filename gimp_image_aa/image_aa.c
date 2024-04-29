@@ -48,7 +48,7 @@ static void display_score(char* score_text)
 }
 
 
-static GimpPDBStatusType start_image_tanet(gint32 drawable_id)
+static GimpPDBStatusType start_image_aa(gint32 drawable_id)
 {
     gint channels;
     GeglRectangle rect;
@@ -139,7 +139,7 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     vision_gimp_plugin_init();
     // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
-    status = start_image_tanet(drawable_id);
+    status = start_image_aa(drawable_id);
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
         gimp_displays_flush();
 

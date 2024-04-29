@@ -131,7 +131,8 @@ IMAGE* vision_get_image_from_drawable(gint32 drawable_id, gint* channels, GeglRe
     GeglBuffer* buffer;
     IMAGE* image;
 
-    if (!gimp_drawable_mask_intersect(drawable_id, &(rect->x), &(rect->y), &(rect->width), &(rect->height))) {
+    if (!gimp_drawable_mask_intersect(drawable_id, 
+        &(rect->x), &(rect->y), &(rect->width), &(rect->height))) {
         syslog_error("Call gimp_drawable_mask_intersect()");
         return NULL;
     }
@@ -283,23 +284,23 @@ gint32 vision_get_reference_drawable(gint32 image_id, gint32 drawable_id)
     return ret;
 }
 
-IMAGE* vision_get_selection_mask(gint32 image_id)
-{
-    gint channels;
-    GeglRectangle rect;
-    gint32 select_id;
+// IMAGE* vision_get_selection_mask(gint32 image_id)
+// {
+//     gint channels;
+//     GeglRectangle rect;
+//     gint32 select_id;
 
-    /* Get selection channel */
-    if (gimp_selection_is_empty(image_id)) {
-        return NULL;
-    }
-    select_id = gimp_image_get_selection(image_id);
-    if (select_id < 0) {
-        return NULL;
-    }
+//     /* Get selection channel */
+//     if (gimp_selection_is_empty(image_id)) {
+//         return NULL;
+//     }
+//     select_id = gimp_image_get_selection(image_id);
+//     if (select_id < 0) {
+//         return NULL;
+//     }
 
-    return vision_get_image_from_drawable(select_id, &channels, &rect);
-}
+//     return vision_get_image_from_drawable(select_id, &channels, &rect);
+// }
 
 
 int vision_gimp_plugin_init()
@@ -313,6 +314,7 @@ int vision_gimp_plugin_init()
     }
 
     gegl_init(NULL, NULL);
+    // gimp_help_disable_tooltips();
 
     return (ret > 0) ? RET_OK : RET_ERROR;
 }
@@ -651,4 +653,33 @@ failure:
     redos_close(taskset);
 
     return recv_image;
+}
+
+IMAGE *vision_get_selection_mask(gint image_id)
+{
+    gint channels, channel_id;
+    GeglRectangle rect;
+    IMAGE *mask_image;
+
+    channel_id = gimp_selection_save(image_id);
+    CheckPoint("image_id = %d, channel_id = %d", image_id, channel_id);
+    if (channel_id < 0) {
+        syslog_error("Save selection to channel");
+        return NULL;
+    }
+
+    mask_image = vision_get_image_from_drawable(channel_id, &channels, &rect);
+    gimp_image_remove_channel(image_id, channel_id);
+
+    // debug ...
+    // if (image_valid(mask_image)) {
+    //     char filename[1024];
+    //     vision_get_cache_filename("selection", sizeof(filename), filename);
+    //     CheckPoint("selection filename = %s", filename);
+    //     image_save(mask_image, filename);
+    // } else {
+    //     syslog_error("Create selection_mask image");
+    // }
+
+    return mask_image;
 }

@@ -117,7 +117,6 @@ void test_drag_path(gint32 image_id)
     g_free(vectors);
 }
 
-
 static void query(void);
 static void run(const gchar* name,
     gint nparams, const GimpParam* param, gint* nreturn_vals, GimpParam** return_vals);
@@ -149,7 +148,6 @@ static void query(void)
     gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Select/");
 }
 
-
 static GimpPDBStatusType save_to_alpha(gint drawable_id)
 {
     int i, j;
@@ -158,10 +156,14 @@ static GimpPDBStatusType save_to_alpha(gint drawable_id)
     IMAGE *image;
     GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
+    // gimp_drawable_width()
     image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
-
     if (image_valid(image)) {
         image_foreach(image, i, j) {
+            // debug ...
+            // image->ie[i][j].r = 255;
+            // image->ie[i][j].g = 0;
+            // image->ie[i][j].b = 0;
             image->ie[i][j].a = alpha_value; //bg - 0,  unkown - 128, fg - 255
         }
         vision_save_image_to_drawable(image, drawable_id, channels, &rect);
@@ -173,13 +175,12 @@ static GimpPDBStatusType save_to_alpha(gint drawable_id)
     return status;
 }
 
-
 static void
 run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals, GimpParam** return_vals)
 {
     static GimpParam values[1];
     GimpRunMode run_mode;
-    gint32 image_id;
+    // gint32 image_id;
     gint32 drawable_id;
     GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
@@ -198,11 +199,12 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     }
 
     run_mode = (GimpRunMode)param[0].data.d_int32;
-    image_id = param[1].data.d_image;
+    // image_id = param[1].data.d_image;
     drawable_id = param[2].data.d_drawable;
 
-    test_drag_path(image_id);
-
+    // test_drag_path(image_id);
+    // IMAGE *selection_mask = vision_get_selection_mask(drawable_id);
+    // image_destroy(select_mask);
 
     if (run_mode == GIMP_RUN_INTERACTIVE && ! save_as_dialog())
         return;

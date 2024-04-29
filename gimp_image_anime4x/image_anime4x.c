@@ -107,7 +107,7 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Super resolution, Super quality, Beautify Anime"),
+        _("Scale size, Zoom in, Super resolution, Super quality, Beautify Anime"),
         _("More_Anime4x_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",

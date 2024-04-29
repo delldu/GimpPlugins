@@ -32,7 +32,7 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Transform your photo like a realistic expert"),
+        _("Transform your photo like a reality expert"),
         _("More_Photo_Style_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
