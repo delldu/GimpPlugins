@@ -47,31 +47,21 @@ static GimpPDBStatusType start_image_desnow(gint32 drawable_id)
     gint channels;
     GeglRectangle rect;
     IMAGE *send_image, *recv_image;
-    GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
     gimp_progress_init("Desnow ...");
-    recv_image = NULL;
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
-    if (image_valid(send_image)) {
-        recv_image = vision_image_service((char*)"image_desnow", send_image, NULL);
-        image_destroy(send_image);
-    } else {
-        status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
-    }
+    check_status(image_valid(send_image));
 
-    if (status == GIMP_PDB_SUCCESS && image_valid(recv_image)) {
-        vision_save_image_to_drawable(recv_image, drawable_id, channels, &rect);
-        image_destroy(recv_image);
-    } else {
-        status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Service not available.\n");
-    }
+    recv_image = vision_image_service((char*)"image_desnow", send_image, NULL);
+    image_destroy(send_image);
+    check_status(image_valid(recv_image));
+    vision_save_image_to_drawable(recv_image, drawable_id, channels, &rect);
+    image_destroy(recv_image);
 
     gimp_progress_update(1.0);
     gimp_progress_end();
 
-    return status; // GIMP_PDB_SUCCESS;
+    return GIMP_PDB_SUCCESS;
 }
 
 static void

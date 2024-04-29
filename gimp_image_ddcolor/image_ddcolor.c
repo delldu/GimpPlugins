@@ -19,31 +19,21 @@ static GimpPDBStatusType start_image_ddcolor(gint drawable_id)
     gint channels;
     GeglRectangle rect;
     IMAGE *send_image, *recv_image;
-    GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
     gimp_progress_init("Color ...");
-    recv_image = NULL;
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
-    if (image_valid(send_image)) {
-        recv_image = vision_image_service((char*)"image_ddcolor", send_image, NULL);
+    check_status(image_valid(send_image));
 
-        if (image_valid(recv_image)) {
-            vision_save_image_to_gimp(recv_image, (char*)"auto_color");
-            image_destroy(recv_image);
-        } else {
-            status = GIMP_PDB_EXECUTION_ERROR;
-            g_message("Service not avaible.\n");
-        }
-        image_destroy(send_image);
-    } else {
-        status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
-    }
+    recv_image = vision_image_service((char*)"image_ddcolor", send_image, NULL);
+    image_destroy(send_image);
+    check_status(image_valid(recv_image));
+    vision_save_image_to_gimp(recv_image, (char*)"auto_color");
+    image_destroy(recv_image);
 
     gimp_progress_update(1.0);
     gimp_progress_end();
 
-    return status;
+    return GIMP_PDB_SUCCESS;
 }
 
 GimpPlugInInfo PLUG_IN_INFO = {
@@ -78,7 +68,6 @@ static void
 run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals, GimpParam** return_vals)
 {
     static GimpParam values[1];
-    GimpPDBStatusType status = GIMP_PDB_SUCCESS;
     GimpRunMode run_mode;
     gint32 image_id;
     gint32 drawable_id;
@@ -89,8 +78,7 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     *nreturn_vals = 1;
     *return_vals = values;
     values[0].type = GIMP_PDB_STATUS;
-    values[0].data.d_status = status;
-
+    values[0].data.d_status = GIMP_PDB_STATUS;
     if (strcmp(name, PLUG_IN_PROC) != 0 || nparams < 3) {
         values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
         return;
@@ -106,12 +94,9 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     vision_gimp_plugin_init();
     // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
-    status = start_image_ddcolor(drawable_id);
+    values[0].data.d_status = start_image_ddcolor(drawable_id);
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
         gimp_displays_flush();
-
-    // Output result for pdb
-    values[0].data.d_status = status;
 
     vision_gimp_plugin_exit();
 }

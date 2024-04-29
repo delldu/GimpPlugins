@@ -154,25 +154,21 @@ static GimpPDBStatusType save_to_alpha(gint drawable_id)
     gint channels;
     GeglRectangle rect;
     IMAGE *image;
-    GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
     // gimp_drawable_width()
     image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
-    if (image_valid(image)) {
-        image_foreach(image, i, j) {
-            // debug ...
-            // image->ie[i][j].r = 255;
-            // image->ie[i][j].g = 0;
-            // image->ie[i][j].b = 0;
-            image->ie[i][j].a = alpha_value; //bg - 0,  unkown - 128, fg - 255
-        }
-        vision_save_image_to_drawable(image, drawable_id, channels, &rect);
-        image_destroy(image);
-    } else {
-        status = GIMP_PDB_EXECUTION_ERROR;
+    check_status(image_valid(image));
+    image_foreach(image, i, j) {
+        // debug ...
+        // image->ie[i][j].r = 255;
+        // image->ie[i][j].g = 0;
+        // image->ie[i][j].b = 0;
+        image->ie[i][j].a = alpha_value; //bg - 0,  unkown - 128, fg - 255
     }
+    vision_save_image_to_drawable(image, drawable_id, channels, &rect);
+    image_destroy(image);
 
-    return status;
+    return GIMP_PDB_SUCCESS;
 }
 
 static void
@@ -182,7 +178,6 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     GimpRunMode run_mode;
     // gint32 image_id;
     gint32 drawable_id;
-    GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
     INIT_I18N();
     gegl_init(NULL, NULL);
@@ -191,8 +186,7 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     *nreturn_vals = 1;
     *return_vals = values;
     values[0].type = GIMP_PDB_STATUS;
-    values[0].data.d_status = status;
-
+    values[0].data.d_status = GIMP_PDB_SUCCESS;
     if (strcmp(name, PLUG_IN_PROC) != 0 || nparams < 3) {
         values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
         return;
@@ -212,13 +206,9 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     if (!gimp_drawable_has_alpha(drawable_id))
         gimp_layer_add_alpha(drawable_id);
 
-    status = save_to_alpha(drawable_id);
-
+    values[0].data.d_status = save_to_alpha(drawable_id);
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
         gimp_displays_flush();
 
     gegl_exit();
-
-    // Output result for pdb
-    values[0].data.d_status = status;
 }

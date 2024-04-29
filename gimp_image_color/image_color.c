@@ -20,35 +20,25 @@ static GimpPDBStatusType start_image_color(gint drawable_id, gint color_drawable
     gint channels;
     GeglRectangle rect;
     IMAGE *send_image, *color_image, *recv_image;
-    GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
     gimp_progress_init("Color ...");
-    recv_image = NULL;
-    color_image = vision_get_image_from_drawable(color_drawable_id, &channels, &rect);
-    send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
-    if (image_valid(send_image) && image_valid(color_image)) {
-        recv_image = vision_color_service((char *)"image_color", send_image, color_image);
-    } else {
-        status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
-    }
 
-    if (status == GIMP_PDB_SUCCESS && image_valid(recv_image)) {
-        vision_save_image_to_gimp(recv_image, (char*)"color");
-        image_destroy(recv_image);
-    } else {
-        status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Service not avaible.\n");
-    }
-    if (image_valid(send_image))
-        image_destroy(send_image);
-    if (image_valid(color_image))
-        image_destroy(color_image);
+    color_image = vision_get_image_from_drawable(color_drawable_id, &channels, &rect);
+    check_status(image_valid(color_image));
+    send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
+    check_status(image_valid(send_image));
+
+    recv_image = vision_color_service((char *)"image_color", send_image, color_image);
+    image_destroy(send_image);
+    image_destroy(color_image);
+    check_status(image_valid(recv_image));
+    vision_save_image_to_gimp(recv_image, (char*)"color");
+    image_destroy(recv_image);
 
     gimp_progress_update(1.0);
     gimp_progress_end();
 
-    return status;
+    return GIMP_PDB_SUCCESS;
 }
 
 GimpPlugInInfo PLUG_IN_INFO = {
@@ -95,7 +85,6 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     *return_vals = values;
     values[0].type = GIMP_PDB_STATUS;
     values[0].data.d_status = status;
-
     if (strcmp(name, PLUG_IN_PROC) != 0 || nparams < 3) {
         values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
         return;

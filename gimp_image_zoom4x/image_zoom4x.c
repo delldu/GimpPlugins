@@ -121,35 +121,26 @@ static GimpPDBStatusType start_image_zoom4x(gint32 drawable_id)
     gint channels;
     GeglRectangle rect;
     IMAGE *send_image, *recv_image;
-    GimpPDBStatusType status = GIMP_PDB_SUCCESS;
     char command[256];
 
     snprintf(command, sizeof(command) - 1, "Zoom %dX ...", image_scale_times);
     gimp_progress_init(command); // "Zoom 4X ...";
     recv_image = NULL;
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
-    if (image_valid(send_image)) {
-        snprintf(command, sizeof(command) - 1, "image_zoom%dx", image_scale_times);
-        recv_image = vision_image_service(command, send_image, NULL);
-        image_destroy(send_image);
-    } else {
-        status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
-    }
+    check_status(image_valid(send_image));
 
-    if (status == GIMP_PDB_SUCCESS && image_valid(recv_image)) {
-        snprintf(command, sizeof(command) - 1, "image_zoom%dx", image_scale_times);
-        vision_save_image_to_gimp(recv_image, command);
-        image_destroy(recv_image);
-    } else {
-        status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Service not available.\n");
-    }
+    snprintf(command, sizeof(command) - 1, "image_zoom%dx", image_scale_times);
+    recv_image = vision_image_service(command, send_image, NULL);
+    image_destroy(send_image);
+    check_status(image_valid(recv_image));
+    snprintf(command, sizeof(command) - 1, "image_zoom%dx", image_scale_times);
+    vision_save_image_to_gimp(recv_image, command);
+    image_destroy(recv_image);
 
     gimp_progress_update(1.0);
     gimp_progress_end();
 
-    return status; // GIMP_PDB_SUCCESS;
+    return GIMP_PDB_SUCCESS;
 }
 
 static void
@@ -159,7 +150,6 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     GimpRunMode run_mode;
     // gint32 image_id;
     gint32 drawable_id;
-    GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
     // INIT_I18N();
 
@@ -167,8 +157,7 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     *nreturn_vals = 1;
     *return_vals = values;
     values[0].type = GIMP_PDB_STATUS;
-    values[0].data.d_status = status;
-
+    values[0].data.d_status = GIMP_PDB_SUCCESS;
     if (strcmp(name, PLUG_IN_PROC) != 0 || nparams < 3) {
         values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
         return;
@@ -184,7 +173,7 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     if (run_mode == GIMP_RUN_INTERACTIVE && ! image_scale_times_dialog())
         return;
 
-    status = start_image_zoom4x(drawable_id);
+    values[0].data.d_status = start_image_zoom4x(drawable_id);
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
         gimp_displays_flush();
 

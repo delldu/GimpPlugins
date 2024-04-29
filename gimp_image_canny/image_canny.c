@@ -53,33 +53,25 @@ static void query(void)
 
 static GimpPDBStatusType start_image_canny(gint32 drawable_id)
 {
-    int ret = RET_ERROR;
+    int ret;
     gint channels;
     GeglRectangle rect;
     IMAGE *recv_image;
-    GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
     gimp_progress_init("Detect Edge ...");
     recv_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
-    if (image_valid(recv_image)) {
-        ret = shape_bestedge(recv_image, global_threshold.low/255.0, global_threshold.high/255.0);
-    } else {
-        status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
-    }
+    check_status(image_valid(recv_image));
 
-    if (status == GIMP_PDB_SUCCESS && ret == RET_OK) {
-        vision_save_image_to_gimp(recv_image, (char *)"canny");
-        image_destroy(recv_image);
-    } else {
-        status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Service not available.\n");
-    }
+    ret = shape_bestedge(recv_image, global_threshold.low/255.0, global_threshold.high/255.0);
+    check_status(ret == RET_OK);
+    
+    vision_save_image_to_gimp(recv_image, (char *)"canny");
+    image_destroy(recv_image);
 
     gimp_progress_update(1.0);
     gimp_progress_end();
 
-    return status; // GIMP_PDB_SUCCESS;
+    return GIMP_PDB_SUCCESS;
 }
 
 static void
@@ -98,7 +90,6 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     *return_vals = values;
     values[0].type = GIMP_PDB_STATUS;
     values[0].data.d_status = status;
-
     if (strcmp(name, PLUG_IN_PROC) != 0 || nparams < 3) {
         values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
         return;
@@ -108,10 +99,8 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     // image_id = param[1].data.d_image;
     drawable_id = param[2].data.d_drawable;
 
-
     if (run_mode == GIMP_RUN_INTERACTIVE && ! canny_dialog())
         return;
-
 
     vision_gimp_plugin_init();
 

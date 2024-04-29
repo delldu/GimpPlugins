@@ -81,6 +81,7 @@ static int image_saveto_rawdata(IMAGE* image, gint channels, gint height, gint w
     int i, j;
 
     check_image(image);
+    
     if (channels < 1 || channels > 4) {
         syslog_error("Channels %d is not in [1-4]", channels);
         return RET_ERROR;

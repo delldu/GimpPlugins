@@ -8,7 +8,7 @@
 
 #include "plugin.h"
 
-#define PLUG_IN_PROC "gimp_image_tanet"
+#define PLUG_IN_PROC "gimp_image_aa"
 
 static void query(void);
 static void run(const gchar* name,
@@ -54,32 +54,23 @@ static GimpPDBStatusType start_image_aa(gint32 drawable_id)
     GeglRectangle rect;
     IMAGE* send_image;
     char* recv_text;
-    GimpPDBStatusType status = GIMP_PDB_SUCCESS;
 
     gimp_progress_init("Assess ...");
-    recv_text = NULL;
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
-    if (image_valid(send_image)) {
-        recv_text = vision_text_service((char *)"image_aa", send_image, NULL);
-        image_destroy(send_image);
-    } else {
-        status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Source error, try menu 'Image->Precision->8 bit integer'.\n");
-    }
+    check_status(image_valid(send_image));
 
-    if (status == GIMP_PDB_SUCCESS && recv_text != NULL) {
-        // g_message("Aesthetic Score: %s\n", recv_text);
-        display_score(recv_text);
-        free(recv_text);
-    } else {
-        status = GIMP_PDB_EXECUTION_ERROR;
-        g_message("Service not avaible.\n");
-    }
+    recv_text = vision_text_service((char *)"image_aa", send_image, NULL);
+    image_destroy(send_image);
+    check_status(recv_text != NULL);
+
+    // g_message("Aesthetic Score: %s\n", recv_text);
+    display_score(recv_text);
+    free(recv_text);
 
     gimp_progress_update(1.0);
     gimp_progress_end();
 
-    return status;
+    return GIMP_PDB_SUCCESS;
 }
 
 GimpPlugInInfo PLUG_IN_INFO = {
@@ -114,7 +105,6 @@ static void
 run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals, GimpParam** return_vals)
 {
     static GimpParam values[1];
-    GimpPDBStatusType status = GIMP_PDB_SUCCESS;
     GimpRunMode run_mode;
     // gint32 image_id;
     gint32 drawable_id;
@@ -125,8 +115,7 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     *nreturn_vals = 1;
     *return_vals = values;
     values[0].type = GIMP_PDB_STATUS;
-    values[0].data.d_status = status;
-
+    values[0].data.d_status = GIMP_PDB_SUCCESS;
     if (strcmp(name, PLUG_IN_PROC) != 0 || nparams < 3) {
         values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
         return;
@@ -139,12 +128,9 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     vision_gimp_plugin_init();
     // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
-    status = start_image_aa(drawable_id);
+    values[0].data.d_status = start_image_aa(drawable_id);
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
         gimp_displays_flush();
-
-    // Output result for pdb
-    values[0].data.d_status = status;
 
     vision_gimp_plugin_exit();
 }

@@ -56,6 +56,42 @@ void vision_gimp_plugin_exit();
 
 gchar* vision_select_image_filename(char *plug_in, char* title);
 
+#define check_avoid(x)                                                                                                 \
+    do {                                                                                                               \
+        if (!(x)) {                                                                                                    \
+            fflush(stdout);                                                                                            \
+            fprintf(stderr, "Error: %s == NULL or false (%s:%d)\n", #x, __FILE__, __LINE__);                               \
+            return;                                                                                                    \
+        }                                                                                                              \
+    } while (0)
+
+#define check_point(x)                                                                                                 \
+    do {                                                                                                               \
+        if (!(x)) {                                                                                                    \
+            fflush(stdout);                                                                                            \
+            fprintf(stderr, "Error: %s == NULL or false (%s:%d)\n", #x, __FILE__, __LINE__);                               \
+            return RET_ERROR;                                                                                              \
+        }                                                                                                              \
+    } while (0)
+
+#define check_status(x)                                                                                                 \
+    do {                                                                                                               \
+        if (!(x)) {                                                                                                    \
+            fflush(stdout);                                                                                            \
+            fprintf(stderr, "Error: %s == NULL or false (%s:%d)\n", #x, __FILE__, __LINE__);                               \
+            return GIMP_PDB_EXECUTION_ERROR;                                                                                              \
+        }                                                                                                              \
+    } while (0)
+
+
+#define CHECK_POINT(x)                                                                                                 \
+    do {                                                                                                               \
+        if (!(x)) {                                                                                                    \
+            fflush(stdout);                                                                                            \
+            fprintf(stderr, "Error: %s == NULL or false (%s:%d)\n", #x, __FILE__, __LINE__);                               \
+            return NULL;                                                                                               \
+        }                                                                                                              \
+    } while (0)
 
 #if defined(__cplusplus)
 }
