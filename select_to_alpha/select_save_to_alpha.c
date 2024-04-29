@@ -180,7 +180,6 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     gint32 drawable_id;
 
     INIT_I18N();
-    gegl_init(NULL, NULL);
 
     /* Setting mandatory output values */
     *nreturn_vals = 1;
@@ -200,6 +199,8 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     // IMAGE *selection_mask = vision_get_selection_mask(drawable_id);
     // image_destroy(select_mask);
 
+    vision_gimp_plugin_init();
+
     if (run_mode == GIMP_RUN_INTERACTIVE && ! save_as_dialog())
         return;
 
@@ -210,5 +211,5 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     if (run_mode != GIMP_RUN_NONINTERACTIVE)
         gimp_displays_flush();
 
-    gegl_exit();
+    vision_gimp_plugin_exit();    
 }

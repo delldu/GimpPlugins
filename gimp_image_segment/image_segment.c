@@ -14,40 +14,6 @@ static void query(void);
 static void run(const gchar* name,
     gint nparams, const GimpParam* param, gint* nreturn_vals, GimpParam** return_vals);
 
-static int save_segment_result(IMAGE* send_image, IMAGE* recv_image)
-{
-    gint32 image_id;
-    int ret = RET_OK;
-
-    check_image(send_image);
-    check_image(recv_image);
-
-    if (send_image->height != recv_image->height || send_image->width != recv_image->width) {
-        syslog_error("Recv image size does not match send image.");
-        return RET_ERROR;
-    }
-
-    image_id = gimp_image_new(send_image->width, send_image->height, GIMP_RGB);
-    if (image_id < 0) {
-        syslog_error("Call gimp_image_new().");
-        return RET_ERROR;
-    }
-
-    ret = vision_save_image_as_layer(send_image, "sources", image_id, 100.0);
-    if (ret == RET_OK) {
-        ret = vision_save_image_as_layer(recv_image, "segment", image_id, 50.0);
-    }
-
-    if (ret == RET_OK) {
-        gimp_display_new(image_id);
-        gimp_displays_flush();
-    } else {
-        syslog_error("Call vision_save_image_as_layer().");
-    }
-
-    return ret;
-}
-
 GimpPlugInInfo PLUG_IN_INFO = {
     NULL,
     NULL,
@@ -78,22 +44,32 @@ static void query(void)
 
 static GimpPDBStatusType start_image_segment(gint32 drawable_id)
 {
+    int ret;
     gint channels;
     GeglRectangle rect;
     IMAGE *send_image, *recv_image;
+    gint32 image_id;
 
     gimp_progress_init("Segment ...");
+
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     check_status(image_valid(send_image));
 
     recv_image = vision_image_service((char*)"image_segment", send_image, NULL);
-    image_destroy(send_image);
     check_status(image_valid(recv_image));
-    save_segment_result(send_image, recv_image);
-    image_destroy(recv_image);
-
     gimp_progress_update(1.0);
     gimp_progress_end();
+
+    // Save segment as new layer
+    image_id = gimp_item_get_image(drawable_id);
+    check_status(send_image->height == recv_image->height && send_image->width == recv_image->width);
+    ret = vision_save_image_as_layer(recv_image, "segment", image_id, 50.0);
+    image_destroy(send_image);
+    image_destroy(recv_image);
+    check_status(ret == RET_OK);
+
+    gimp_display_new(image_id);
+    gimp_displays_flush();
 
     return GIMP_PDB_SUCCESS;
 }
