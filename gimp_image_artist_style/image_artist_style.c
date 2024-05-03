@@ -50,6 +50,9 @@ static GimpPDBStatusType start_image_artist_style(gint32 drawable_id, gint32 sty
     IMAGE *send_image, *style_image, *recv_image;
 
     gimp_progress_init("Artist Style ...");
+    if (! vision_server_is_running()) {
+        return GIMP_PDB_EXECUTION_ERROR;
+    }
 
     style_image = vision_get_image_from_drawable(style_drawable_id, &channels, &rect);
     check_status(image_valid(style_image));
@@ -99,21 +102,20 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     style_drawable_id = vision_get_reference_drawable(image_id, drawable_id);
     if (style_drawable_id < 0) {
         gchar* filename = vision_select_image_filename(PLUG_IN_PROC, _("Load Style Image"));
-        if (filename != NULL) {
-            style_drawable_id = gimp_file_load_layer(run_mode, image_id, filename);
-            if (style_drawable_id > 0) {
-                gimp_layer_set_opacity(style_drawable_id, 50.0);
-                if (!gimp_image_insert_layer(image_id, style_drawable_id, 0, 0)) {
-                    syslog_error("Call gimp_image_insert_layer().");
-                    style_drawable_id = -1; // force set -1 ==> error
-                }
-                if (run_mode != GIMP_RUN_NONINTERACTIVE)
-                    gimp_displays_flush();
-            }
-            g_free(filename);
-        }
-    }
+        check_avoid(filename != NULL);
 
+        style_drawable_id = gimp_file_load_layer(run_mode, image_id, filename);
+        g_free(filename);
+        check_avoid(style_drawable_id >= 0);
+        // gimp_layer_set_opacity(style_drawable_id, 100.0);
+        check_avoid(gimp_image_insert_layer(image_id, style_drawable_id, 0, 0));
+        // Scale size
+        gimp_layer_scale(style_drawable_id, 
+            gimp_drawable_width(drawable_id)/2, gimp_drawable_height(drawable_id)/2, FALSE /*gboolean local_origin*/);
+
+        if (run_mode != GIMP_RUN_NONINTERACTIVE)
+            gimp_displays_flush();
+    }
     if (style_drawable_id < 0) {
         g_message("NO Style image, please use menu 'File->Open as Layers...' to add one.\n");
         return;

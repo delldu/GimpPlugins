@@ -33,6 +33,10 @@ static GimpPDBStatusType start_image_colour(gint drawable_id)
     IMAGE *send_image, *recv_image; // , *mask;
 
     gimp_progress_init("Colour ...");
+    if (! vision_server_is_running()) {
+        return GIMP_PDB_EXECUTION_ERROR;
+    }
+    
     // mask = vision_get_selection_mask(image_id);
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     check_status(image_valid(send_image));

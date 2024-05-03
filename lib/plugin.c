@@ -14,6 +14,7 @@ extern void md5sum(uint8_t* initial_msg, size_t initial_len, uint8_t* digest);
 
 static int image_saveto_rawdata(IMAGE* image, gint channels, gint height, gint width, guchar* d);
 static IMAGE* image_from_rawdata(gint channels, gint height, gint width, guchar* d);
+static void update_preview_cb(GtkFileChooser *file_chooser, gpointer data);
 
 // ------------------------------------------------------------------------------------------------
 
@@ -269,10 +270,10 @@ int vision_save_image_as_layer(IMAGE* image, char* name_prefix, gint32 image_id,
 gint32 vision_get_reference_drawable(gint32 image_id, gint32 drawable_id)
 {
     gint* layer_ids = NULL;
-    gint i, num_layers, ret = -1;
+    gint num_layers, ret = -1;
 
     layer_ids = gimp_image_get_layers(image_id, &num_layers);
-    for (i = 0; i < num_layers; i++) {
+    for (int i = 0; i < num_layers; i++) {
         if (layer_ids[i] != drawable_id) {
             ret = layer_ids[i];
             break;
@@ -336,6 +337,27 @@ void vision_gimp_plugin_exit()
     gegl_exit();
 }
 
+static void update_preview_cb(GtkFileChooser *file_chooser, gpointer data)
+{
+    GtkWidget *preview;
+    char *filename;
+    GdkPixbuf *pixbuf;
+    gboolean have_preview;
+
+    preview = GTK_WIDGET (data);
+    filename = gtk_file_chooser_get_preview_filename(file_chooser);
+
+    pixbuf = gdk_pixbuf_new_from_file_at_size (filename, 256, 256, NULL);
+    have_preview = (pixbuf != NULL);
+    g_free (filename);
+
+    gtk_image_set_from_pixbuf (GTK_IMAGE (preview), pixbuf);
+    if (pixbuf)
+        g_object_unref (pixbuf);
+
+    gtk_file_chooser_set_preview_widget_active (file_chooser, have_preview);
+}
+
 gchar* vision_select_image_filename(char *plug_in, char* title)
 {
     GtkWidget* dialog;
@@ -343,7 +365,7 @@ gchar* vision_select_image_filename(char *plug_in, char* title)
     GtkFileChooser* chooser;
     gchar* filename = NULL;
 
-    gimp_ui_init(plug_in, 1 /*preview*/);
+    gimp_ui_init(plug_in, TRUE /*preview*/);
 
     dialog = gtk_file_chooser_dialog_new(title,
         NULL,
@@ -359,7 +381,11 @@ gchar* vision_select_image_filename(char *plug_in, char* title)
     gtk_file_filter_set_name(filter, _("All image files (*.*)"));
     gtk_file_filter_add_pixbuf_formats(filter);
     gtk_file_chooser_add_filter(chooser, filter);
-    gtk_file_chooser_set_preview_widget_active(chooser, TRUE);
+    // gtk_file_chooser_set_preview_widget_active(chooser, TRUE);
+
+    GtkWidget *preview = gtk_image_new();
+    gtk_file_chooser_set_preview_widget(chooser, preview);
+    g_signal_connect (chooser, "update-preview", G_CALLBACK(update_preview_cb), preview);
 
     gtk_widget_show(dialog);
 
@@ -397,7 +423,7 @@ IMAGE* vision_image_service(char* service_name, IMAGE* send_image, char* addon)
         snprintf(command, sizeof(command), "%s(input_file=%s,output_file=%s)", service_name, input_file, output_file);
     }
 
-    taskset = redos_open(AI_TASKSET);
+    taskset = redos_open(GIMP_AI_SERVER);
     if (redos_queue_task(taskset, command, &taskarg) != RET_OK)
         goto failure;
 
@@ -418,9 +444,8 @@ IMAGE* vision_image_service(char* service_name, IMAGE* send_image, char* addon)
     if (getenv("DEBUG") == NULL) { // Debug mode ? NO
         unlink(input_file);
         unlink(output_file);
-
-        redos_delete_task(taskset, taskarg.key);
     }
+    redos_delete_task(taskset, taskarg.key);
 
 failure:
     redos_close(taskset);
@@ -438,7 +463,7 @@ IMAGE* vision_color_service(char* service_name, IMAGE* send_image, IMAGE* color_
     char input_file[512], color_file[512], output_file[512], command[TASK_BUFFER_LEN];
 
     CHECK_IMAGE(send_image);
-
+    CHECK_IMAGE(color_image);
 
     snprintf(command, sizeof(command), "%s_input", service_name);
     vision_get_cache_filename(command, sizeof(input_file), input_file);
@@ -447,14 +472,13 @@ IMAGE* vision_color_service(char* service_name, IMAGE* send_image, IMAGE* color_
     snprintf(command, sizeof(command), "%s_output", service_name);
     vision_get_cache_filename(command, sizeof(output_file), output_file);
 
-
     image_save(send_image, input_file);
     image_save(color_image, color_file);
 
     snprintf(command, sizeof(command), "%s(input_file=%s,color_file=%s,output_file=%s)",
         service_name, input_file, color_file, output_file);
 
-    taskset = redos_open(AI_TASKSET);
+    taskset = redos_open(GIMP_AI_SERVER);
     if (redos_queue_task(taskset, command, &taskarg) != RET_OK)
         goto failure;
 
@@ -476,9 +500,8 @@ IMAGE* vision_color_service(char* service_name, IMAGE* send_image, IMAGE* color_
         unlink(input_file);
         unlink(color_file);
         unlink(output_file);
-
-        redos_delete_task(taskset, taskarg.key);
     }
+    redos_delete_task(taskset, taskarg.key);
 
 failure:
     redos_close(taskset);
@@ -510,7 +533,7 @@ IMAGE* vision_style_service(char* service_name, IMAGE* send_image, IMAGE* style_
     snprintf(command, sizeof(command), "%s(input_file=%s,style_file=%s,output_file=%s)",
         service_name, input_file, style_file, output_file);
 
-    taskset = redos_open(AI_TASKSET);
+    taskset = redos_open(GIMP_AI_SERVER);
     if (redos_queue_task(taskset, command, &taskarg) != RET_OK)
         goto failure;
 
@@ -532,9 +555,8 @@ IMAGE* vision_style_service(char* service_name, IMAGE* send_image, IMAGE* style_
         unlink(input_file);
         unlink(style_file);
         unlink(output_file);
-
-        redos_delete_task(taskset, taskarg.key);
     }
+    redos_delete_task(taskset, taskarg.key);
 
 failure:
     redos_close(taskset);
@@ -567,7 +589,7 @@ char* vision_text_service(char* service_name, IMAGE* send_image, char* addon)
         snprintf(command, sizeof(command), "%s(input_file=%s,output_file=%s)", service_name, input_file, output_file);
     }
 
-    taskset = redos_open(AI_TASKSET);
+    taskset = redos_open(GIMP_AI_SERVER);
     if (redos_queue_task(taskset, command, &taskarg) != RET_OK)
         goto failure;
 
@@ -589,9 +611,8 @@ char* vision_text_service(char* service_name, IMAGE* send_image, char* addon)
     if (getenv("DEBUG") == NULL) { // Debug mode ? NO
         unlink(input_file);
         unlink(output_file);
-
-        redos_delete_task(taskset, taskarg.key);
     }
+    redos_delete_task(taskset, taskarg.key);
 
 failure:
     redos_close(taskset);
@@ -624,7 +645,7 @@ IMAGE* vision_json_service(char* service_name, IMAGE* send_image, char *jstr)
     snprintf(command, sizeof(command), "%s(input_file=%s,json_file=%s,output_file=%s)",
         service_name, input_file, json_file, output_file);
 
-    taskset = redos_open(AI_TASKSET);
+    taskset = redos_open(GIMP_AI_SERVER);
     if (redos_queue_task(taskset, command, &taskarg) != RET_OK)
         goto failure;
 
@@ -646,9 +667,8 @@ IMAGE* vision_json_service(char* service_name, IMAGE* send_image, char *jstr)
         unlink(input_file);
         unlink(json_file);
         unlink(output_file);
-
-        redos_delete_task(taskset, taskarg.key);
     }
+    redos_delete_task(taskset, taskarg.key);
 
 failure:
     redos_close(taskset);
@@ -683,4 +703,19 @@ IMAGE *vision_get_selection_mask(gint image_id)
     // }
 
     return mask_image;
+}
+
+int vision_server_is_running()
+{
+    int ret;
+
+    TASKSET* taskset = redos_open(GIMP_AI_SERVER);
+    ret = (redos_pong(taskset) == RET_OK);
+    redos_close(taskset);
+
+    if (! ret) {
+        g_message("AI server is not running ... Please start it\n");
+    }
+
+    return ret;
 }

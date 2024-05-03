@@ -40,6 +40,10 @@ static GimpPDBStatusType start_image_clean(gint drawable_id)
 
     gimp_progress_init("Clean ...");
 
+    if (! vision_server_is_running()) {
+        return GIMP_PDB_EXECUTION_ERROR;
+    }
+
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     if (image_valid(send_image)) {
         recv_image = clean_service(send_image, clean_options.method);

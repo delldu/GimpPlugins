@@ -97,6 +97,7 @@ static gboolean create_dialog()
         GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, 
         GTK_STOCK_OK, GTK_RESPONSE_OK, NULL);
     gtk_window_set_default_size(GTK_WINDOW(dialog), 1280, 800);
+    gimp_window_set_transient (GTK_WINDOW (dialog));
 
     // GtkWidget * gtk_vbox_new (gboolean homogeneous, gint spacing);
     main_vbox = gtk_vbox_new(FALSE, 8);

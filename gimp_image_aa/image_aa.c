@@ -56,6 +56,10 @@ static GimpPDBStatusType start_image_aa(gint32 drawable_id)
     char* recv_text;
 
     gimp_progress_init("Assess ...");
+    if (! vision_server_is_running()) {
+        return GIMP_PDB_EXECUTION_ERROR;
+    }
+
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     check_status(image_valid(send_image));
 

@@ -34,7 +34,7 @@ extern "C" {
     G_STMT_END
 
 #define GIMP_PLUGIN_VERSION "1.1.0"
-#define AI_TASKSET "TAI"
+#define GIMP_AI_SERVER "GAI"
 
 int vision_save_image_as_layer(IMAGE* image, char* name_prefix, gint32 image_id, float alpha);
 int vision_save_image_to_drawable(IMAGE* image, gint32 drawable_id, gint channels, GeglRectangle* rect);
@@ -47,20 +47,31 @@ IMAGE* vision_image_service(char* service_name, IMAGE* send_image, char* addon);
 char* vision_text_service(char* service_name, IMAGE* send_image, char* addon);
 IMAGE* vision_style_service(char* service_name, IMAGE* send_image, IMAGE* style_image);
 IMAGE* vision_color_service(char* service_name, IMAGE* send_image, IMAGE* color_image);
-IMAGE* vision_json_service(char* service_name, IMAGE* send_image, char *jstr);
-
+IMAGE* vision_json_service(char* service_name, IMAGE* send_image, char *jstr); // stable diffusion
 
 int vision_gimp_plugin_init();
 int vision_get_cache_filename(char* prefix, int namesize, char* filename);
 void vision_gimp_plugin_exit();
 
 gchar* vision_select_image_filename(char *plug_in, char* title);
+int vision_server_is_running();
+
+
+#ifndef check_avoid
+    #define check_avoid(x)                                                                                                 \
+        do {                                                                                                               \
+            if (!(x)) {                                                                                                    \
+                fflush(stdout);                                                                                            \
+                fprintf(stderr, "Error: assert %s (%s:%d)\n", #x, __FILE__, __LINE__);                               \
+            }                                                                                                              \
+        } while (0)
+#endif
 
 #define check_status(x)                                                                                                 \
     do {                                                                                                               \
         if (!(x)) {                                                                                                    \
             fflush(stdout);                                                                                            \
-            fprintf(stderr, "Error: %s == NULL or false (%s:%d)\n", #x, __FILE__, __LINE__);                               \
+            fprintf(stderr, "Error: assert %s (%s:%d)\n", #x, __FILE__, __LINE__);                               \
             return GIMP_PDB_EXECUTION_ERROR;                                                                                              \
         }                                                                                                              \
     } while (0)

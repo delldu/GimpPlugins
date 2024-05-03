@@ -22,6 +22,9 @@ static GimpPDBStatusType start_image_color(gint drawable_id, gint color_drawable
     IMAGE *send_image, *color_image, *recv_image;
 
     gimp_progress_init("Color ...");
+    if (! vision_server_is_running()) {
+        return GIMP_PDB_EXECUTION_ERROR;
+    }
 
     color_image = vision_get_image_from_drawable(color_drawable_id, &channels, &rect);
     check_status(image_valid(color_image));
@@ -106,19 +109,19 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     color_drawable_id = vision_get_reference_drawable(image_id, drawable_id);
     if (color_drawable_id < 0) {
         gchar* filename = vision_select_image_filename(PLUG_IN_PROC, _("Load Reference Color Image"));
-        if (filename != NULL) {
-            color_drawable_id = gimp_file_load_layer(run_mode, image_id, filename);
-            if (color_drawable_id > 0) {
-                gimp_layer_set_opacity(color_drawable_id, 50.0);
-                if (!gimp_image_insert_layer(image_id, color_drawable_id, 0, 0)) {
-                    syslog_error("Call gimp_image_insert_layer().");
-                    color_drawable_id = -1; // force set -1 ==> error
-                }
-                if (run_mode != GIMP_RUN_NONINTERACTIVE)
-                    gimp_displays_flush();
-            }
-            g_free(filename);
-        }
+        check_avoid(filename != NULL);
+
+        color_drawable_id = gimp_file_load_layer(run_mode, image_id, filename);
+        g_free(filename);
+        check_avoid(color_drawable_id > 0);
+        // gimp_layer_set_opacity(color_drawable_id, 100.0);
+        check_avoid(gimp_image_insert_layer(image_id, color_drawable_id, 0, 0));
+        // Scale size
+        gimp_layer_scale(color_drawable_id, 
+            gimp_drawable_width(drawable_id)/2, gimp_drawable_height(drawable_id)/2, FALSE /*gboolean local_origin*/);
+
+        if (run_mode != GIMP_RUN_NONINTERACTIVE)
+            gimp_displays_flush();
     }
 
     if (color_drawable_id < 0) {

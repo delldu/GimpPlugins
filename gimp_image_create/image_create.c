@@ -50,6 +50,9 @@ static GimpPDBStatusType start_image_redraw(gint32 drawable_id)
     IMAGE *send_image, *recv_image;
 
     gimp_progress_init("Create ...");
+    if (! vision_server_is_running()) {
+        return GIMP_PDB_EXECUTION_ERROR;
+    }
 
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     check_status(image_valid(send_image));
@@ -70,11 +73,14 @@ static GimpPDBStatusType start_image_redraw(gint32 drawable_id)
         "{\"prompt\":\"%s\", \"negative\":\"%s\", \"guide_scale\":%.2f, \"noise_strength\":%.2f, \"seed\":%d, \"sample_steps\":%d}",
         create_options.prompt, create_options.negative, create_options.model==SDXL_TURBO?1.8:7.5, 
         (float)create_options.strength/100.0, create_options.seed, create_options.sample_steps);
-    
-    if (create_options.model == SDXL_TURBO)
+
+    // model limition ...
+    if (create_options.model == SDXL_TURBO) {
         recv_image = vision_json_service((char*)"image_sdxl_create", send_image, jstr);
-    else
+    }
+    else {
         recv_image = vision_json_service((char*)"image_sd21_create", send_image, jstr);
+    }
 
     image_destroy(send_image);
     check_status(image_valid(recv_image));
