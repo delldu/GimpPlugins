@@ -32,14 +32,14 @@ static void query(void)
     };
 
     gimp_install_procedure(PLUG_IN_PROC,
-        _("Semantic segment, Lightweight !"),
+        _("Detect semantics, Segment lightweight !"),
         _("More_Segment_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
         "2020-2024",
-        _("Segment"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        _("Semantics"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
-    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/");
+    gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Detect");
 }
 
 static GimpPDBStatusType start_image_segment(gint32 drawable_id)
@@ -55,6 +55,8 @@ static GimpPDBStatusType start_image_segment(gint32 drawable_id)
         return GIMP_PDB_EXECUTION_ERROR;
     }
 
+    image_id = gimp_item_get_image(drawable_id);
+    gimp_selection_none(image_id);
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     check_status(image_valid(send_image));
 
@@ -64,9 +66,8 @@ static GimpPDBStatusType start_image_segment(gint32 drawable_id)
     gimp_progress_end();
 
     // Save segment as new layer
-    image_id = gimp_item_get_image(drawable_id);
     check_status(send_image->height == recv_image->height && send_image->width == recv_image->width);
-    ret = vision_save_image_as_layer(recv_image, "segment", image_id, 50.0);
+    ret = vision_save_image_as_layer(recv_image, "detect_segment", image_id, 50.0);
     image_destroy(send_image);
     image_destroy(recv_image);
     check_status(ret == RET_OK);
@@ -84,8 +85,6 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     GimpRunMode run_mode;
     // gint32 image_id;
     gint32 drawable_id;
-
-    // INIT_I18N();
 
     /* Setting mandatory output values */
     *nreturn_vals = 1;

@@ -82,8 +82,6 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     gint32 image_id;
     gint32 drawable_id, style_drawable_id;
 
-    // INIT_I18N();
-
     /* Setting mandatory output values */
     *nreturn_vals = 1;
     *return_vals = values;

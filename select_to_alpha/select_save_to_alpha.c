@@ -39,7 +39,7 @@ gboolean save_as_dialog()
 
     gimp_ui_init(PLUG_IN_PROC, FALSE);
 
-    dialog = gimp_dialog_new("Save As", "select_save_to_alpha" /*role*/,
+    dialog = gimp_dialog_new("Save Selection As", "select_save_to_alpha" /*role*/,
         NULL /* parent */, 0,
         NULL /*gimp_standard_help_func*/, NULL /* "" */,
         GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, GTK_STOCK_OK, GTK_RESPONSE_OK, NULL);
@@ -54,7 +54,7 @@ gboolean save_as_dialog()
     // Create a radio button with a GtkEntry widget
     radio1 = gtk_radio_button_new_with_label(NULL, "Foregroud"); //gtk_radio_button_new (NULL);
     radio2 = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (radio1), "Background");
-    radio3 = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (radio1), "Unkown Area");
+    radio3 = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (radio1), "Unkown");
 
     // Pack them into a box, then show all the widgets
     gtk_box_pack_start (GTK_BOX (vbox), radio1, FALSE, FALSE, 0);
@@ -143,7 +143,7 @@ static void query(void)
         _("More_Select_Save_To_Alpha_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
-        "023", _("Save to Alpha"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        "023", _("Save to Alpha..."), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
     gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/Select/");
 }
@@ -179,8 +179,6 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     // gint32 image_id;
     gint32 drawable_id;
 
-    INIT_I18N();
-
     /* Setting mandatory output values */
     *nreturn_vals = 1;
     *return_vals = values;
@@ -201,8 +199,29 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
 
     vision_gimp_plugin_init();
 
-    if (run_mode == GIMP_RUN_INTERACTIVE && ! save_as_dialog())
-        return;
+    switch (run_mode) {
+    case GIMP_RUN_INTERACTIVE:
+        /* Get options last values if needed */
+        gimp_get_data(PLUG_IN_PROC, &alpha_value);
+        if (! save_as_dialog())
+            return;
+        // Save values for next ...
+        gimp_set_data(PLUG_IN_PROC, &alpha_value, sizeof(alpha_value));
+        break;
+
+    case GIMP_RUN_NONINTERACTIVE:
+        gimp_get_data(PLUG_IN_PROC, &alpha_value);
+        break;
+
+    case GIMP_RUN_WITH_LAST_VALS:
+        /*  Get options last values if needed  */
+        gimp_get_data(PLUG_IN_PROC, &alpha_value);
+        break;
+
+    default:
+        break;
+    }
+
 
     if (!gimp_drawable_has_alpha(drawable_id))
         gimp_layer_add_alpha(drawable_id);

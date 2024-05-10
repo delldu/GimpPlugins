@@ -67,8 +67,24 @@ static GimpPDBStatusType start_image_aa(gint32 drawable_id)
     image_destroy(send_image);
     check_status(recv_text != NULL);
 
-    // g_message("Aesthetic Score: %s\n", recv_text);
+    g_message("Aesthetic Score: %s\n", recv_text);
     display_score(recv_text);
+
+    // gint32
+    // gimp_text_fontname (gint32 image_ID,
+    //                     gint32 drawable_ID,
+    //                     gdouble x,
+    //                     gdouble y,
+    //                     const gchar *text,
+    //                     gint border,
+    //                     gboolean antialias,
+    //                     gdouble size,
+    //                     GimpSizeType size_type,
+    //                     const gchar *fontname);
+
+    // gint32 image_id = gimp_item_get_image(drawable_id);
+    // gimp_text_fontname(image_id, -1, 10, 10, recv_text, 1, TRUE, 32, GIMP_PIXELS, "Sans-serif");
+
     free(recv_text);
 
     gimp_progress_update(1.0);
@@ -112,8 +128,6 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     GimpRunMode run_mode;
     // gint32 image_id;
     gint32 drawable_id;
-
-    // INIT_I18N();
 
     /* Setting mandatory output values */
     *nreturn_vals = 1;

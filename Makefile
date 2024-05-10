@@ -36,7 +36,6 @@ XSUBDIRS :=  \
 	gimp_image_edge \
 	gimp_image_mlsd \
 	gimp_image_midas \
-	gimp_image_pose \
 	gimp_image_normal \
 	gimp_image_lineart \
 	gimp_image_face_detect \
@@ -46,7 +45,9 @@ XSUBDIRS :=  \
 	gimp_image_artist_style \
 	gimp_image_photo_style \
 	gimp_image_shape_style \
-	gimp_image_harmonize
+
+# 	gimp_image_pose \
+# 	gimp_image_harmonize
 
 all: 
 	@for d in $(XSUBDIRS)  ; do \

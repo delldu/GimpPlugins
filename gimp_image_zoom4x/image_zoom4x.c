@@ -77,6 +77,11 @@ static gboolean image_scale_times_dialog()
     g_signal_connect(G_OBJECT(radio2), "toggled", G_CALLBACK (toggle_2x_button), NULL);
     g_signal_connect(G_OBJECT(radio1), "toggled", G_CALLBACK (toggle_1x_button), NULL);
 
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio4), (image_scale_times == 4));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio3), (image_scale_times == 3));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio2), (image_scale_times == 2));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio1), (image_scale_times == 1));
+
     run = (gimp_dialog_run(GIMP_DIALOG(dialog)) == GTK_RESPONSE_OK);
 
     gtk_widget_destroy(dialog);
@@ -111,7 +116,7 @@ static void query(void)
         _("More_Zoom4x_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
-        "2020-2024", _("Natural Image"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        "2020-2024", _("Natural Image..."), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
     gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Beautify");
 }
@@ -154,8 +159,6 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     // gint32 image_id;
     gint32 drawable_id;
 
-    // INIT_I18N();
-
     /* Setting mandatory output values */
     *nreturn_vals = 1;
     *return_vals = values;
@@ -173,8 +176,30 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     vision_gimp_plugin_init();
     // gimp_image_convert_precision(image_id, GIMP_COMPONENT_TYPE_U8);
 
-    if (run_mode == GIMP_RUN_INTERACTIVE && ! image_scale_times_dialog())
-        return;
+
+    switch (run_mode) {
+    case GIMP_RUN_INTERACTIVE:
+        /* Get options last values if needed */
+        gimp_get_data(PLUG_IN_PROC, &image_scale_times);
+        if (! image_scale_times_dialog())
+            return;
+        // Save values for next ...
+        gimp_set_data(PLUG_IN_PROC, &image_scale_times, sizeof(image_scale_times));
+        break;
+
+    case GIMP_RUN_NONINTERACTIVE:
+        gimp_get_data(PLUG_IN_PROC, &image_scale_times);
+        break;
+
+    case GIMP_RUN_WITH_LAST_VALS:
+        /*  Get options last values if needed  */
+        gimp_get_data(PLUG_IN_PROC, &image_scale_times);
+        break;
+
+    default:
+        break;
+    }
+
 
     values[0].data.d_status = start_image_zoom4x(drawable_id);
     if (run_mode != GIMP_RUN_NONINTERACTIVE)

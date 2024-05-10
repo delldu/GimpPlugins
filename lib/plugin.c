@@ -315,6 +315,7 @@ int vision_gimp_plugin_init()
         make_dir(image_cache_path);
     }
 
+    INIT_I18N();
     gegl_init(NULL, NULL);
     // gimp_help_disable_tooltips();
 
@@ -427,8 +428,8 @@ IMAGE* vision_image_service(char* service_name, IMAGE* send_image, char* addon)
     if (redos_queue_task(taskset, command, &taskarg) != RET_OK)
         goto failure;
 
-    // Wait time, e.g, 60 seconds
-    wait_time = 60 * 1000;
+    // Wait time, e.g, 300 seconds
+    wait_time = 300 * 1000;
     start_time = time_now();
     while (time_now() - start_time < wait_time) {
         usleep(300 * 1000); // 300 ms

@@ -37,7 +37,7 @@ static void query(void)
         _("More_Create_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
-        "2020-2024", _("Create"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        "2020-2024", _("_Create ..."), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
     gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/");
 }
@@ -49,7 +49,7 @@ static GimpPDBStatusType start_image_redraw(gint32 drawable_id)
     GeglRectangle rect;
     IMAGE *send_image, *recv_image;
 
-    gimp_progress_init("Create ...");
+    gimp_progress_init("Create...");
     if (! vision_server_is_running()) {
         return GIMP_PDB_EXECUTION_ERROR;
     }
@@ -84,7 +84,10 @@ static GimpPDBStatusType start_image_redraw(gint32 drawable_id)
 
     image_destroy(send_image);
     check_status(image_valid(recv_image));
-    vision_save_image_to_gimp(recv_image, (char*)"image_create");
+    // vision_save_image_to_gimp(recv_image, (char*)"image_create");
+    gint32 image_id = gimp_item_get_image(drawable_id);
+    gimp_selection_none(image_id);
+    vision_save_image_as_layer(recv_image, "image_create", image_id, 50.0);
     image_destroy(recv_image);
 
     gimp_progress_update(1.0);
@@ -100,8 +103,6 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     GimpRunMode run_mode;
     // gint32 image_id;
     gint32 drawable_id;
-
-    INIT_I18N();
 
     /* Setting mandatory output values */
     *nreturn_vals = 1;
@@ -123,6 +124,8 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
         gimp_get_data(PLUG_IN_PROC, &create_options);
         if (! create_dialog())
             return;
+        // Save values for next ...
+        gimp_set_data(PLUG_IN_PROC, &create_options, sizeof(create_options));
         break;
 
     case GIMP_RUN_NONINTERACTIVE:

@@ -59,7 +59,9 @@ static GimpPDBStatusType start_image_pose(gint32 drawable_id)
     recv_image = vision_image_service((char*)"image_pose", send_image, NULL);
     image_destroy(send_image);
     check_status(image_valid(recv_image));
-    vision_save_image_to_gimp(recv_image, (char *)"pose");
+    // vision_save_image_to_gimp(recv_image, (char *)"pose");
+    gint32 image_id = gimp_item_get_image(drawable_id);
+    vision_save_image_as_layer(recv_image, "detect_pose", image_id, 50.0);
     image_destroy(recv_image);
 
     gimp_progress_update(1.0);
@@ -75,8 +77,6 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     GimpRunMode run_mode;
     // gint32 image_id;
     gint32 drawable_id;
-
-    // INIT_I18N();
 
     /* Setting mandatory output values */
     *nreturn_vals = 1;

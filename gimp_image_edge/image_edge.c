@@ -58,14 +58,18 @@ static GimpPDBStatusType start_image_edge(gint32 drawable_id)
     if (! vision_server_is_running()) {
         return GIMP_PDB_EXECUTION_ERROR;
     }
-    
+
+    gint32 image_id = gimp_item_get_image(drawable_id);
+    gimp_selection_none(image_id);
     send_image = vision_get_image_from_drawable(drawable_id, &channels, &rect);
     check_status(image_valid(send_image));
 
     recv_image = vision_image_service((char*)"image_edge", send_image, NULL);
     image_destroy(send_image);
     check_status(image_valid(recv_image));
-    vision_save_image_to_gimp(recv_image, (char *)"edge");
+
+    // vision_save_image_to_gimp(recv_image, (char *)"edge");
+    vision_save_image_as_layer(recv_image, "detect_edge", image_id, 50.0);
     image_destroy(recv_image);
 
     gimp_progress_update(1.0);
@@ -82,7 +86,6 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     // gint32 image_id;
     gint32 drawable_id;
 
-    // INIT_I18N();
 
     /* Setting mandatory output values */
     *nreturn_vals = 1;

@@ -36,7 +36,7 @@ static void query(void)
         _("More_Denoise_Help"),
         "Dell Du <18588220928@163.com>",
         "Dell Du",
-        "2020-2024", _("Noise"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
+        "2020-2024", _("_Noise"), "RGB*, GRAY*", GIMP_PLUGIN, G_N_ELEMENTS(args), 0, args, NULL);
 
     gimp_plugin_menu_register(PLUG_IN_PROC, "<Image>/AI/Clean/");
 }
@@ -75,7 +75,6 @@ run(const gchar* name, gint nparams, const GimpParam* param, gint* nreturn_vals,
     // gint32 image_id;
     gint32 drawable_id;
 
-    // INIT_I18N();
 
     /* Setting mandatory output values */
     *nreturn_vals = 1;
